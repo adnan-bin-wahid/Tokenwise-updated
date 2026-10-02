@@ -1,5 +1,12 @@
 # TokenWise Codebase Review
 
+> Implementation update, October 3, 2026: `TokenWise: Enable Automatic Context`
+> configures arbitrary local Windows Python repositories, preserving unrelated
+> rules, hooks, and existing context settings. Workspace launchers resolve a
+> shared backend registration in extension user storage rather than assuming
+> the repository lives in the TokenWise checkout. Model/environment installation
+> remains a separate prerequisite; cross-platform and remote setup remain open.
+>
 > Implementation update, October 2, 2026: automatic Python context retrieval for
 > Antigravity IDE is now implemented for `Test_project`, with a `PreInvocation`
 > hook, model startup, bounded context, caching, and extension activity display.

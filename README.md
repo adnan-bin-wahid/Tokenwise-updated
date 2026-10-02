@@ -13,10 +13,13 @@ The user-facing client is a VS Code extension. The local FastAPI backend perform
 
 ## Project layout
 
-For automatic context in Antigravity IDE, open `Test_project` and follow
-[the Antigravity integration guide](docs/ANTIGRAVITY.md). TokenWise can now build
-Python repository context from the prompt alone and supply it through a
-`PreInvocation` hook, with activity visible in the extension.
+For automatic context in Antigravity IDE, open any local Windows Python
+repository and run **TokenWise: Enable Automatic Context**. Select the complete
+backend installation once; repositories can live outside the TokenWise checkout.
+Follow [the integration guide](docs/ANTIGRAVITY.md). TokenWise builds bounded
+repository context from the prompt through an always-on agent-command rule,
+or a `PreInvocation` hook on supporting IDE builds. Activity is visible in the
+extension. Other workspace rules and hook handlers are preserved.
 
 ```text
 TokenWise/

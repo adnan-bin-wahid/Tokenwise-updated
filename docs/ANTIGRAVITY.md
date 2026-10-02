@@ -1,6 +1,7 @@
 # Automatic Context in Antigravity
 
-Open `Test_project` as the workspace in **Antigravity IDE** and send a normal
+Open any local Python repository as the workspace in **Antigravity IDE**, run
+`TokenWise: Enable Automatic Context` once, then send a normal
 coding prompt. TokenWise discovers relevant Python files, ranks and prunes them,
 and returns bounded repository context. No editor selection, manual pruning
 command, or copy/paste is required.
@@ -19,11 +20,56 @@ the configured native hook: both demo prompts appeared in its real transcript
 without TokenWise context. Its installed hook-management UI is gated behind
 development/insider mode. The fallback does not require that UI or an MCP server.
 
+## Enable Any Python Repository
+
+1. Install `vscode-extension/tokenwise-vscode-0.3.1.vsix` in Antigravity IDE and
+   reload its window. For development, compile the extension and press F5 instead.
+2. Open your Python repository. It can be anywhere on your machine; it does not
+   need to be inside the TokenWise checkout. Trust the workspace before setup.
+3. Open the command palette and run **TokenWise: Enable Automatic Context**.
+   In a multi-folder workspace, select the repository to configure.
+4. On first use, select your complete TokenWise backend installation: the folder
+   containing `.venv`, `scripts`, and `swe-pruner`. During F5 development the
+   checkout is discovered automatically. Existing registered installations are
+   reused, so subsequent repositories do not require another backend selection.
+5. Confirm setup. In **Customizations > Rules**, confirm that the TokenWise
+   workspace rule is listed. Start a new chat and enter your normal prompt.
+
+Setup installs launchers under `.agents/tokenwise/`, merges the TokenWise hook
+and `.agents/tokenwise.json`, and adds a `.tokenwise/` Git ignore entry. It leaves
+unrelated rules and hook handlers intact and retains your budget and threshold.
+If `.agents/rules/tokenwise.md` contains custom instructions, setup uses a new
+rule filename instead. It can migrate the exact old generated demo rule, but
+refuses to overwrite customized launchers or malformed JSON configuration.
+Setup confirmation explicitly re-enables `enabled` in the TokenWise settings.
+
+The backend installation is registered in the extension's **user storage**.
+Each workspace has an ignored `.tokenwise/backend-link.json` pointing to that
+registration. Launchers derive the target workspace from their own location;
+they no longer derive the backend from the repository's parent folder. Shared
+rules contain no machine-specific backend paths.
+
+Re-run the command after cloning on another machine, clearing `.tokenwise/`,
+or changing IDE profiles. To relocate the backend, update the application-level
+`tokenWise.backendInstallationPath` user setting and re-run setup. Workspaces
+linked to that registration will use the new installation. Keep the backend
+environment and model installed separately; the VSIX does not bundle them.
+
+This release supports **local Windows Python repositories**. Remote/virtual
+workspaces and macOS/Linux launchers are not yet supported. Retrieval still uses
+the Python indexer's supported files and exclusions; it cannot promise that
+every possible Python repository layout or dynamic import will be resolved.
+
+If version 0.3.0 reports "supports local folders only" for a normal drive folder
+in an F5 window, upgrade or recompile and restart the development host. Version
+0.3.1 accepts Antigravity's locally backed `vscode-userdata` extension storage;
+that storage scheme does not make your repository remote.
+
 ## Try the Demo
 
-1. Install the packaged `vscode-extension/tokenwise-vscode-0.2.0.vsix` in
-   Antigravity IDE. This development session already installed it on this machine.
-2. Reload the Antigravity window after installation, then open `Test_project`.
+1. Follow the setup above with `Test_project` as the repository.
+2. Run **TokenWise: Enable Automatic Context** to migrate its generated rule
+   to the shared-backend launchers.
 3. In **Customizations > Rules**, confirm the project `tokenwise.md` rule is
    listed. You do not need a Hooks tab for the fallback. On builds that expose
    **Customizations > Hooks**, keep `tokenwise-automatic-context` enabled too.
@@ -37,7 +83,7 @@ status bar shows retrieval progress, followed by the file count and packed token
 count. A **TokenWise Repository Context** panel opens beside the editor without
 taking keyboard focus. It contains the selected files and the actual supplied
 context. On the fallback path, you should see the agent invoke
-`.agents/tokenwise-context.ps1` through its command tool. Approve it if the IDE's
+`.agents/tokenwise/tokenwise-context.ps1` through its command tool. Approve it if the IDE's
 permission policy requests approval. The rule asks Antigravity to acknowledge
 TokenWise only when it actually receives current context.
 
@@ -62,8 +108,9 @@ a live context panel. Neither label means your current prompt ran TokenWise.
   hooks are optional for the fallback.
 - The existing TokenWise Python environment (`scripts/setup.ps1`).
 - Local pruning weights at `swe-pruner/swe-pruner/model/model.safetensors`.
-- This demo folder must stay inside the TokenWise checkout: its launcher locates
-  the environment and backend through the parent directory.
+- A complete backend installation selected once, independently of repository
+  location. The older checked-in demo launchers remain available for backwards
+  compatibility until you run the new setup command.
 
 To rebuild and install the extension after future changes, run from the checkout
 root after the usual setup:
@@ -82,7 +129,8 @@ The stable-IDE path is:
 ```text
 Antigravity user prompt
   -> always-on .agents/rules/tokenwise.md
-  -> agent command tool runs .agents/tokenwise-context.ps1
+  -> agent command tool runs .agents/tokenwise/tokenwise-context.ps1
+  -> workspace backend-link.json resolves the shared installation
   -> scripts/antigravity_context.py
   -> local /prune-workspace, without an active_file
   -> bounded Python repository context returned as tool output
@@ -98,8 +146,8 @@ The optional native path is:
 
 ```text
 Antigravity user prompt
-  -> Test_project/.agents/hooks.json: PreInvocation
-  -> .agents/tokenwise-hook.ps1
+  -> workspace/.agents/hooks.json: PreInvocation
+  -> .agents/tokenwise/tokenwise-hook.ps1
   -> scripts/antigravity_hook.py
   -> explicit user request from Antigravity's JSONL transcript
   -> local /prune-workspace, without an active_file
@@ -130,16 +178,20 @@ files before editing. Antigravity retains its own ability to retrieve more files
 
 ## Configuration and Activity
 
-Edit `Test_project/.agents/tokenwise.json` for the token budget, pruning threshold,
+Edit your workspace's `.agents/tokenwise.json` for the token budget, pruning threshold,
 candidate limit, timeouts, and automatic startup. Set `enabled` to `false` to
 disable the adapter. Turn off `tokenWise.autoOpenAutomaticContext` in editor
 settings to keep the status bar and logs without opening a result panel.
 
-- `Test_project/.tokenwise/latest.json`: current prompt, selected files, tokens,
+- `.tokenwise/latest.json` in the workspace: current prompt, selected files, tokens,
   result and errors.
-- `Test_project/.tokenwise/conversations/`: duplicate-injection state.
-- `.tokenwise/backend.log` in the checkout root: local model/server diagnostics.
-- `.tokenwise/backend.json`: backend PID and local port.
+- `.tokenwise/conversations/` in the workspace: duplicate-injection state.
+- `.tokenwise/backend-link.json` in the workspace: extension user registration path.
+- `backend/installation.json` in extension user storage: shared installation and
+  runtime directory paths.
+- `backend/runtime/backend.log` and `backend.json` in extension user storage:
+  new server diagnostics, PID and local port. If setup adopts the old checkout
+  server, its log remains in the checkout's `.tokenwise/backend.log` until restart.
 - **Output > TokenWise**: editor activity log.
 - **TokenWise: Show Automatic Context**: reopen the latest result.
 
@@ -160,11 +212,16 @@ permission being granted. It does not guarantee native pre-model interception.
 If the agent skips the command, `.tokenwise/latest.json` will remain unchanged.
 Do not enable unrestricted terminal permissions merely to make the demo work.
 
-To stop the automatically started backend:
+To stop the automatically started backend, take `runtime_dir` from the shared
+`installation.json` and pass it to the shutdown helper:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/stop-antigravity-backend.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/stop-antigravity-backend.ps1 -RuntimeDirectory 'C:\absolute\path\to\backend\runtime'
 ```
+
+Without `-RuntimeDirectory`, the helper stops the older checkout-managed server.
+Multiple repositories share one model process, startup lock, and backend log;
+prompt activity and duplicate-injection state remain separate per repository.
 
 ## Verification
 
@@ -173,6 +230,10 @@ From the checkout root:
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s swe-pruner/swe-pruner/tests -v
 .\.venv\Scripts\python.exe scripts/verify_antigravity.py
+cd vscode-extension
+npm test
+cd ..
+node scripts/verify-portable-context.cjs
 ```
 
 The live verifier uses a synthetic Antigravity transcript and both exact Windows
@@ -182,6 +243,14 @@ packing, exact tokenizer counts, hook stdout JSON, duplicate prevention, a
 marks its demo activity report with `verification: true`. It does not call
 Antigravity's cloud model. Confirm the final IDE behavior with a new agent
 conversation and the demo prompt above.
+
+The portable verifier configures two temporary Python repositories **outside**
+the checkout, preserves pre-existing rules and hooks, and exercises the exact
+new command and hook launchers against the real local model. It checks a shared
+backend, quoted/Unicode prompts, exact tokenizer counts, bounded context, repeat
+setup, and duplicate prevention. Start the backend first; this verifier refuses
+to launch a detached model process. Temporary files are cleaned up and it does
+not replace your real workspace activity report or call Antigravity's cloud model.
 
 Official integration contracts:
 [Antigravity hooks](https://antigravity.google/docs/hooks?tab=ide) and

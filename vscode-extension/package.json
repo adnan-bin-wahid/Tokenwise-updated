@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -19,8 +19,18 @@
     "Other"
   ],
   "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "TokenWise runs a local backend and installs executable workspace agent launchers."
+    }
+  },
   "contributes": {
     "commands": [
+      {
+        "command": "tokenwise.enableAutomaticContext",
+        "title": "TokenWise: Enable Automatic Context"
+      },
       {
         "command": "tokenwise.pruneSelected",
         "title": "TokenWise: Prune Selected Code"
@@ -62,6 +72,12 @@
     "configuration": {
       "title": "TokenWise",
       "properties": {
+        "tokenWise.backendInstallationPath": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Shared local TokenWise backend installation containing .venv, scripts, and swe-pruner. Set by Enable Automatic Context, never taken from repository settings."
+        },
         "tokenWise.autoOpenAutomaticContext": {
           "type": "boolean",
           "default": true,

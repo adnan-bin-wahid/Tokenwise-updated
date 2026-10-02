@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from swe_pruner.antigravity_hook import MARKER, latest_prompt, run_hook
+from swe_pruner.antigravity_hook import (
+    DEFAULTS, MARKER, backend_runtime_directory, ensure_backend, latest_prompt, registered_port, run_hook, write_json,
+)
 from swe_pruner.antigravity_context import run_context
 from swe_pruner.repository.repository_index import RepositoryIndex, RepositoryIndexCache
 from swe_pruner.retrieval.context_builder import ContextBuilder
@@ -220,6 +222,86 @@ class AntigravityTests(unittest.TestCase):
         self.assertIn("MAX_PAYMENT_RETRIES = 3", reference)
         self.assertIn("async def retry(self, count: int=3) -> bool:", reference)
         self.assertNotIn("raise RuntimeError", reference)
+
+
+class SharedBackendTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.directory.name).resolve()
+        self.installation = self.root / "backend"
+        self.installation.mkdir()
+        self.runtime = self.root / "user-storage/runtime"
+        self.environment = patch.dict("os.environ", {"TOKENWISE_RUNTIME_DIR": str(self.runtime)})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
+        self.addCleanup(self.directory.cleanup)
+        self.status = {
+            "service": "tokenwise", "model_loaded": True, "pid": 123,
+            "model_path": str(self.installation / "swe-pruner/swe-pruner/model"),
+        }
+
+    def test_runtime_is_central_and_relative_overrides_are_rejected(self):
+        self.assertEqual(backend_runtime_directory(self.installation), self.runtime)
+        with patch.dict("os.environ", {"TOKENWISE_RUNTIME_DIR": ".tokenwise"}):
+            with self.assertRaisesRegex(ValueError, "absolute"):
+                backend_runtime_directory(self.installation)
+        with patch.dict("os.environ", {"TOKENWISE_RUNTIME_DIR": ""}):
+            self.assertEqual(backend_runtime_directory(self.installation), self.installation / ".tokenwise")
+
+    def test_central_registration_reuses_process_without_startup(self):
+        write_json(self.runtime / "backend.json", {"pid": 123, "port": 8005, "project_root": str(self.installation)})
+        with patch("swe_pruner.antigravity_hook.health", return_value=self.status), \
+                patch("swe_pruner.antigravity_hook.subprocess.Popen") as process:
+            self.assertEqual(ensure_backend(self.installation, DEFAULTS), "http://127.0.0.1:8005")
+            process.assert_not_called()
+        self.assertFalse((self.installation / ".tokenwise").exists())
+
+    def test_legacy_checkout_process_is_adopted_into_central_storage(self):
+        write_json(self.installation / ".tokenwise/backend.json", {"pid": 456, "port": 8001, "project_root": str(self.installation)})
+        status = {key: value for key, value in self.status.items() if key != "pid"}
+        with patch("swe_pruner.antigravity_hook.health", side_effect=lambda port: status if port == 8001 else None), \
+                patch("swe_pruner.antigravity_hook.subprocess.Popen") as process:
+            self.assertEqual(ensure_backend(self.installation, DEFAULTS), "http://127.0.0.1:8001")
+            process.assert_not_called()
+        registration = json.loads((self.runtime / "backend.json").read_text())
+        self.assertEqual(registration["pid"], 456)
+        self.assertEqual(registration["project_root"], str(self.installation))
+
+    def test_another_installation_is_never_reused(self):
+        other = {**self.status, "model_path": str(self.root / "other/model")}
+        with patch("swe_pruner.antigravity_hook.health", return_value=other), \
+                patch("swe_pruner.antigravity_hook.subprocess.Popen") as process:
+            with self.assertRaisesRegex(RuntimeError, "offline"):
+                ensure_backend(self.installation, {**DEFAULTS, "auto_start_backend": False})
+            process.assert_not_called()
+        self.assertFalse((self.runtime / "backend.json").exists())
+
+    def test_invalid_ports_and_foreign_registration_paths_are_ignored(self):
+        for port in (True, "8000", -1, 99999):
+            self.assertIsNone(registered_port({"port": port, "project_root": str(self.installation)}, self.installation))
+        self.assertIsNone(registered_port({"port": 8001, "project_root": str(self.root / "other")}, self.installation))
+        self.assertEqual(registered_port({"port": 8001, "project_root": str(self.installation)}, self.installation), 8001)
+
+    def test_unloaded_model_reports_the_central_log_path(self):
+        with patch("swe_pruner.antigravity_hook.health", return_value={**self.status, "model_loaded": False}):
+            with self.assertRaises(RuntimeError) as error:
+                ensure_backend(self.installation, DEFAULTS)
+        self.assertIn(str(self.runtime / "backend.log"), str(error.exception))
+
+    def test_shared_startup_writes_logs_registration_and_lock_in_user_storage(self):
+        weights = self.installation / "swe-pruner/swe-pruner/model/model.safetensors"
+        weights.parent.mkdir(parents=True)
+        weights.write_bytes(b"fixture")
+        statuses = iter([None, None, self.status])
+        with patch("swe_pruner.antigravity_hook.health", side_effect=lambda _: next(statuses)), \
+                patch("swe_pruner.antigravity_hook.socket.socket"), \
+                patch("swe_pruner.antigravity_hook.subprocess.Popen") as process:
+            process.return_value.pid = 123
+            self.assertEqual(ensure_backend(self.installation, DEFAULTS), "http://127.0.0.1:8000")
+            self.assertEqual(process.call_args.kwargs["cwd"], self.installation)
+        self.assertTrue((self.runtime / "backend.log").is_file())
+        self.assertFalse((self.runtime / "backend-start.lock").exists())
+        self.assertFalse((self.installation / ".tokenwise").exists())
 
 
 if __name__ == "__main__":

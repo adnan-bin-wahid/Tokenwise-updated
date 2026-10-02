@@ -6,6 +6,7 @@ import { createPruneCurrentFileCommand } from "./commands/pruneCurrentFile";
 import { createCheckHealthCommand } from "./commands/checkHealth";
 import { createBuildRepositoryContextCommand } from "./commands/buildRepositoryContext";
 import { AutomaticContextMonitor } from "./services/automaticContext";
+import { createEnableAutomaticContextCommand } from "./commands/enableAutomaticContext";
 
 export function activate(context: vscode.ExtensionContext): void {
   const service = new PruneService();
@@ -32,9 +33,14 @@ export function activate(context: vscode.ExtensionContext): void {
     statusItem.tooltip = "TokenWise is ready";
   };
 
+  const automaticMonitor = new AutomaticContextMonitor(statusItem, panel, context.extensionUri);
   context.subscriptions.push(
     statusItem,
-    new AutomaticContextMonitor(statusItem, panel, context.extensionUri),
+    automaticMonitor,
+    vscode.commands.registerCommand(
+      "tokenwise.enableAutomaticContext",
+      createEnableAutomaticContextCommand(context, (folder) => automaticMonitor.configured(folder)),
+    ),
     vscode.commands.registerCommand(
       "tokenwise.pruneSelected",
       createPruneSelectedCommand(

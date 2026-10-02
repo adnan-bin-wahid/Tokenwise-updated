@@ -145,17 +145,68 @@ def health(port: int) -> dict | None:
         return None
 
 
-def ensure_backend(project_root: Path, settings: dict) -> str:
-    runtime = project_root / ".tokenwise"
-    runtime.mkdir(exist_ok=True)
-    registration = read_json(runtime / "backend.json")
-    preferred = int(settings["backend_port"])
-    remembered = registration.get("port", preferred)
-    port = remembered if isinstance(remembered, int) and 1024 <= remembered <= 65535 else preferred
+def backend_runtime_directory(project_root: Path) -> Path:
+    configured = os.environ.get("TOKENWISE_RUNTIME_DIR")
+    if not configured:
+        return project_root / ".tokenwise"
+    runtime = Path(configured).expanduser()
+    if not runtime.is_absolute():
+        raise ValueError("TOKENWISE_RUNTIME_DIR must be an absolute directory path.")
+    return runtime.resolve()
+
+
+def registered_port(registration: dict, project_root: Path) -> int | None:
+    port = registration.get("port")
+    root = registration.get("project_root")
+    if type(port) is not int or not 1024 <= port <= 65535 or not isinstance(root, str):
+        return None
+    return port if Path(root).resolve() == project_root else None
+
+
+def matching_backend(port: int, model_path: Path, log_path: Path) -> dict | None:
     status = health(port)
-    if status:
-        if not status.get("model_loaded"):
-            raise RuntimeError("TokenWise is running but its model is not loaded. Check .tokenwise/backend.log.")
+    if not status or not isinstance(status.get("model_path"), str):
+        return None
+    if Path(status["model_path"]).resolve() != model_path:
+        return None
+    if not status.get("model_loaded"):
+        raise RuntimeError(f"TokenWise is running but its model is not loaded. Check {log_path}.")
+    return status
+
+
+def ensure_backend(project_root: Path, settings: dict) -> str:
+    project_root = project_root.resolve()
+    runtime = backend_runtime_directory(project_root)
+    runtime.mkdir(parents=True, exist_ok=True)
+    preferred = int(settings["backend_port"])
+    model_path = (project_root / "swe-pruner/swe-pruner/model").resolve()
+    log_path = runtime / "backend.log"
+
+    def reuse_running() -> int | None:
+        # Adopt a healthy checkout-era process instead of loading a second copy of the model.
+        records = [read_json(runtime / "backend.json")]
+        if runtime != project_root / ".tokenwise":
+            records.append(read_json(project_root / ".tokenwise/backend.json"))
+        candidates = [(registered_port(record, project_root), record) for record in records]
+        candidates.append((preferred, {}))
+        checked = set()
+        for candidate, record in candidates:
+            if candidate is None or candidate in checked:
+                continue
+            checked.add(candidate)
+            status = matching_backend(candidate, model_path, log_path)
+            if status:
+                registration = {"port": candidate, "project_root": str(project_root)}
+                pid = status.get("pid", record.get("pid"))
+                if type(pid) is int and pid > 0:
+                    registration["pid"] = pid
+                if read_json(runtime / "backend.json") != registration:
+                    write_json(runtime / "backend.json", registration)
+                return candidate
+        return None
+
+    port = reuse_running()
+    if port is not None:
         return f"http://127.0.0.1:{port}"
     if not settings["auto_start_backend"]:
         raise RuntimeError("TokenWise backend is offline and automatic startup is disabled.")
@@ -166,9 +217,8 @@ def ensure_backend(project_root: Path, settings: dict) -> str:
     with file_lock(runtime / "backend-start.lock") as acquired:
         if acquired:
             # Another conversation may have finished starting the service while we acquired the lock.
-            registration = read_json(runtime / "backend.json")
-            port = registration.get("port", preferred)
-            if not health(port):
+            port = reuse_running()
+            if port is None:
                 for candidate in range(preferred, min(preferred + 10, 65536)):
                     with socket.socket() as probe:
                         try:
@@ -187,7 +237,7 @@ def ensure_backend(project_root: Path, settings: dict) -> str:
                     "PYTHONPATH": str(project_root / "swe-pruner/swe-pruner/src"),
                 })
                 flags = (subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS) if os.name == "nt" else 0
-                with (runtime / "backend.log").open("ab") as log:
+                with log_path.open("ab") as log:
                     process = subprocess.Popen(
                         [sys.executable, "-m", "uvicorn", "swe_pruner.online_serving:app",
                          "--host", "127.0.0.1", "--port", str(port)],
@@ -199,14 +249,12 @@ def ensure_backend(project_root: Path, settings: dict) -> str:
                 })
         while time.monotonic() < deadline:
             registration = read_json(runtime / "backend.json")
-            port = registration.get("port", port)
-            status = health(port)
+            port = registered_port(registration, project_root)
+            status = matching_backend(port, model_path, log_path) if port is not None else None
             if status:
-                if not status.get("model_loaded"):
-                    raise RuntimeError("TokenWise could not load its model. Check .tokenwise/backend.log.")
                 return f"http://127.0.0.1:{port}"
             time.sleep(0.3)
-    raise RuntimeError("TokenWise startup timed out. See .tokenwise/backend.log; Antigravity can continue normally.")
+    raise RuntimeError(f"TokenWise startup timed out. See {log_path}; Antigravity can continue normally.")
 
 
 def load_settings(workspace: Path) -> dict:

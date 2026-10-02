@@ -21,4 +21,4 @@ finally {
     Pop-Location
 }
 
-Write-Host 'TokenWise installed. Reload Antigravity IDE and open Test_project.'
+Write-Host 'TokenWise installed. Reload Antigravity IDE, open a Python repository, and run TokenWise: Enable Automatic Context.'

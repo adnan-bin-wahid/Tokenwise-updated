@@ -118,3 +118,17 @@ test("a fresh agent-command result shows its transport and opens the panel", asy
   assert.equal(panels.length, 1);
   monitor.dispose();
 });
+
+test("enabling a repository clears stale context and waits for real prompt activity", async () => {
+  const folder = { name: "New Repository", uri: { fsPath: "C:/New Repository", toString: () => "new-repo" } };
+  vscodeStub.workspace.workspaceFolders = [folder];
+  currentActivity = ready;
+  const status = {};
+  const monitor = new AutomaticContextMonitor(status, { showWorkspaceResult() {} }, "extension");
+  await new Promise((resolve) => setImmediate(resolve));
+  monitor.configured(folder);
+  assert.match(status.text, /awaiting prompt/);
+  assert.match(status.tooltip, /New Repository/);
+  assert.equal(monitor.latest, undefined);
+  monitor.dispose();
+});

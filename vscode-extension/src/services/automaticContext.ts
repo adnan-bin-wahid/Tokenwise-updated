@@ -75,6 +75,15 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     }
   }
 
+  public configured(folder: vscode.WorkspaceFolder): void {
+    this.latest = undefined;
+    this.seen.delete(folder.uri.toString());
+    this.status.text = "$(filter) TokenWise Auto: awaiting prompt";
+    this.status.tooltip = `Automatic context is configured for ${folder.name}. Start a new Antigravity chat.`;
+    this.status.command = "tokenwise.showAutomaticContext";
+    this.output.appendLine(`Automatic context enabled for ${folder.uri.fsPath}`);
+  }
+
   private watch(folder: vscode.WorkspaceFolder): void {
     const key = folder.uri.toString();
     const watcher = vscode.workspace.createFileSystemWatcher(

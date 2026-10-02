@@ -130,6 +130,7 @@ async def health_check():
         "carbon_models_loaded": bool(carbon_estimator and carbon_estimator.is_ready()),
         "device": device,
         "model_path": str(resolve_model_path()),
+        "pid": os.getpid(),
     }
 
 
