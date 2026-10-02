@@ -85,7 +85,7 @@ export interface PruneResultViewModel {
 export interface WorkspacePruneRequest {
   query: string;
   workspace_root: string;
-  active_file: string;
+  active_file?: string;
   language: string;
   current_symbol?: string;
   selected_code?: string;
@@ -106,6 +106,11 @@ export interface WorkspaceFilePruneResult {
 }
 
 export interface WorkspacePruneResponse {
+  automatic_context?: {
+    query: string;
+    timestamp: string;
+    elapsed_ms: number;
+  };
   carbonBefore?: CarbonEstimateViewModel;
   carbonAfter?: CarbonEstimateViewModel;
   carbonSavings?: CarbonSavingsViewModel;
@@ -120,4 +125,7 @@ export interface WorkspacePruneResponse {
   pruned_tokens: number;
   original_tokens: number;
   files: WorkspaceFilePruneResult[];
+  selected_file?: string;
+  index_cache_hit?: boolean;
+  context_cache_hit?: boolean;
 }

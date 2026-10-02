@@ -1,4 +1,6 @@
 import logging
+import ast
+import copy
 from typing import Any, Dict, List, Tuple
 
 from ..prune_wrapper import PruneRequest, estimate_token_count
@@ -16,6 +18,35 @@ class ContextBuilder:
 
     @staticmethod
     def _signatures_only(file_meta: Dict[str, Any], rel_path: str) -> str:
+        content = file_meta.get("content", "")
+        if content:
+            try:
+                tree = ast.parse(content)
+                interface = []
+                for node in tree.body:
+                    if isinstance(node, (ast.Import, ast.ImportFrom, ast.Assign, ast.AnnAssign)):
+                        interface.append(node)
+                    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        stub = copy.copy(node)
+                        stub.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
+                        interface.append(stub)
+                    elif isinstance(node, ast.ClassDef):
+                        stub = copy.copy(node)
+                        stub.body = []
+                        for child in node.body:
+                            if isinstance(child, (ast.Assign, ast.AnnAssign)):
+                                stub.body.append(child)
+                            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                                method = copy.copy(child)
+                                method.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
+                                stub.body.append(method)
+                        if not stub.body:
+                            stub.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
+                        interface.append(stub)
+                if interface:
+                    return ast.unparse(ast.Module(body=interface, type_ignores=[]))
+            except (SyntaxError, ValueError):
+                pass
         signatures: list[str] = []
         for class_name, cls_info in file_meta.get("classes", {}).items():
             signatures.append(f"class {class_name}:")
@@ -38,6 +69,10 @@ class ContextBuilder:
         marker = "\n# [TokenWise truncated to repository token budget]"
         if tokenizer is None:
             words = text.split()
+            if len(words) <= token_limit:
+                return text
+            if token_limit <= len(marker.split()):
+                return " ".join(words[:token_limit])
             clipped = " ".join(words[: max(0, token_limit - 8)])
             return clipped + marker
 
@@ -45,6 +80,8 @@ class ContextBuilder:
         if len(ids) <= token_limit:
             return text
         marker_ids = tokenizer.encode(marker, add_special_tokens=False)
+        if token_limit <= len(marker_ids):
+            return tokenizer.decode(ids[:token_limit], skip_special_tokens=False)
         keep = max(0, token_limit - len(marker_ids))
         return tokenizer.decode(ids[:keep], skip_special_tokens=False) + marker
 
@@ -57,6 +94,9 @@ class ContextBuilder:
         pruner_model: Any,
         threshold: float = 0.45,
         active_file: str | None = None,
+        preamble: str = "",
+        prepruned: Dict[str, Any] | None = None,
+        prune_uncached: bool = True,
     ) -> Tuple[str, List[Dict[str, Any]], int]:
         """
         Build the final repository context within ``self.token_budget``.
@@ -79,7 +119,7 @@ class ContextBuilder:
 
         output_blocks: list[str] = []
         summaries: list[dict[str, Any]] = []
-        used_tokens = 0
+        used_tokens = self._count(preamble, tokenizer)
 
         for rel_path in ordered_paths:
             file_meta = files_metadata[rel_path]
@@ -92,24 +132,33 @@ class ContextBuilder:
             if rel_path == active_file:
                 tier = 1
                 relation = "active file"
-            elif distance == 1 or score >= 0.35:
+            elif (prepruned and rel_path in prepruned) or distance == 1 or score >= 0.35:
                 tier = 2
                 relation = "direct/relevant dependency"
             else:
                 tier = 3
                 relation = "transitive reference"
 
+            if not prune_uncached and rel_path not in (prepruned or {}):
+                tier = 3
+                relation = "dependency interface"
+
             if "test" in rel_path.lower():
                 relation = "related test"
 
             original_tokens = self._count(content, tokenizer)
-            if tier == 1:
+            if prepruned and rel_path in prepruned:
+                result = prepruned[rel_path]
+                pruned_content = result.pruned_code
+                original_tokens = result.origin_token_cnt
+            elif tier == 1:
                 try:
                     result = pruner_model.prune(
                         PruneRequest(
                             query=query,
                             code=content,
                             threshold=max(0.10, threshold - 0.15),
+                            always_keep_first_frags=True,
                         )
                     )
                     pruned_content = result.pruned_code
@@ -124,6 +173,7 @@ class ContextBuilder:
                             query=query,
                             code=content,
                             threshold=min(0.85, threshold + 0.15),
+                            always_keep_first_frags=True,
                         )
                     )
                     pruned_content = result.pruned_code
@@ -141,7 +191,8 @@ class ContextBuilder:
                 "```python\n"
             )
             footer = "\n```"
-            remaining = self.token_budget - used_tokens
+            prefix = "\n\n".join(([preamble] if preamble else []) + output_blocks)
+            remaining = self.token_budget - self._count(prefix + ("\n\n" if prefix else ""), tokenizer)
             if remaining <= 0:
                 break
 
@@ -165,18 +216,13 @@ class ContextBuilder:
                 block = f"{header}{pruned_content}{footer}"
                 block_tokens = self._count(block, tokenizer)
 
-            if block_tokens > remaining:
-                if rel_path == active_file and not output_blocks:
-                    # Last-resort: guarantee that the active file contributes some context.
-                    pruned_content = self._truncate(pruned_content, max(1, content_budget // 2), tokenizer)
-                    block = f"{header}{pruned_content}{footer}"
-                    block_tokens = self._count(block, tokenizer)
-                else:
-                    continue
+            combined = "\n\n".join(([preamble] if preamble else []) + output_blocks + [block])
+            if self._count(combined, tokenizer) > self.token_budget:
+                break
 
             pruned_tokens = self._count(pruned_content, tokenizer)
             output_blocks.append(block)
-            used_tokens += block_tokens
+            used_tokens = self._count(combined, tokenizer)
             summaries.append(
                 {
                     "file_path": rel_path,
@@ -191,4 +237,5 @@ class ContextBuilder:
             if used_tokens >= self.token_budget:
                 break
 
-        return "\n\n".join(output_blocks), summaries, used_tokens
+        packed = "\n\n".join(([preamble] if preamble else []) + output_blocks)
+        return packed, summaries, self._count(packed, tokenizer)

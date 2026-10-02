@@ -7,7 +7,7 @@ export class ResultPanel {
   private latestResult: PruneResultViewModel | undefined;
   private latestWorkspaceResult: WorkspacePruneResponse | undefined;
 
-  private ensurePanel(): vscode.WebviewPanel {
+  private ensurePanel(preserveFocus = false): vscode.WebviewPanel {
     if (this.panel) {
       return this.panel;
     }
@@ -15,7 +15,7 @@ export class ResultPanel {
     this.panel = vscode.window.createWebviewPanel(
       ResultPanel.viewType,
       "TokenWise Result",
-      vscode.ViewColumn.Beside,
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus },
       { enableScripts: true, retainContextWhenHidden: true },
     );
 
@@ -56,13 +56,14 @@ export class ResultPanel {
   public showWorkspaceResult(
     result: WorkspacePruneResponse,
     _extensionUri: vscode.Uri,
+    preserveFocus = false,
   ): void {
     this.latestWorkspaceResult = result;
     this.latestResult = undefined;
-    const panel = this.ensurePanel();
+    const panel = this.ensurePanel(preserveFocus);
     panel.title = "TokenWise Repository Context";
     panel.webview.html = this.getWorkspaceHtml(result);
-    panel.reveal(vscode.ViewColumn.Beside);
+    panel.reveal(vscode.ViewColumn.Beside, preserveFocus);
   }
 
   private getHtml(result: PruneResultViewModel): string {
@@ -147,6 +148,7 @@ export class ResultPanel {
     return this.shell(
       "TokenWise — Repository Context",
       `
+      ${result.automatic_context ? `<div class="subtle"><strong>Antigravity automatic context</strong><br>Task: ${escapeHtml(result.automatic_context.query)}<br>Prepared in ${(result.automatic_context.elapsed_ms / 1000).toFixed(2)}s</div>` : ""}
       <div class="card">
         <div class="card-title">Synthesized goal</div>
         <div class="meta-grid">

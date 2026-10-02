@@ -5,4 +5,5 @@
 **/src/**
 **/tsconfig.json
 **/*.map
+tests/**
 node_modules/**/.bin/**

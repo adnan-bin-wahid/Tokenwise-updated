@@ -1,5 +1,14 @@
 # TokenWise Codebase Review
 
+> Implementation update, October 2, 2026: automatic Python context retrieval for
+> Antigravity IDE is now implemented for `Test_project`, with a `PreInvocation`
+> hook, model startup, bounded context, caching, and extension activity display.
+> Live IDE testing found that the installed stable build did not invoke the hook.
+> A workspace-rule command fallback now retrieves context through the agent's
+> command tool. This is agent-driven, not guaranteed pre-model interception.
+> See [the integration guide](docs/ANTIGRAVITY.md) for setup and verification.
+> The review below describes the earlier baseline and the remaining roadmap.
+
 ## Executive summary
 
 TokenWise is not a browser extension. It is a VS Code extension backed by a local FastAPI service. The extension collects a developer task, selected/current code, or active workspace context, sends it to the local backend, receives a pruned context bundle, estimates approximate carbon impact, and renders copyable output in a VS Code Webview.

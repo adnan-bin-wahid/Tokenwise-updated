@@ -1,15 +1,16 @@
 import os
 
-# Keep CPU execution deterministic and avoid oversubscription in the local API process.
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
+# Bound CPU parallelism; model requests are serialized to avoid oversubscription.
+CPU_THREADS = max(1, min(8, int(os.getenv("TOKENWISE_CPU_THREADS", "4"))))
+os.environ.setdefault("OMP_NUM_THREADS", str(CPU_THREADS))
+os.environ.setdefault("MKL_NUM_THREADS", str(CPU_THREADS))
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 import asyncio
 import logging
-import re
+import threading
 from pathlib import Path
 from typing import List, Optional
 
@@ -23,16 +24,12 @@ from .carbon_estimator import CarbonEstimateRequest, CarbonEstimateResponse, Car
 from .goal_compiler import GoalCompiler
 from .goal_generator_client import LocalGoalGeneratorClient
 from .prune_wrapper import PruneRequest, PruneResponse, SwePrunerForCodePruning
-from .repository.dependency_graph import DependencyGraph
-from .repository.repository_index import RepositoryIndex
-from .retrieval.candidate_ranker import CandidateRanker
-from .retrieval.context_builder import ContextBuilder
-from .retrieval.graph_retriever import GraphRetriever
-from .retrieval.lexical_retriever import LexicalRetriever
+from .repository.repository_index import RepositoryIndexCache
+from .retrieval.workspace_context import WorkspaceContextBuilder
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-torch.set_num_threads(1)
+torch.set_num_threads(CPU_THREADS)
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL_PATH = RUNTIME_ROOT / "model"
@@ -49,13 +46,16 @@ except Exception as exc:  # startup should still expose health diagnostics
 
 generator_client = LocalGoalGeneratorClient()
 goal_compiler = GoalCompiler(generator_client)
+repository_cache = RepositoryIndexCache()
+workspace_builder = WorkspaceContextBuilder()
+inference_lock = threading.RLock()
 
 
 class WorkspacePruneRequest(BaseModel):
     query: str = Field(min_length=1)
     workspace_root: str
-    active_file: str
-    language: str
+    active_file: Optional[str] = None
+    language: str = "python"
     current_symbol: Optional[str] = None
     selected_code: Optional[str] = None
     diagnostics: List[str] = Field(default_factory=list)
@@ -63,6 +63,7 @@ class WorkspacePruneRequest(BaseModel):
     local_llm_url: Optional[str] = None
     local_llm_model: Optional[str] = None
     token_budget: int = Field(default=8192, ge=256, le=32768)
+    max_candidates: int = Field(default=8, ge=1, le=32)
 
 
 class WorkspacePruneResponse(BaseModel):
@@ -71,6 +72,10 @@ class WorkspacePruneResponse(BaseModel):
     pruned_tokens: int
     original_tokens: int
     files: List[dict]
+    selected_file: str
+    repository_fingerprint: str
+    index_cache_hit: bool = False
+    context_cache_hit: bool = False
 
 
 def resolve_model_path() -> Path:
@@ -119,6 +124,7 @@ async def health_check():
         except StopIteration:
             device = "unknown"
     return {
+        "service": "tokenwise",
         "status": "healthy",
         "model_loaded": model is not None,
         "carbon_models_loaded": bool(carbon_estimator and carbon_estimator.is_ready()),
@@ -131,7 +137,10 @@ async def health_check():
 async def prune_code(request: PruneRequest) -> PruneResponse:
     if model is None:
         raise HTTPException(status_code=503, detail="Pruner model is not loaded")
-    return await asyncio.to_thread(model.prune, request)
+    def run() -> PruneResponse:
+        with inference_lock:
+            return model.prune(request)
+    return await asyncio.to_thread(run)
 
 
 @app.post("/prune-workspace", response_model=WorkspacePruneResponse)
@@ -145,22 +154,29 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
         )
 
     workspace_root = Path(request.workspace_root).expanduser().resolve()
-    active_file = Path(request.active_file).expanduser().resolve()
     if not workspace_root.is_dir():
         raise HTTPException(status_code=400, detail="Workspace root does not exist")
-    try:
-        active_rel_path = active_file.relative_to(workspace_root).as_posix()
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Active file must be inside the workspace") from exc
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query must not be blank")
+    active_rel_path = None
+    if request.active_file:
+        active_file = Path(request.active_file).expanduser()
+        if not active_file.is_absolute():
+            active_file = workspace_root / active_file
+        try:
+            active_rel_path = active_file.resolve().relative_to(workspace_root).as_posix()
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Active file must be inside the workspace") from exc
 
-    repo_index = RepositoryIndex(str(workspace_root))
-    await asyncio.to_thread(repo_index.build_index)
-    if active_rel_path not in repo_index.index:
+    repo_index, cache_hit = await asyncio.to_thread(repository_cache.get, str(workspace_root))
+    if not repo_index.index:
+        raise HTTPException(status_code=400, detail="Workspace contains no indexed Python files")
+    if active_rel_path and active_rel_path not in repo_index.index:
         raise HTTPException(status_code=400, detail="Active file is not an indexed Python file")
 
     goal = await goal_compiler.compile(
         query=request.query.strip(),
-        active_file=active_rel_path,
+        active_file=active_rel_path or "(automatic repository discovery)",
         current_symbol=request.current_symbol,
         selected_code=request.selected_code,
         diagnostics=request.diagnostics,
@@ -168,69 +184,15 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
         local_llm_model=request.local_llm_model,
     )
 
-    dep_graph = DependencyGraph(repo_index)
-    await asyncio.to_thread(dep_graph.build_graph)
-    graph_retriever = GraphRetriever(dep_graph)
+    def build() -> dict:
+        with inference_lock:
+            return workspace_builder.build(
+                repo_index, goal, model, active_rel_path, request.query.strip(),
+                request.threshold, request.token_budget, request.max_candidates,
+            )
 
-    lexical_seeds = LexicalRetriever(repo_index).search_identifiers(goal.identifiers)
-    discovery_seeds = set(lexical_seeds)
-    discovery_seeds.add(active_rel_path)
-    candidate_distances = graph_retriever.get_neighbors(discovery_seeds, max_hops=2)
-    active_distances = graph_retriever.get_neighbors({active_rel_path}, max_hops=2)
-
-    candidates: list[tuple[str, str]] = []
-    for path in candidate_distances:
-        meta = repo_index.index.get(path)
-        if meta is not None:
-            candidates.append((path, meta.get("content", "")))
-
-    python_keywords = {
-        "def", "class", "import", "from", "as", "return", "if", "else", "elif",
-        "try", "except", "finally", "for", "while", "in", "is", "not", "and", "or",
-        "with", "pass", "break", "continue", "lambda", "global", "nonlocal", "assert",
-        "del", "yield", "raise", "True", "False", "None", "self", "str", "int", "float",
-        "list", "dict", "set", "tuple", "bool", "type", "print", "len", "range",
-    }
-    goal_identifiers = {ident for ident in goal.identifiers if ident not in python_keywords}
-
-    rank_candidates: list[tuple[str, str]] = []
-    unranked_scores: list[tuple[str, float]] = []
-    for path, content in candidates:
-        has_identifier = any(
-            re.search(r"\b" + re.escape(identifier) + r"\b", content)
-            for identifier in goal_identifiers
-        )
-        if path == active_rel_path or path in lexical_seeds or has_identifier:
-            rank_candidates.append((path, content))
-        else:
-            unranked_scores.append((path, 0.0))
-
-    ranker = CandidateRanker(model)
-    ranked_scores = await asyncio.to_thread(
-        ranker.rank_candidates, goal.objective, rank_candidates
-    )
-    ranked_scores.extend(unranked_scores)
-    ranked_scores.sort(key=lambda item: item[1], reverse=True)
-
-    builder = ContextBuilder(token_budget=request.token_budget)
-    unified_prompt, file_summaries, packed_tokens = await asyncio.to_thread(
-        builder.pack_context,
-        goal.objective,
-        repo_index.index,
-        active_distances,
-        ranked_scores,
-        model,
-        request.threshold,
-        active_rel_path,
-    )
-
-    return WorkspacePruneResponse(
-        structured_goal=goal.model_dump(),
-        unified_prompt=unified_prompt,
-        pruned_tokens=packed_tokens,
-        original_tokens=sum(item["original_tokens"] for item in file_summaries),
-        files=file_summaries,
-    )
+    result = await asyncio.to_thread(build)
+    return WorkspacePruneResponse(**result, index_cache_hit=cache_hit)
 
 
 @app.post("/estimate-carbon", response_model=CarbonEstimateResponse)

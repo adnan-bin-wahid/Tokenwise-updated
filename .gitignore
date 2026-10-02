@@ -31,6 +31,7 @@ Thumbs.db
 *.log
 tmp/
 temp/
+.tokenwise/
 
 # Local environment secrets
 .env

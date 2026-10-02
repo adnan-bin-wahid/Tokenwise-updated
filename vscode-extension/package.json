@@ -2,7 +2,12 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adnan-bin-wahid/Tokenwise-updated.git"
+  },
   "publisher": "adnan-bin-wahid",
   "engines": {
     "vscode": "^1.95.0"
@@ -31,6 +36,10 @@
       {
         "command": "tokenwise.buildRepositoryContext",
         "title": "TokenWise: Build Repository Context"
+      },
+      {
+        "command": "tokenwise.showAutomaticContext",
+        "title": "TokenWise: Show Automatic Context"
       }
     ],
     "menus": {
@@ -53,6 +62,11 @@
     "configuration": {
       "title": "TokenWise",
       "properties": {
+        "tokenWise.autoOpenAutomaticContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show automatically prepared Antigravity context beside the editor without taking keyboard focus."
+        },
         "tokenWise.apiUrl": {
           "type": "string",
           "default": "http://127.0.0.1:8000",
@@ -157,11 +171,14 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile"
+    "package": "npm run compile && vsce package",
+    "pretest": "npm run compile",
+    "test": "node --test tests/*.test.cjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.11",
     "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "^4.0.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {

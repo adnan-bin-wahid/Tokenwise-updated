@@ -5,6 +5,7 @@ import { createPruneSelectedCommand } from "./commands/pruneSelected";
 import { createPruneCurrentFileCommand } from "./commands/pruneCurrentFile";
 import { createCheckHealthCommand } from "./commands/checkHealth";
 import { createBuildRepositoryContextCommand } from "./commands/buildRepositoryContext";
+import { AutomaticContextMonitor } from "./services/automaticContext";
 
 export function activate(context: vscode.ExtensionContext): void {
   const service = new PruneService();
@@ -33,6 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     statusItem,
+    new AutomaticContextMonitor(statusItem, panel, context.extensionUri),
     vscode.commands.registerCommand(
       "tokenwise.pruneSelected",
       createPruneSelectedCommand(
