@@ -1,0 +1,74 @@
+{
+  "open_llm": {
+    "rows_raw": 1612,
+    "rows_out": 1612,
+    "selected_columns": {
+      "model_name": "Model",
+      "precision": "Precision",
+      "model_size_b": "#Params (B)",
+      "mmlu_pro_score": "MMLU-PRO Raw",
+      "bbh_score": "BBH Raw"
+    }
+  },
+  "llm_perf": {
+    "rows_raw": 34128,
+    "rows_out": 12822,
+    "perf_files_count": 48,
+    "perf_files_sample": [
+      "perf-df-onnxruntime-cpu-unquantized-32vCPU-C7i.csv",
+      "perf-df-openvino-cpu-unquantized-32vCPU-C7i.csv",
+      "perf-df-pytorch-cpu-unquantized-32vCPU-C7i.csv",
+      "perf-df-pytorch-cuda-awq-1xA10.csv",
+      "perf-df-pytorch-cuda-awq-1xT4.csv",
+      "perf-df-pytorch-cuda-bnb-1xA10.csv",
+      "perf-df-pytorch-cuda-bnb-1xA100.csv",
+      "perf-df-pytorch-cuda-bnb-1xT4.csv",
+      "perf-df-pytorch-cuda-gptq-1xA10.csv",
+      "perf-df-pytorch-cuda-gptq-1xA100.csv",
+      "perf-df-pytorch-cuda-gptq-1xT4.csv",
+      "perf-df-pytorch-cuda-torchao-1xA10.csv",
+      "perf-df-pytorch-cuda-torchao-1xT4.csv",
+      "perf-df-pytorch-cuda-unquantized-1xA10.csv",
+      "perf-df-pytorch-cuda-unquantized-1xA100.csv",
+      "perf-df-pytorch-cuda-unquantized-1xT4.csv",
+      "perf-df-awq-1xA10.csv",
+      "perf-df-awq-1xT4.csv",
+      "perf-df-awq-c7i.csv",
+      "perf-df-bnb-1xA10.csv"
+    ],
+    "selected_columns": {
+      "model_name": "config.backend.model",
+      "precision": "config.backend.torch_dtype",
+      "num_input_tokens": "config.scenario.input_shapes.sequence_length",
+      "num_output_tokens": "config.scenario.new_tokens",
+      "latency_per_input_token_ms": "report.prefill.latency.mean",
+      "latency_per_output_token_ms": "report.decode.latency.mean",
+      "prefill_energy_j": "report.prefill.energy.total",
+      "decode_energy_j": "report.decode.energy.total",
+      "gpu_type": "config.environment.gpu"
+    }
+  },
+  "outputs": {
+    "open_llm_path": "E:\\A A SPL3\\part-2\\swe-pruner\\carbon-engine\\data\\open_llm_leaderboard.parquet",
+    "llm_perf_path": "E:\\A A SPL3\\part-2\\swe-pruner\\carbon-engine\\data\\llm_perf_leaderboard.parquet",
+    "open_llm_columns": [
+      "model_name",
+      "precision",
+      "model_size_b",
+      "mmlu_pro_score",
+      "bbh_score"
+    ],
+    "llm_perf_columns": [
+      "model_name",
+      "precision",
+      "num_input_tokens",
+      "num_output_tokens",
+      "latency_per_input_token_ms",
+      "latency_per_output_token_ms",
+      "prefill_energy_j",
+      "decode_energy_j",
+      "gpu_type",
+      "source_file"
+    ]
+  }
+}

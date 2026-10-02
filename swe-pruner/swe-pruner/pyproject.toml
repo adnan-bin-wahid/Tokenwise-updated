@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "swe-pruner"
+version = "0.1.1"
+description = "Self-Adaptive Context Pruning for Coding Agents"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "SwePruner Team" }
+]
+license = { text = "MIT" }
+keywords = ["code-pruning", "nlp", "transformers", "software-engineering", "code agent"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastapi>=0.123,<1",
+    "httpx>=0.28,<1",
+    "huggingface-hub>=0.36,<1",
+    "joblib>=1.4,<2",
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+    "pydantic>=2.10,<3",
+    "scikit-learn==1.9.0",
+    "socksio>=1.0,<2",
+    "torch>=2.5,<3",
+    "transformers>=4.55,<5",
+    "typer>=0.19,<1",
+    "uvicorn>=0.38,<1",
+    "xgboost==3.3.0",
+]
+
+[project.scripts]
+swe-pruner = "swe_pruner.online_serving:main"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["src/swe_pruner"]
+
+[tool.hatchling.build]
+include = [
+  "src/swe_pruner/**/*.py",
+  "LICENSE",
+  "README.md",
+]
+exclude = [
+  "model",
+  "test-prune.sh",
+  "uv.lock",
+]

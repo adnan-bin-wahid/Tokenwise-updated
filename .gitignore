@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node / VS Code extension build outputs
+vscode-extension/node_modules/
+vscode-extension/dist/
+*.vsix
+
+# Local model weight (kept outside Git because it is ~1.3 GB)
+swe-pruner/swe-pruner/model/model.safetensors
+swe-pruner/swe-pruner/model/.cache/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.DS_Store
+Thumbs.db
+
+# Local logs / temp
+*.log
+tmp/
+temp/
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
+!.env.sample

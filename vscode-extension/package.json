@@ -1,0 +1,170 @@
+{
+  "name": "tokenwise-vscode",
+  "displayName": "TokenWise",
+  "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
+  "version": "0.1.0",
+  "publisher": "adnan-bin-wahid",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tokenwise.pruneSelected",
+        "title": "TokenWise: Prune Selected Code"
+      },
+      {
+        "command": "tokenwise.pruneCurrentFile",
+        "title": "TokenWise: Prune Current File"
+      },
+      {
+        "command": "tokenwise.checkHealth",
+        "title": "TokenWise: Check Backend Health"
+      },
+      {
+        "command": "tokenwise.buildRepositoryContext",
+        "title": "TokenWise: Build Repository Context"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "tokenwise.pruneSelected",
+          "when": "editorHasSelection",
+          "group": "navigation@50"
+        },
+        {
+          "command": "tokenwise.pruneCurrentFile",
+          "group": "navigation@51"
+        },
+        {
+          "command": "tokenwise.buildRepositoryContext",
+          "group": "navigation@52"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TokenWise",
+      "properties": {
+        "tokenWise.apiUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "SWE-Pruner backend API base URL."
+        },
+        "tokenWise.enableLocalGoalModel": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use an optional local OpenAI-compatible LLM to synthesize structured repository goals. When disabled, TokenWise uses its deterministic goal compiler without network calls."
+        },
+        "tokenWise.localLlmUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434/v1",
+          "description": "Local goal synthesis LLM OpenAI-compatible endpoint URL (e.g. Ollama or LM Studio)."
+        },
+        "tokenWise.localLlmModelName": {
+          "type": "string",
+          "default": "qwen2.5-coder:1.5b-instruct-q4_k_m",
+          "description": "Model identifier for local goal generator LLM."
+        },
+        "tokenWise.timeoutMs": {
+          "type": "number",
+          "default": 120000,
+          "minimum": 1000,
+          "description": "Request timeout in milliseconds."
+        },
+        "tokenWise.defaultThreshold": {
+          "type": "number",
+          "default": 0.45,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Default pruning threshold used in requests."
+        },
+        "tokenWise.autoOpenResultPanel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open TokenWise result panel automatically after each prune."
+        },
+        "tokenWise.enableCarbonEstimation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Estimate before/after carbon impact for each prune result."
+        },
+        "tokenWise.targetModelName": {
+          "type": "string",
+          "default": "meta-llama-3-8b-instruct",
+          "description": "Target LLM used for approximate energy/carbon estimation. The default is benchmark-backed and inside the interpolation range."
+        },
+        "tokenWise.targetModelSizeB": {
+          "type": "number",
+          "minimum": 0.1,
+          "description": "Optional model-size assumption in billions. Leave unset to use the backend registry/default assumption."
+        },
+        "tokenWise.targetGpuType": {
+          "type": "string",
+          "description": "Optional GPU assumption (e.g. nvidia-a100-80gb). Leave unset to use the backend registry/default assumption."
+        },
+        "tokenWise.targetMmluProScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional normalized MMLU-Pro score in [0,1]."
+        },
+        "tokenWise.targetBbhScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional normalized BBH score in [0,1]."
+        },
+        "tokenWise.expectedOutputTokens": {
+          "type": "number",
+          "default": 256,
+          "minimum": 1,
+          "description": "Expected output token count used in prompt-level estimation."
+        },
+        "tokenWise.latencyPerInputTokenMs": {
+          "type": "number",
+          "minimum": 0.001,
+          "description": "Optional prefill latency per input token in milliseconds."
+        },
+        "tokenWise.latencyPerOutputTokenMs": {
+          "type": "number",
+          "minimum": 0.001,
+          "description": "Optional decode latency per output token in milliseconds."
+        },
+        "tokenWise.carbonIntensityGPerKwh": {
+          "type": "number",
+          "default": 475,
+          "minimum": 1,
+          "description": "Carbon intensity in grams CO2 per kWh for region-aware conversion."
+        },
+        "tokenWise.repositoryTokenBudget": {
+          "type": "number",
+          "default": 8192,
+          "minimum": 256,
+          "maximum": 32768,
+          "description": "Maximum packed token budget for repository-context mode."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "@types/vscode": "^1.95.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "gpt-tokenizer": "^3.4.0"
+  }
+}

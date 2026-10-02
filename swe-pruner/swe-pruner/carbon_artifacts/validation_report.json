@@ -1,0 +1,21 @@
+{
+  "samples": [
+    {
+      "name": "llama2_7b",
+      "empirical_joules": 349.96,
+      "predicted_joules": 365.71773678064346,
+      "relative_error_pct": 4.502725105910242,
+      "prefill_route": "xgboost_interpolation",
+      "decode_route": "xgboost_interpolation"
+    },
+    {
+      "name": "llama2_13b",
+      "empirical_joules": 602.27,
+      "predicted_joules": 419.1162927746773,
+      "relative_error_pct": 30.410564568270495,
+      "prefill_route": "xgboost_interpolation",
+      "decode_route": "xgboost_interpolation"
+    }
+  ],
+  "average_relative_error_pct": 17.45664483709037
+}
