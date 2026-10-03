@@ -3,32 +3,20 @@ import * as vscode from "vscode";
 import {
   configureAutomaticContext, discoverRegisteredBackend, registerBackend, validateBackendInstallation,
 } from "../services/automaticSetup";
-
-function localStoragePath(context: vscode.ExtensionContext): string {
-  const storage = context.globalStorageUri;
-  // Desktop Antigravity maps vscode-userdata to the local file provider.
-  if (!["file", "vscode-userdata"].includes(storage.scheme)
-    || (storage.scheme === "vscode-userdata" && storage.authority)) {
-    throw new Error(`Unsupported extension storage URI (${storage.scheme}). Local file-backed storage is required.`);
-  }
-  const nativePath = storage.with({ scheme: "file" }).fsPath;
-  if (!path.isAbsolute(nativePath)) {
-    throw new Error("The extension storage directory must have an absolute local path.");
-  }
-  return nativePath;
-}
+import { localStoragePath } from "../services/extensionPaths";
 
 export function createEnableAutomaticContextCommand(
   context: vscode.ExtensionContext,
   onConfigured: (folder: vscode.WorkspaceFolder) => void,
+  installManaged?: () => Promise<string | undefined>,
 ): () => Promise<void> {
   return async () => {
     if (!vscode.workspace.isTrusted) {
       await vscode.window.showWarningMessage("Trust this workspace before enabling TokenWise scripts and agent rules.");
       return;
     }
-    if (process.platform !== "win32") {
-      await vscode.window.showErrorMessage("Automatic Antigravity setup currently requires a local Windows workspace.");
+    if (!["win32", "darwin", "linux"].includes(process.platform)) {
+      await vscode.window.showErrorMessage("TokenWise automatic context requires a local Windows, macOS, or Linux workspace.");
       return;
     }
     const folders = vscode.workspace.workspaceFolders ?? [];
@@ -59,6 +47,19 @@ export function createEnableAutomaticContextCommand(
       if (!installation && context.extensionUri.scheme === "file") {
         try { installation = await validateBackendInstallation(path.dirname(context.extensionUri.fsPath)); }
         catch { /* A packaged extension is separate from its backend installation. */ }
+      }
+      if (!installation) {
+        if (installManaged) {
+          const choice = await vscode.window.showQuickPick([
+            { label: "Install Managed Backend", description: "Recommended: automatic setup, no checkout required", install: true },
+            { label: "Use Existing Backend", description: "Select a complete TokenWise backend installation", install: false },
+          ], { title: "Set up TokenWise once on this computer" });
+          if (!choice) { return; }
+          if (choice.install) {
+            installation = await installManaged();
+            if (!installation) { return; }
+          }
+        }
       }
       if (!installation) {
         const chosen = await vscode.window.showOpenDialog({

@@ -1,42 +1,52 @@
-# TokenWise VS Code Extension
+# TokenWise
 
-VS Code client for the TokenWise local backend.
+Automatic, bounded Python repository context for Antigravity coding prompts.
 
-## Automatic Context in Antigravity
+## Quick Start
 
-Install the VSIX, reload Antigravity IDE, and open any **local Windows Python
-repository**. Run **TokenWise: Enable Automatic Context** from the command
-palette. Select the complete TokenWise backend installation once, confirm setup,
-and start a new Antigravity chat. No manual file selection is required.
+1. Install the TokenWise VSIX through **Extensions > ... > Install from VSIX**.
+2. Install **64-bit Python 3.12** if it is not already available, then restart the IDE.
+3. Open and trust your local Python repository.
+4. Run **TokenWise: Enable Automatic Context** from the command palette.
+5. Choose **Install Managed Backend**, confirm the dependency/model download,
+   wait for setup, then confirm enabling this repository.
+6. Start a new Antigravity chat and enter your normal repository prompt.
 
-The command preserves other workspace rules and hook handlers, retains your
-context settings, and registers one shared backend in extension user storage.
-Repositories do not need to live inside the TokenWise checkout. Backend Python
-dependencies and model weights must already be installed; they are not bundled
-in this extension. Remote workspaces and non-Windows launchers are not supported.
+No Git checkout, Node.js, compilation, F5, API key, GPU, or manual file selection
+is needed for normal users. Initial setup downloads about 1.35 GB of model weights
+plus CPU dependencies; allow about 10 GB free. Existing complete backend
+installations can be reused instead of downloading a managed installation.
 
-On stable IDE builds, an always-on rule asks the agent to run the local retrieval
-command. This is tool-output context, not guaranteed native prompt interception.
-See [the integration guide](../docs/ANTIGRAVITY.md) for setup and verification.
+Windows is tested. macOS/Linux portable setup is included but not yet verified
+on native machines; compatible Python/PyTorch wheels are required. Remote and
+virtual workspaces are unsupported.
+
+## Verify and Troubleshoot
+
+The agent should invoke the TokenWise command and receive
+`[TokenWise automatic context]` for the current prompt. The status bar and context
+panel show selected files and packed tokens. A saved result alone does not prove
+the agent consumed it.
+
+Use **TokenWise: Diagnose Setup** for installation/health information,
+**TokenWise: Start Backend** to warm the model, and **Output > TokenWise Setup**
+for install logs. **TokenWise: Open Setup Guide** opens the complete bundled guide.
+Setup preserves unrelated workspace rules and hook handlers.
+
+On stable Antigravity, an always-on rule guides the agent to retrieve context
+through tool output. It is not guaranteed native prompt interception. Retrieved
+code enters your selected Antigravity model's normal request and privacy policy.
+
+Full instructions: [project README](https://github.com/adnan-bin-wahid/Tokenwise-updated#readme).
 
 ## Development
 
-Use the project-root setup first, then open this folder in VS Code and press F5:
-
-```powershell
-.\scripts\copy-model.ps1
-.\scripts\setup.ps1
-.\scripts\run-backend.ps1
-code .\vscode-extension
+```sh
+npm ci
+npm test
+npm run package
 ```
 
-Commands:
-
-- `TokenWise: Enable Automatic Context`
-- `TokenWise: Show Automatic Context`
-- `TokenWise: Check Backend Health`
-- `TokenWise: Prune Selected Code`
-- `TokenWise: Prune Current File`
-- `TokenWise: Build Repository Context`
-
-Repository context currently supports Python workspaces. Optional local-LLM goal synthesis is disabled by default. Pruned output is treated as LLM context and can be copied; it is never automatically inserted into the source file.
+Packaging prepares the backend bundle and creates a shareable release folder.
+F5 is for extension development only. Manual code-pruning and repository-context
+commands remain available in VS Code with a configured backend.

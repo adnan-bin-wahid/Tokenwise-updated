@@ -1,260 +1,224 @@
-# Tokenwise-updated
+# TokenWise
 
-**Sustainable Context Optimization for Coding Agents**
+Automatic, bounded Python repository context for Antigravity coding prompts.
+Open a repository, enable TokenWise once, and enter your normal prompt. TokenWise
+retrieves relevant code and tests without asking you to select files manually.
 
-TokenWise is an academic SPL-3 project that combines two research ideas in one developer workflow:
+**For normal users: install the VSIX. You do not need to clone this repository,
+install Node.js, compile the extension, press F5, or manually start a server.**
 
-1. **SWE-Pruner-derived task-aware code pruning** — a local Qwen3-Reranker-0.6B-based neural skimmer reduces irrelevant repository context at line level before the context is passed to a coding LLM.
-2. **SEAL-derived prompt-level energy/carbon estimation** — trained phase-specific regressors estimate prefill and decode energy from benchmark-derived features and convert energy to approximate CO2 impact.
+## Before You Start
 
-The user-facing client is a VS Code extension. The local FastAPI backend performs neural pruning, Python repository indexing/retrieval, bounded context packing, and carbon estimation.
+| Requirement | Details |
+| --- | --- |
+| Editor | Antigravity IDE with workspace rules and a command tool |
+| Python | A **64-bit Python 3.12** installation; [official downloads](https://www.python.org/downloads/) |
+| Repository | A local folder containing Python source |
+| Internet | Needed for initial dependency/model downloads; retrieval runs locally afterward |
+| Disk | Allow about **10 GB free** for the environment, model, and package caches |
+| Memory | 8 GB RAM is a practical starting recommendation; a CPU is sufficient |
 
-> The large `model.safetensors` weight is intentionally excluded from this ZIP. Copy it into the project with `scripts/copy-model.ps1` before running the backend.
+Windows installation and retrieval are tested. Portable setup and launchers are
+also included for macOS/Linux, but those platforms have not yet been verified
+on native machines. Python/PyTorch wheels must support your OS and architecture.
+On macOS/Linux, `python3` must be on PATH for the small workspace bootstrap.
+Remote SSH, WSL/Dev Containers, browser editors, and virtual workspaces are not
+supported by this first-run workflow.
 
-## Project layout
+TokenWise itself does not need an API key. Your Antigravity model access and
+billing remain separate. A GPU, Ollama, and an MCP server are not required.
 
-For automatic context in Antigravity IDE, open any local Windows Python
-repository and run **TokenWise: Enable Automatic Context**. Select the complete
-backend installation once; repositories can live outside the TokenWise checkout.
-Follow [the integration guide](docs/ANTIGRAVITY.md). TokenWise builds bounded
-repository context from the prompt through an always-on agent-command rule,
-or a `PreInvocation` hook on supporting IDE builds. Activity is visible in the
-extension. Other workspace rules and hook handlers are preserved.
+## Quick Start
 
-```text
-TokenWise/
-├─ scripts/                         Windows setup, verification, run and smoke-test helpers
-├─ vscode-extension/                VS Code client
-├─ swe-pruner/swe-pruner/           Local FastAPI backend + neural-pruner runtime
-│  ├─ model/                         Tokenizer/config files; add model.safetensors here
-│  ├─ carbon_artifacts/              Trained XGBoost/Ridge runtime artifacts
-│  └─ src/swe_pruner/                Backend implementation
-├─ carbon-engine/                   Reproducibility pipeline for the carbon models
-├─ Test_project/                    Small Python workspace for end-to-end demonstrations
-└─ docs/                            Proposal, research papers, evaluation and test checklist
+### 1. Install TokenWise
+
+Get **`tokenwise-vscode-0.4.0.vsix`** from the project owner. A shareable release
+folder contains this file, this README, licenses, and a checksum file. This
+repository is not automatically published to an extension marketplace.
+
+In Antigravity:
+
+1. Open the **Extensions** view.
+2. Open its **...** menu and choose **Install from VSIX...**.
+3. Select the TokenWise VSIX and reload the editor window when asked.
+
+Install the extension normally. **F5 is only for extension developers.**
+
+### 2. Open Your Python Repository
+
+Use **File > Open Folder** and select your project, for example
+`C:\Projects\my-python-app`. The folder can be anywhere; it does not need to sit
+inside a TokenWise checkout. Trust it only if you trust the repository's contents.
+
+### 3. Enable Automatic Context
+
+Open the command palette and run **TokenWise: Enable Automatic Context**.
+
+On a new computer:
+
+1. Choose **Install Managed Backend**.
+2. Review the download/setup confirmation and choose **Install Backend**.
+3. Wait for setup. It creates a private Python environment, installs CPU
+   dependencies, downloads about **1.35 GB** of pinned model weights, and checks
+   their SHA-256 checksum. Progress appears in a notification; detailed logs are
+   in **Output > TokenWise Setup**. First setup can take several minutes.
+4. Confirm enabling TokenWise in the selected repository.
+
+If you already have a complete TokenWise checkout/environment, choose
+**Use Existing Backend** and select its root folder instead. Do not select your
+Python repository or the `swe-pruner` subfolder as the backend installation.
+
+Setup adds TokenWise launchers and a workspace rule, merges its hook settings,
+and ignores local runtime data. Existing unrelated rules, hook handlers, and
+your context budget are preserved. Malformed JSON or customized launchers are
+not silently overwritten. No application source files are changed by setup.
+
+In a multi-folder window, choose the repository you want to enable. Repeat the
+command for each additional repository; they share one backend installation.
+
+### 4. Start a New Chat and Enter a Prompt
+
+For example:
+
+> Explain the login failure handling and its related tests. Do not modify files.
+
+Or:
+
+> Find why invoice retries fail and identify the relevant service and tests.
+
+You do not need to select an editor file, run a pruning command, or paste code.
+The backend starts automatically when needed. The first request also loads the
+model and can take longer; keep the context command running until it finishes.
+Approve its local command if Antigravity's permission policy asks. You do not
+need to enable unrestricted terminal execution.
+
+## How to Tell It Is Working
+
+- In **Customizations > Rules**, a TokenWise workspace rule should be listed.
+- In the chat, the agent should run the TokenWise context command, receive
+  `[TokenWise automatic context]`, and use the relevant excerpts.
+- The status bar changes from awaiting a prompt to **TokenWise Auto: N files,
+  N tokens**. The repository-context panel shows the selected files and excerpts.
+- Your repository's `.tokenwise/latest.json` should have a **new timestamp**,
+  the current query, `status: "ready"`, and `verification: false`.
+
+**A saved report or status bar alone does not prove that the model consumed the
+context. Check the current chat's actual tool output too.** Historical results
+are labeled **TokenWise last result**; verifier output is labeled **TokenWise test**.
+
+On stable Antigravity builds, an always-on rule asks the agent to invoke the
+local retrieval command. Context reaches the model through tool output. On IDE
+builds supporting native hooks, `PreInvocation` can inject it instead. The rule
+fallback is not guaranteed interception before the first model call: it depends
+on the agent following the rule and being permitted to run the command.
+
+## Everyday Controls
+
+| Command | Use |
+| --- | --- |
+| **Enable Automatic Context** | Configure this Python repository or repair its backend link |
+| **Set Up Backend** | Install/repair a managed backend without configuring a repository |
+| **Start Backend** | Warm the model before a prompt; updates the manual API URL to its actual port |
+| **Diagnose Setup** | Check the registered installation, actual backend health, and workspace links |
+| **Show Automatic Context** | Reopen the latest supplied context |
+| **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
+
+All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
+**Prune Current File**, and **Build Repository Context** commands remain available
+in VS Code as well; automatic chat retrieval needs Antigravity's agent integration.
+
+For a smaller context, edit your repository's `.agents/tokenwise.json`:
+
+```json
+{
+  "enabled": true,
+  "token_budget": 2048,
+  "threshold": 0.45,
+  "max_candidates": 6
+}
 ```
 
-## What the cleaned version does
+Other settings use defaults when omitted. The default budget is 4,096 tokens;
+the supported range is 256-32,768. This counts the complete supplied context with
+TokenWise's local tokenizer, not necessarily the tokenizer of your chosen agent
+model. Set `enabled` to `false` to stop retrieval. To remove the rule entirely,
+remove only TokenWise's generated rule and handler, retaining your other rules.
 
-- Local single-file/selection neural pruning.
-- Goal-conditioned repository context construction for **Python workspaces**.
-- Two-hop import/call graph expansion and task-conditioned candidate ranking.
-- Three-tier packing:
-  - Tier 1: active file, lightly pruned.
-  - Tier 2: direct/high-relevance dependencies, more aggressively pruned.
-  - Tier 3: transitive/low-relevance files, signatures only.
-- Hard repository context token budget.
-- Optional local LLM goal synthesis. It is **disabled by default**, so TokenWise does not wait for Ollama/LM Studio when none is running.
-- Trained carbon estimation only; no fabricated heuristic fallback.
-- Before/after carbon estimates in both single-file and repository-context views.
-- Copy-only result workflow. Pruned context is not automatically inserted into source files because it is context, not a patch.
+Turn off **TokenWise > Auto Open Automatic Context** in editor settings to keep
+the status bar and logs without automatically opening a panel.
 
-## Required software
+## Troubleshooting
 
-Install these first:
+| Problem | What to do |
+| --- | --- |
+| Python 3.12 is not found | Install 64-bit Python 3.12 and restart the IDE. For a nonstandard installation, set the **TokenWise > Python Path** user setting to its executable. |
+| A download/setup fails | Open **Output > TokenWise Setup**, check network/disk space, and run setup again. Verified downloads are reused; partial model downloads can resume. |
+| Setup was cancelled | Run setup again. The owned setup process is stopped; its private environment/cache are retained for retry. |
+| A setup lock remains after an IDE crash | First ensure no setup process is still running. The diagnostic paths identify user storage; remove only its `backend/install.lock` and retry. |
+| Backend is offline or the model is not ready | Run **TokenWise: Diagnose Setup**, then **Start Backend**. Inspect `backend.log` at the reported runtime path if startup fails. |
+| No context appears in chat | Start a new chat, confirm the workspace rule is loaded, and check command approval. An unchanged `latest.json` means no new retrieval ran. |
+| An old result is displayed | Check the timestamp/query and current tool output. A previous result is not evidence about your new prompt. |
+| Workspace is rejected | Use a trusted local folder. Version 0.4.0 accepts Antigravity's local `vscode-userdata` storage; remote/virtual repositories remain unsupported. |
+| You cloned/moved a repository or changed IDE profile | Run **Enable Automatic Context** again to create a valid local backend link. |
+| Existing rules or JSON conflict | Read the reported filename. Fix invalid JSON or retain customized files under another name; setup will not discard them. |
+| Retrieval is slow | Warm the backend with **Start Backend**, keep its process running, and try a smaller budget/candidate limit. Repeated unchanged queries benefit from caching. |
 
-- Windows 10/11
-- **Python 3.12.x**
-- Node.js LTS + npm
-- VS Code
+Corporate firewalls/proxies must permit PyPI, the PyTorch wheel host, Hugging Face,
+and Hugging Face's download CDN. TokenWise does not bypass your network policies.
+On Linux, missing system libraries such as OpenMP must be supplied by your OS.
 
-Python 3.14 is not the target environment for this project. The packaged setup deliberately uses Python 3.12 for model/dependency compatibility.
+## Privacy, Storage, and Limits
 
-## 1. Extract the ZIP
+The setup process downloads software and model files. Retrieval calls only the
+local backend on `127.0.0.1`; it does not execute repository Python files. Relevant
+source excerpts then enter **Antigravity's normal model request**, subject to
+your selected provider's privacy policy. Do not treat local pruning as a promise
+that code never leaves your machine.
 
-If the ZIP is saved in:
+Managed environments, verified model downloads, backend registration, and logs
+live in **TokenWise's extension user storage**, not in your repository. Each
+repository has an ignored `.tokenwise/` directory containing prompt/context
+records and a machine-specific backend link. Do not commit or share that directory.
+The small `.agents/` rule/launcher files may be committed; teammates must still
+enable TokenWise locally to create their own backend link.
 
-```text
-E:\A A SPL3\new_september5
-```
+Retrieval currently indexes Python files and supported static imports/calls.
+Dynamic imports, generated code, unsupported Python syntax, ignored directories,
+and very large files may not be represented. Context is a bounded selection,
+not a complete repository dump. The agent should read original files before
+editing. TokenWise never writes pruned excerpts into application source files.
 
-extract it so this file exists:
+Carbon values in manual result views are **approximate, SEAL-derived estimates**,
+not measurements of your Antigravity cloud-model consumption. See
+[evaluation notes](docs/PROJECT-EVALUATION.md) and
+[the detailed integration guide](docs/ANTIGRAVITY.md).
 
-```text
-E:\A A SPL3\new_september5\TokenWise\README.md
-```
+## For Maintainers
 
-Then open PowerShell and run:
+To build a shareable release from this checkout, with Node.js dependencies installed:
 
 ```powershell
-Set-Location -LiteralPath 'E:\A A SPL3\new_september5\TokenWise'
-Set-ExecutionPolicy -Scope Process Bypass -Force
+cd vscode-extension
+npm ci
+npm test
+npm run package
 ```
 
-## 2. Add the missing model weight
+Packaging bundles the backend source/configuration, not the weight or a virtual
+environment, and creates `releases/TokenWise-0.4.0/` with the VSIX, this guide,
+licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
+and guide. Public marketplace publishing is a separate step requiring a publisher
+account; creating this package does not publish it.
 
-The source weight is expected at:
+F5 remains available for extension development. Use
+[developer setup notes](docs/DEVELOPMENT.md) for source/environment setup and tests.
+The research pipeline remains under `carbon-engine/`; paper PDFs remain under
+`docs/papers/`. No developer-specific absolute paths are required for normal users.
 
-```text
-E:\A A SPL3\new_september5\main\swe-pruner\swe-pruner\model\model.safetensors
-```
+## Credits and License
 
-Recommended command:
-
-```powershell
-.\scripts\copy-model.ps1
-```
-
-The script copies the file and verifies source/destination SHA256 hashes.
-
-Equivalent direct copy command:
-
-```powershell
-Copy-Item -LiteralPath 'E:\A A SPL3\new_september5\main\swe-pruner\swe-pruner\model\model.safetensors' -Destination 'E:\A A SPL3\new_september5\TokenWise\swe-pruner\swe-pruner\model\model.safetensors' -Force
-```
-
-## 3. Install the project
-
-```powershell
-.\scripts\setup.ps1
-```
-
-The setup script:
-
-- creates `.venv` with Python 3.12;
-- installs PyTorch;
-- installs the backend in editable mode;
-- installs VS Code extension dependencies with `npm ci`;
-- compiles TypeScript.
-
-GPU selection is automatic. To force CPU:
-
-```powershell
-.\scripts\setup.ps1 -TorchMode cpu
-```
-
-To force the CUDA 12.6 PyTorch wheel:
-
-```powershell
-.\scripts\setup.ps1 -TorchMode cu126
-```
-
-## 4. Verify the installation
-
-```powershell
-.\scripts\verify.ps1
-```
-
-This checks:
-
-- Python syntax;
-- demo unit tests;
-- carbon artifacts and request-length behavior;
-- repository index/graph behavior;
-- local tokenizer/config availability;
-- VS Code TypeScript compilation.
-
-## 5. Start TokenWise backend
-
-```powershell
-.\scripts\run-backend.ps1
-```
-
-Keep that PowerShell window open. The backend listens only on:
-
-```text
-http://127.0.0.1:8000
-```
-
-The default device is `auto`. You can force a device:
-
-```powershell
-.\scripts\run-backend.ps1 -Device cpu
-```
-
-or:
-
-```powershell
-.\scripts\run-backend.ps1 -Device cuda
-```
-
-## 6. Check backend health
-
-Open a second PowerShell window:
-
-```powershell
-Set-Location -LiteralPath 'E:\A A SPL3\new_september5\TokenWise'
-Invoke-RestMethod 'http://127.0.0.1:8000/health' | Format-List
-```
-
-A fully ready system should report:
-
-```text
-status               : healthy
-model_loaded          : True
-carbon_models_loaded  : True
-```
-
-## 7. Run the full API smoke test
-
-With the backend still running:
-
-```powershell
-.\.venv\Scripts\python.exe .\scripts\smoke_test.py --full
-```
-
-Expected final marker:
-
-```text
-FULL_SMOKE_OK
-```
-
-The test exercises `/health`, `/estimate-carbon`, `/prune`, and `/prune-workspace`, including repository token-budget enforcement.
-
-## 8. Run the VS Code extension
-
-From the project root:
-
-```powershell
-code .\vscode-extension
-```
-
-Then:
-
-1. Press **F5** in VS Code.
-2. A new **Extension Development Host** window opens.
-3. In that new window, open:
-   `E:\A A SPL3\new_september5\TokenWise\Test_project`
-4. Open `services\auth_service.py`.
-5. Press `Ctrl+Shift+P` and run `TokenWise: Check Backend Health`.
-6. Run `TokenWise: Prune Current File` with:
-   `Find the account lockout and successful authentication logic.`
-7. Open `services\payment_service.py` and try:
-   `Find payment retry and timeout handling.`
-8. Open `app.py`, then run `TokenWise: Build Repository Context` with:
-   `Trace authentication and payment processing from the application entrypoint.`
-9. Confirm the repository panel shows Tier 1/2/3 files, a packed token count within the configured budget, and approximate carbon impact when carbon estimation is enabled.
-
-## Optional: local LLM goal synthesis
-
-TokenWise works without Ollama/LM Studio. Its deterministic goal compiler is the default.
-
-If you have an OpenAI-compatible local endpoint and want LLM-generated structured goals, enable VS Code setting:
-
-```text
-TokenWise › Enable Local Goal Model
-```
-
-Then configure the URL/model settings if necessary.
-
-## Carbon-estimation scope
-
-The runtime estimator is **SEAL-derived**, not a claim of exact reproduction of the SEAL paper's reported models. This repository contains locally trained XGBoost/Ridge artifacts and their own validation metrics under:
-
-```text
-swe-pruner\swe-pruner\carbon_artifacts\
-```
-
-For the default benchmark-backed `meta-llama-3-8b-instruct`, input-context reduction primarily reduces **prefill** energy. The expected output token count is held constant, so decode savings can legitimately be zero.
-
-Current artifact metrics and limitations are documented in `docs/PROJECT-EVALUATION.md`.
-
-## Research material
-
-- `docs/papers/SWE-Pruner.pdf`
-- `docs/papers/SEAL-Carbon-Estimation.pdf`
-- `docs/TokenWise-Proposal.pdf`
-
-## License
-
-See `LICENSE`. Research papers and model assets remain subject to their respective authors' and distributors' terms.
+TokenWise source is MIT licensed. The neural model is derived from
+[SWE-Pruner](https://github.com/Ayanami1314/swe-pruner), with weights from
+[ayanami-kitasan/code-pruner](https://huggingface.co/ayanami-kitasan/code-pruner).
+Model assets and dependencies retain their respective licenses; see
+[third-party notices](docs/THIRD-PARTY-NOTICES.md).

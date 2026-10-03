@@ -28,10 +28,10 @@ const DEFAULT_SETTINGS = {
   backend_port: 8000, auto_start_backend: true,
   startup_timeout_seconds: 40, request_timeout_seconds: 90,
 };
-const HOOK_COMMAND = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-hook.ps1";
+const WINDOWS_HOOK_COMMAND = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-hook.ps1";
+const PORTABLE_HOOK_COMMAND = "python3 .agents/tokenwise/tokenwise-launcher.py --hook";
 const LEGACY_HOOK_COMMAND = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise-hook.ps1";
 const LEGACY_RULE_HASH = "65e962fc19c85a5306dd0ec303710941985e3892d7c5e7758fdfa7f2347c6d53";
-const LAUNCHERS = ["tokenwise-runtime.ps1", "tokenwise-context.ps1", "tokenwise-hook.ps1"];
 
 function object(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -213,7 +213,11 @@ function validateSettings(settings: JsonObject): void {
 
 export async function configureAutomaticContext(
   workspaceRoot: string, backend: RegisteredBackend, templatesRoot: string,
+  platform: NodeJS.Platform = process.platform,
 ): Promise<AutomaticSetupResult> {
+  const hookCommand = platform === "win32" ? WINDOWS_HOOK_COMMAND : PORTABLE_HOOK_COMMAND;
+  const launchers = platform === "win32"
+    ? ["tokenwise-runtime.ps1", "tokenwise-context.ps1", "tokenwise-hook.ps1"] : ["tokenwise-launcher.py"];
   const root = await fs.realpath(workspaceRoot);
   const writes: PendingWrite[] = [];
   const snapshots = new Map<string, Buffer | undefined>();
@@ -241,9 +245,10 @@ export async function configureAutomaticContext(
   if (!Array.isArray(handlers) || handlers.some((handler) => !object(handler))) {
     throw new Error("TokenWise PreInvocation handlers must be JSON objects. No workspace files were changed.");
   }
-  const retained = handlers.filter((handler: JsonObject) => handler.command !== LEGACY_HOOK_COMMAND);
-  if (!retained.some((handler: JsonObject) => handler.command === HOOK_COMMAND)) {
-    retained.push({ type: "command", command: HOOK_COMMAND,
+  const retained = handlers.filter((handler: JsonObject) => handler.command !== LEGACY_HOOK_COMMAND
+    && handler.command !== (platform === "win32" ? PORTABLE_HOOK_COMMAND : WINDOWS_HOOK_COMMAND));
+  if (!retained.some((handler: JsonObject) => handler.command === hookCommand)) {
+    retained.push({ type: "command", command: hookCommand,
       timeout: Math.ceil(settings.startup_timeout_seconds + settings.request_timeout_seconds + 20) });
   }
   hook.PreInvocation = retained;
@@ -253,7 +258,7 @@ export async function configureAutomaticContext(
   const manifest = parseObject(await read(manifestPath), manifestPath);
   const owned = manifest.schema_version === 1 && object(manifest.files) ? manifest.files : {};
   const newOwned: JsonObject = {};
-  for (const filename of LAUNCHERS) {
+  for (const filename of launchers) {
     const relative = `.agents/tokenwise/${filename}`;
     const content = await fs.readFile(path.join(templatesRoot, filename));
     const previous = await read(relative);
@@ -264,7 +269,7 @@ export async function configureAutomaticContext(
     newOwned[relative] = digest(content);
   }
 
-  const rule = await fs.readFile(path.join(templatesRoot, "tokenwise.md"));
+  const rule = await fs.readFile(path.join(templatesRoot, platform === "win32" ? "tokenwise.md" : "tokenwise-python.md"));
   const priorRulePath = typeof manifest.rule_path === "string" && /^\.agents\/rules\/tokenwise(?:-automatic-context(?:-\d+)?)?\.md$/.test(manifest.rule_path)
     ? manifest.rule_path : undefined;
   const candidates = [...new Set([

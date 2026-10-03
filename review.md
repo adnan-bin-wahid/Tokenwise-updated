@@ -1,5 +1,12 @@
 # TokenWise Codebase Review
 
+> Friend-ready setup update, October 3, 2026: version 0.4.0 bundles backend source,
+> tokenizer/configuration and trained carbon artifacts, with guided managed setup,
+> verified/resumable model acquisition, setup logs, diagnostics, and a shareable
+> VSIX release folder. Normal users no longer need the checkout, Node.js or F5.
+> Python 3.12 remains a prerequisite. Windows has live installation/retrieval
+> verification; portable macOS/Linux paths still need native release validation.
+>
 > Implementation update, October 3, 2026: `TokenWise: Enable Automatic Context`
 > configures arbitrary local Windows Python repositories, preserving unrelated
 > rules, hooks, and existing context settings. Workspace launchers resolve a

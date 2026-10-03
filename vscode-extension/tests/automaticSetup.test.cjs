@@ -6,8 +6,10 @@ const path = require("node:path");
 const { configureAutomaticContext, registerBackend, discoverRegisteredBackend } = require("../dist/services/automaticSetup.js");
 
 const templates = path.resolve(__dirname, "../resources/automatic-context");
+const windows = process.platform === "win32";
+const launcher = windows ? "tokenwise-context.ps1" : "tokenwise-launcher.py";
 const legacyCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise-hook.ps1";
-const command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-hook.ps1";
+const command = windows ? "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-hook.ps1" : "python3 .agents/tokenwise/tokenwise-launcher.py --hook";
 
 async function put(root, relative, content) {
   const filename = path.join(root, relative);
@@ -16,7 +18,7 @@ async function put(root, relative, content) {
 }
 async function json(root, relative) { return JSON.parse(await fs.readFile(path.join(root, relative), "utf8")); }
 async function fixture(t) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "tokenwise-setup-test-"));
+  const root = await fs.mkdtemp(path.join(await fs.realpath(os.tmpdir()), "tokenwise-setup-test-"));
   t.after(async () => {
     assert.equal(path.dirname(root), await fs.realpath(os.tmpdir()));
     assert.ok(path.basename(root).startsWith("tokenwise-setup-test-"));
@@ -41,7 +43,7 @@ test("external repositories share a centrally registered backend; setup is idemp
   const { root, installation, storage, workspace, backend } = await fixture(t);
   const first = await configureAutomaticContext(workspace, backend, templates);
   assert.equal(first.rulePath, ".agents/rules/tokenwise.md");
-  assert.equal(first.changedFiles.length, 9);
+  assert.equal(first.changedFiles.length, windows ? 9 : 7);
   assert.equal(await discoverRegisteredBackend(storage), await fs.realpath(installation));
   const link = await json(workspace, ".tokenwise/backend-link.json");
   assert.equal(link.registration_path, backend.registrationPath);
@@ -53,7 +55,7 @@ test("external repositories share a centrally registered backend; setup is idemp
   assert.deepEqual((await configureAutomaticContext(workspace, backend, templates)).changedFiles, []);
   const rule = await fs.readFile(path.join(workspace, first.rulePath), "utf8");
   assert.ok(!rule.includes(installation));
-  assert.match(rule, /\.agents\/tokenwise\/tokenwise-context\.ps1/);
+  assert.ok(rule.includes(`.agents/tokenwise/${launcher}`));
 });
 
 test("preserves custom rules, handlers, settings, and existing ignore bytes", async (t) => {
@@ -91,7 +93,7 @@ test("migrates only the exact legacy generated rule", async (t) => {
   const legacy = await fs.readFile(path.resolve(__dirname, "../../Test_project/.agents/rules/tokenwise.md"));
   await put(workspace, ".agents/rules/tokenwise.md", legacy.toString("utf8"));
   assert.equal((await configureAutomaticContext(workspace, backend, templates)).rulePath, ".agents/rules/tokenwise.md");
-  assert.match(await fs.readFile(path.join(workspace, ".agents/rules/tokenwise.md"), "utf8"), /\.agents\/tokenwise\/tokenwise-context/);
+  assert.ok((await fs.readFile(path.join(workspace, ".agents/rules/tokenwise.md"), "utf8")).includes(`.agents/tokenwise/${launcher}`));
 });
 
 test("malformed JSON and invalid settings cause no partial workspace setup", async (t) => {
@@ -111,7 +113,7 @@ test("malformed JSON and invalid settings cause no partial workspace setup", asy
 test("refuses to overwrite customized managed launchers", async (t) => {
   const { workspace, backend } = await fixture(t);
   await configureAutomaticContext(workspace, backend, templates);
-  const relative = ".agents/tokenwise/tokenwise-context.ps1";
+  const relative = `.agents/tokenwise/${launcher}`;
   await put(workspace, relative, "# My changed launcher\n");
   const hooksBefore = await fs.readFile(path.join(workspace, ".agents/hooks.json"));
   await assert.rejects(configureAutomaticContext(workspace, backend, templates), /customized file/);
@@ -163,5 +165,17 @@ test("a write failure rolls back only files written by the setup attempt", async
   assert.equal(await fs.readFile(path.join(workspace, ".agents/rules/team.md"), "utf8"), "Leave this rule intact\n");
   for (const relative of [".gitignore", ".agents/rules/tokenwise.md", ".agents/tokenwise/tokenwise-context.ps1", ".tokenwise/backend-link.json"]) {
     await assert.rejects(fs.stat(path.join(workspace, relative)), { code: "ENOENT" });
+  }
+});
+
+test("macOS/Linux setup installs the portable launcher and POSIX rule", async (t) => {
+  const { workspace, backend } = await fixture(t);
+  for (const platform of ["darwin", "linux"]) {
+    const result = await configureAutomaticContext(workspace, backend, templates, platform);
+    assert.match(await fs.readFile(path.join(workspace, result.rulePath), "utf8"), /python3 .agents\/tokenwise\/tokenwise-launcher.py --query-stdin/);
+    await fs.access(path.join(workspace, ".agents/tokenwise/tokenwise-launcher.py"));
+    const handlers = (await json(workspace, ".agents/hooks.json"))["tokenwise-automatic-context"].PreInvocation;
+    assert.equal(handlers[0].command, "python3 .agents/tokenwise/tokenwise-launcher.py --hook");
+    assert.deepEqual((await configureAutomaticContext(workspace, backend, templates, platform)).changedFiles, []);
   }
 });

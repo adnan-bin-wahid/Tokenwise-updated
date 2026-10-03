@@ -22,16 +22,20 @@ development/insider mode. The fallback does not require that UI or an MCP server
 
 ## Enable Any Python Repository
 
-1. Install `vscode-extension/tokenwise-vscode-0.3.1.vsix` in Antigravity IDE and
+1. Install `vscode-extension/tokenwise-vscode-0.4.0.vsix` in Antigravity IDE and
    reload its window. For development, compile the extension and press F5 instead.
 2. Open your Python repository. It can be anywhere on your machine; it does not
    need to be inside the TokenWise checkout. Trust the workspace before setup.
 3. Open the command palette and run **TokenWise: Enable Automatic Context**.
    In a multi-folder workspace, select the repository to configure.
-4. On first use, select your complete TokenWise backend installation: the folder
+4. On first use, choose **Install Managed Backend** to create a private environment
+   and download verified weights automatically. Normal users need Python 3.12,
+   not a Git checkout, Node.js, or F5. Alternatively select an existing complete
+   TokenWise backend installation: the folder
    containing `.venv`, `scripts`, and `swe-pruner`. During F5 development the
    checkout is discovered automatically. Existing registered installations are
    reused, so subsequent repositories do not require another backend selection.
+   See the root README for download size, prerequisites, and first-run troubleshooting.
 5. Confirm setup. In **Customizations > Rules**, confirm that the TokenWise
    workspace rule is listed. Start a new chat and enter your normal prompt.
 
@@ -53,10 +57,12 @@ Re-run the command after cloning on another machine, clearing `.tokenwise/`,
 or changing IDE profiles. To relocate the backend, update the application-level
 `tokenWise.backendInstallationPath` user setting and re-run setup. Workspaces
 linked to that registration will use the new installation. Keep the backend
-environment and model installed separately; the VSIX does not bundle them.
+environment and model available; the VSIX bundles backend source/configuration
+and its installer, but downloads dependencies and the weight separately.
 
-This release supports **local Windows Python repositories**. Remote/virtual
-workspaces and macOS/Linux launchers are not yet supported. Retrieval still uses
+Windows is verified. **macOS/Linux portable setup is included but not yet
+native-tested**; `python3` must be available for the small workspace bootstrap.
+Remote/virtual workspaces remain unsupported. Retrieval still uses
 the Python indexer's supported files and exclusions; it cannot promise that
 every possible Python repository layout or dynamic import will be resolved.
 
@@ -106,8 +112,9 @@ a live context panel. Neither label means your current prompt ran TokenWise.
 
 - Antigravity IDE with workspace rules and an available command tool. Native
   hooks are optional for the fallback.
-- The existing TokenWise Python environment (`scripts/setup.ps1`).
-- Local pruning weights at `swe-pruner/swe-pruner/model/model.safetensors`.
+- 64-bit Python 3.12 and a managed installation created through **Set Up Backend**,
+  or the existing TokenWise environment (`scripts/setup.ps1`).
+- Verified local pruning weights, downloaded by managed setup or supplied locally.
 - A complete backend installation selected once, independently of repository
   location. The older checked-in demo launchers remain available for backwards
   compatibility until you run the new setup command.
@@ -136,6 +143,10 @@ Antigravity user prompt
   -> bounded Python repository context returned as tool output
   -> agent answers or continues working
 ```
+
+On macOS/Linux the rule invokes `python3 .agents/tokenwise/tokenwise-launcher.py`
+instead of PowerShell. That bootstrap reads the same backend registration and
+executes the actual adapter in the private Python 3.12 environment.
 
 The launcher transfers the query as UTF-8 data, preserving quotes and Unicode.
 It shares the hook's backend startup, settings, retrieval, and budget validation.

@@ -101,9 +101,12 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     };
     this.watchers.set(key, [watcher, watcher.onDidCreate(refresh), watcher.onDidChange(refresh)]);
     void this.readActivity(folder, false);
-    void vscode.workspace.fs.stat(vscode.Uri.joinPath(folder.uri, ".agents", "hooks.json"))
-      .then(() => {
-        if (!this.latest) {
+    void vscode.workspace.fs.readFile(vscode.Uri.joinPath(folder.uri, ".agents", "hooks.json"))
+      .then((bytes) => {
+        let configured = false;
+        try { configured = Boolean(JSON.parse(Buffer.from(bytes).toString("utf8").replace(/^\uFEFF/, ""))["tokenwise-automatic-context"]); }
+        catch { /* Unrelated or invalid hook files do not prove TokenWise setup. */ }
+        if (configured && !this.latest) {
           this.status.text = "$(filter) TokenWise Auto: awaiting prompt";
           this.status.tooltip = "TokenWise is configured. No context command or hook activity has been observed yet.";
           this.status.command = "tokenwise.showAutomaticContext";

@@ -6,8 +6,10 @@ const path = require("node:path");
 const { execFile } = require("node:child_process");
 const { configureAutomaticContext, registerBackend } = require("../vscode-extension/dist/services/automaticSetup.js");
 
-const installation = path.resolve(__dirname, "..");
-const templates = path.join(installation, "vscode-extension/resources/automatic-context");
+const checkout = path.resolve(__dirname, "..");
+const option = (name) => { const index = process.argv.indexOf(name); return index < 0 ? undefined : process.argv[index + 1]; };
+const installation = path.resolve(option("--backend") ?? checkout);
+const templates = path.join(checkout, "vscode-extension/resources/automatic-context");
 const marker = "[TokenWise automatic context]";
 
 function run(file, args, cwd, input = "") {
@@ -32,7 +34,7 @@ async function main() {
   assert.equal(process.platform, "win32", "This verifier exercises the Windows launchers.");
   const tempRoot = await fs.mkdtemp(path.join(await fs.realpath(os.tmpdir()), "tokenwise-portable-verification-"));
   try {
-    const backend = await registerBackend(installation, path.join(tempRoot, "User Storage"));
+    const backend = await registerBackend(installation, path.resolve(option("--storage") ?? path.join(tempRoot, "User Storage")));
     const contexts = [];
     const urls = [];
     const query = 'Explain customer\'s invoice retries, "InvoiceService", and the related tests. Do not modify files. \u2713';
@@ -73,6 +75,9 @@ async function main() {
       const injected = JSON.parse(await run("powershell.exe", hookArgs, workspace, JSON.stringify(payload)));
       assert.ok(injected.injectSteps[0].userMessage.startsWith(marker));
       assert.deepEqual(JSON.parse(await run("powershell.exe", hookArgs, workspace, JSON.stringify({ ...payload, invocationNum: 1 }))), {});
+      await put(workspace, ".agents/tokenwise/tokenwise-launcher.py", await fs.readFile(path.join(templates, "tokenwise-launcher.py")));
+      const portable = await run(backend.registration.python_path, [".agents/tokenwise/tokenwise-launcher.py", "--query-base64", Buffer.from(query).toString("base64"), "--verification"], workspace);
+      assert.ok(portable.startsWith(marker), "The portable bootstrap must retrieve real context too.");
       assert.deepEqual((await configureAutomaticContext(workspace, backend, templates)).changedFiles, []);
     }
     assert.equal(urls[0], urls[1], "Independent workspaces must share one backend process.");

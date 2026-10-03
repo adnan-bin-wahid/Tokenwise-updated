@@ -8,7 +8,7 @@ const uri = (fsPath, scheme = "file", authority = "") => ({
 });
 const folder = (name) => ({ name, uri: uri(`C:\\Repositories\\${name}`) });
 const context = { extensionUri: uri("C:\\Extensions\\tokenwise-vscode"), globalStorageUri: uri("C:\\Storage\\TokenWise") };
-let messages, calls, saved, configured, selectedFolder, approval, pickBackend, registered;
+let messages, calls, saved, configured, selectedFolder, approval, pickBackend, registered, backendChoice;
 const setupStub = {
   validateBackendInstallation: async (root) => {
     if (root === "C:\\Backend") { return root; }
@@ -32,7 +32,9 @@ const vscode = {
     showWarningMessage: async (text) => { messages.push(text); },
     showErrorMessage: async (text) => { messages.push(text); },
     showInformationMessage: async (text, options) => { messages.push(text); return options?.modal ? approval : undefined; },
-    showQuickPick: async (items) => selectedFolder === undefined ? undefined : items[selectedFolder],
+    showQuickPick: async (items) => items[0].install !== undefined
+      ? backendChoice === undefined ? undefined : items[backendChoice]
+      : selectedFolder === undefined ? undefined : items[selectedFolder],
     showOpenDialog: async () => pickBackend ? [uri(pickBackend)] : undefined,
     withProgress: async (_, action) => action(),
   },
@@ -51,6 +53,7 @@ const windowsTest = (name, action) => test(name, { skip: process.platform !== "w
 beforeEach(() => {
   messages = []; calls = []; configured = []; saved = ""; registered = undefined;
   approval = "Enable"; pickBackend = "C:\\Backend"; selectedFolder = undefined;
+  backendChoice = undefined;
   vscode.workspace.isTrusted = true; vscode.workspace.workspaceFolders = [folder("Python App")];
   vscode.env.remoteName = undefined;
   context.globalStorageUri = uri("C:\\Storage\\TokenWise");
@@ -145,4 +148,28 @@ windowsTest("invalid saved backend can be replaced without touching repository s
   assert.match(messages[0], /saved TokenWise backend is unavailable/);
   assert.equal(calls[0][1], "C:\\Backend");
   assert.equal(calls.at(-1).at(-1), vscode.ConfigurationTarget.Global);
+});
+
+windowsTest("a new user can install a managed backend without a checkout picker", async () => {
+  backendChoice = 0;
+  pickBackend = undefined;
+  let installs = 0;
+  await createEnableAutomaticContextCommand(context, (item) => configured.push(item), async () => { installs += 1; return "C:\\Backend"; })();
+  assert.equal(installs, 1);
+  assert.equal(calls[0][1], "C:\\Backend");
+  assert.equal(configured.length, 1);
+});
+
+windowsTest("cancelling managed setup does not create repository files", async () => {
+  backendChoice = 0;
+  await createEnableAutomaticContextCommand(context, () => {}, async () => undefined)();
+  assert.deepEqual(calls, []);
+});
+
+windowsTest("existing backend remains an alternative to managed installation", async () => {
+  backendChoice = 1;
+  let installs = 0;
+  await createEnableAutomaticContextCommand(context, () => {}, async () => { installs += 1; return "C:\\Backend"; })();
+  assert.equal(installs, 0);
+  assert.equal(calls[0][1], "C:\\Backend");
 });

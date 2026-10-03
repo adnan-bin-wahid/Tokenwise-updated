@@ -1,5 +1,6 @@
 param(
-    [string]$Source = 'E:\A A SPL3\new_september5\main\swe-pruner\swe-pruner\model\model.safetensors'
+    [Parameter(Mandatory = $true)]
+    [string]$Source
 )
 
 $ErrorActionPreference = 'Stop'

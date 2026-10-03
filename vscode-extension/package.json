@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -27,6 +27,10 @@
   },
   "contributes": {
     "commands": [
+      { "command": "tokenwise.setUpBackend", "title": "TokenWise: Set Up Backend" },
+      { "command": "tokenwise.startBackend", "title": "TokenWise: Start Backend" },
+      { "command": "tokenwise.showDiagnostics", "title": "TokenWise: Diagnose Setup" },
+      { "command": "tokenwise.openSetupGuide", "title": "TokenWise: Open Setup Guide" },
       {
         "command": "tokenwise.enableAutomaticContext",
         "title": "TokenWise: Enable Automatic Context"
@@ -72,6 +76,10 @@
     "configuration": {
       "title": "TokenWise",
       "properties": {
+        "tokenWise.pythonPath": {
+          "type": "string", "default": "", "scope": "application",
+          "description": "Optional absolute path to a 64-bit Python 3.12 executable for managed backend setup. Leave empty to auto-detect it."
+        },
         "tokenWise.backendInstallationPath": {
           "type": "string",
           "default": "",
@@ -185,9 +193,10 @@
     }
   },
   "scripts": {
+    "prepare-backend": "node ../scripts/prepare-extension.cjs",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "npm run compile && vsce package",
+    "package": "npm run prepare-backend && npm run compile && vsce package && node ../scripts/package-release.cjs",
     "pretest": "npm run compile",
     "test": "node --test tests/*.test.cjs"
   },

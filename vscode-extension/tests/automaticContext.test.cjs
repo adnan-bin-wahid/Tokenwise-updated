@@ -5,6 +5,7 @@ const Module = require("node:module");
 const originalLoad = Module._load;
 const watcherCallbacks = [];
 let currentActivity;
+let currentHooks;
 const outputLines = [];
 const vscodeStub = {
   window: { createOutputChannel: () => ({ appendLine: (line) => outputLines.push(line), show() {}, dispose() {} }) },
@@ -14,7 +15,7 @@ const vscodeStub = {
   workspace: {
     workspaceFolders: [],
     onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
-    fs: { readFile: async () => Buffer.from(JSON.stringify(currentActivity)), stat: async () => ({}) },
+    fs: { readFile: async (uri) => Buffer.from(JSON.stringify(String(uri).endsWith("/.agents/hooks.json") ? currentHooks ?? {} : currentActivity)), stat: async () => ({}) },
     getConfiguration: () => ({ get: () => true }),
     createFileSystemWatcher: () => ({
       onDidCreate: (handler) => { watcherCallbacks.push(handler); return { dispose() {} }; },
@@ -130,5 +131,27 @@ test("enabling a repository clears stale context and waits for real prompt activ
   assert.match(status.text, /awaiting prompt/);
   assert.match(status.tooltip, /New Repository/);
   assert.equal(monitor.latest, undefined);
+  monitor.dispose();
+});
+
+test("unrelated hooks do not present an unconfigured repository as enabled", async () => {
+  vscodeStub.workspace.workspaceFolders = [{ uri: { toString: () => "plain-repo" } }];
+  currentActivity = undefined;
+  currentHooks = { team: { enabled: true } };
+  const status = { text: "TokenWise" };
+  const monitor = new AutomaticContextMonitor(status, { showWorkspaceResult() {} }, "extension");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(status.text, "TokenWise");
+  monitor.dispose();
+});
+
+test("owned hook setup without previous activity shows awaiting prompt", async () => {
+  vscodeStub.workspace.workspaceFolders = [{ uri: { toString: () => "enabled-repo" } }];
+  currentActivity = undefined;
+  currentHooks = { "tokenwise-automatic-context": { enabled: true, PreInvocation: [] } };
+  const status = {};
+  const monitor = new AutomaticContextMonitor(status, { showWorkspaceResult() {} }, "extension");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.match(status.text, /awaiting prompt/);
   monitor.dispose();
 });

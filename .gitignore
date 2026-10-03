@@ -17,6 +17,11 @@ vscode-extension/dist/
 # Local model weight (kept outside Git because it is ~1.3 GB)
 swe-pruner/swe-pruner/model/model.safetensors
 swe-pruner/swe-pruner/model/.cache/
+vscode-extension/resources/backend-bundle/
+vscode-extension/resources/user-guide.md
+vscode-extension/resources/docs/
+vscode-extension/resources/THIRD-PARTY-NOTICES.md
+releases/
 
 # IDE / OS
 .idea/

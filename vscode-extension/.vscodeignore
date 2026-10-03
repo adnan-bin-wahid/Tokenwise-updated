@@ -2,8 +2,10 @@
 **/.vscode-test/**
 **/.git/**
 **/.gitignore
-**/src/**
+src/**
 **/tsconfig.json
 **/*.map
 tests/**
 node_modules/**/.bin/**
+**/__pycache__/**
+**/*.safetensors

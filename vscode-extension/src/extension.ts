@@ -7,18 +7,20 @@ import { createCheckHealthCommand } from "./commands/checkHealth";
 import { createBuildRepositoryContextCommand } from "./commands/buildRepositoryContext";
 import { AutomaticContextMonitor } from "./services/automaticContext";
 import { createEnableAutomaticContextCommand } from "./commands/enableAutomaticContext";
+import { BackendManager } from "./services/backendManager";
 
 export function activate(context: vscode.ExtensionContext): void {
   const service = new PruneService();
   const panel = new ResultPanel();
+  const backend = new BackendManager(context);
 
   const statusItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     100,
   );
   statusItem.text = "$(filter) TokenWise";
-  statusItem.tooltip = "TokenWise is ready";
-  statusItem.command = "tokenwise.checkHealth";
+  statusItem.tooltip = "Enable automatic repository context or inspect the TokenWise backend";
+  statusItem.command = "tokenwise.enableAutomaticContext";
   statusItem.show();
 
   const refreshStatus = () => {
@@ -36,11 +38,16 @@ export function activate(context: vscode.ExtensionContext): void {
   const automaticMonitor = new AutomaticContextMonitor(statusItem, panel, context.extensionUri);
   context.subscriptions.push(
     statusItem,
+    backend,
     automaticMonitor,
     vscode.commands.registerCommand(
       "tokenwise.enableAutomaticContext",
-      createEnableAutomaticContextCommand(context, (folder) => automaticMonitor.configured(folder)),
+      createEnableAutomaticContextCommand(context, (folder) => automaticMonitor.configured(folder), () => backend.setup()),
     ),
+    vscode.commands.registerCommand("tokenwise.setUpBackend", () => backend.setup()),
+    vscode.commands.registerCommand("tokenwise.startBackend", () => backend.start()),
+    vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
+    vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
     vscode.commands.registerCommand(
       "tokenwise.pruneSelected",
       createPruneSelectedCommand(
@@ -68,6 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
       createBuildRepositoryContextCommand(panel, context.extensionUri),
     ),
   );
+  void backend.welcome().catch(() => undefined);
 }
 
 export function deactivate(): void {
