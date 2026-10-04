@@ -4,6 +4,10 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
+Download the [TokenWise 0.4.0 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.4.0/tokenwise-vscode-0.4.0.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.4.0).
+Do not download the source-code ZIP for normal installation.
+
 1. Install the TokenWise VSIX through **Extensions > ... > Install from VSIX**.
 2. Install **64-bit Python 3.12** if it is not already available, then restart the IDE.
 3. Open and trust your local Python repository.

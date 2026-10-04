@@ -32,9 +32,11 @@ billing remain separate. A GPU, Ollama, and an MCP server are not required.
 
 ### 1. Install TokenWise
 
-Get **`tokenwise-vscode-0.4.0.vsix`** from the project owner. A shareable release
-folder contains this file, this README, licenses, and a checksum file. This
-repository is not automatically published to an extension marketplace.
+Download [**TokenWise 0.4.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.4.0/tokenwise-vscode-0.4.0.vsix)
+from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.4.0).
+This is a **Windows-tested beta**, not a marketplace listing. The release also
+provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
+installation, not GitHub's automatically generated source-code ZIP.
 
 In Antigravity:
 
@@ -207,8 +209,9 @@ npm run package
 Packaging bundles the backend source/configuration, not the weight or a virtual
 environment, and creates `releases/TokenWise-0.4.0/` with the VSIX, this guide,
 licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
-and guide. Public marketplace publishing is a separate step requiring a publisher
-account; creating this package does not publish it.
+and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
+draft/upload/verify/publish process. Public marketplace publishing is a separate
+step requiring a publisher account; creating this package does not publish it.
 
 F5 remains available for extension development. Use
 [developer setup notes](docs/DEVELOPMENT.md) for source/environment setup and tests.

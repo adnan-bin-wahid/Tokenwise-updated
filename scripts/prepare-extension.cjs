@@ -45,7 +45,7 @@ async function main() {
   await fs.copyFile(path.join(root, "README.md"), path.join(resourceRoot, "user-guide.md"));
   await fs.copyFile(path.join(root, "docs/THIRD-PARTY-NOTICES.md"), path.join(resourceRoot, "THIRD-PARTY-NOTICES.md"));
   await fs.mkdir(path.join(resourceRoot, "docs"), { recursive: true });
-  for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "THIRD-PARTY-NOTICES.md"]) {
+  for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md"]) {
     await fs.copyFile(path.join(root, "docs", name), path.join(resourceRoot, "docs", name));
   }
   console.log(`Prepared ${files.length} backend files; model weights will be downloaded separately.`);
