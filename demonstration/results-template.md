@@ -37,7 +37,7 @@ unscored lines instead of silently assuming threshold-only output.
 | Same-chat follow-up after two user turns | | | | | |
 | Explicit new topic | | | | | |
 | New-chat ambiguous follow-up | | | | | |
-| Different project/new chat | | | | | |
+| Same workspace, independent new chat | | | | | |
 
 Fallback may rewrite the current query; the backend cannot see its raw history.
 Clarification without retrieval produces no new event. Generated-transcript
@@ -56,9 +56,11 @@ for live claims. Record failed runs and omitted necessary facts.
 
 ## Optional Independent Answer-Quality Comparison
 
-Use identical tasks/source/settings and separate fresh chats in baseline_lab.
-Rotate order. Disallow tools/file reads for a context-only trial, or label the
-result a tool-assisted workflow instead.
+Use identical tasks/source/settings and separate fresh chats. For strict
+context-only isolation, use chats outside the project with no repository
+attachment/TokenWise integration and paste the exported packets. No second Python
+project is needed. Rotate order. Reject extra tools/file reads for a context-only
+trial, or label the result a tool-assisted workflow instead.
 
 | Project / repeat | Strategy | Packet tokens | Supported facts | Unsupported claims | Tool violation? | Answer seconds | Omissions |
 | --- | --- | --- | --- | --- | --- | --- | --- |

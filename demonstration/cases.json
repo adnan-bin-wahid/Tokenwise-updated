@@ -2,36 +2,16 @@
   "schema_version": 1,
   "cases": [
     {
-      "project": "01_account_security",
+      "project": "tokenwise_demo",
       "selection_file": "security/auth_service.py",
+      "mixed_selection_file": "workflows.py",
+      "class_selection_file": "security/models.py",
       "query": "Explain account lockout after failed login attempts, the expiry boundary, and its related tests. Do not modify any files.",
       "evidence_markers": ["LOCKOUT_THRESHOLD = 3", "LOCKOUT_SECONDS = 60", "def authenticate", "def test_expiry_boundary"],
       "follow_up": "Which tests cover that behavior? Do not modify any files.",
-      "topic_switch": "Explain session expiry and revocation and their tests. Do not modify any files."
-    },
-    {
-      "project": "02_checkout_delivery",
-      "selection_file": "checkout/coupons.py",
-      "query": "Explain coupon expiry, its effect on checkout totals, and the tests for expiry and rounding. Do not modify any files.",
-      "evidence_markers": ["def discount_percent", "TAX_BASIS_POINTS = 1500", "def test_coupon_expiry_boundary", "def test_tax_rounds_half_up_in_integer_cents"],
-      "follow_up": "What about its expiry tests? Do not modify any files.",
-      "topic_switch": "Explain atomic inventory reservation for duplicate product codes and its tests. Do not modify any files."
-    },
-    {
-      "project": "03_issue_tracker",
-      "selection_file": "tracker/issue_service.py",
-      "query": "Explain who can close and reopen an issue, the state changes, audit events, and related permission tests. Do not modify any files.",
-      "evidence_markers": ["ROLE_ACTIONS", "def close", "def test_viewer_cannot_close", "def test_reopen_clears_closed_by"],
-      "follow_up": "Which tests cover that behavior? Do not modify any files.",
-      "topic_switch": "Explain dashboard status counts and their tests. Do not modify any files."
-    },
-    {
-      "project": "04_pruning_inputs",
-      "selection_file": "workflows.py",
-      "query": "Explain session expiry, revocation, and their tests, not invoice pricing. Do not modify any files.",
-      "evidence_markers": ["SESSION_SECONDS = 300", "def session_is_valid", "def revoke_session", "def test_session_expiry_boundary"],
-      "follow_up": "What about its expiry tests? Do not modify any files.",
-      "topic_switch": "Explain invoice totals and shipping modes and their tests. Do not modify any files."
+      "topic_switch": "Explain session expiry and revocation and their tests. Do not modify any files.",
+      "session_query": "Explain session expiry and revocation, not invoice pricing.",
+      "overview_query": "Give me the full overview of my project. Do not modify any files."
     }
   ]
 }

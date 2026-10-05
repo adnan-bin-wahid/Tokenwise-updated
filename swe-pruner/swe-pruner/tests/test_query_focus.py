@@ -51,7 +51,7 @@ class SourceFocusTests(unittest.TestCase):
         return focus_sources({path: {"content": source} for path, source in sources.items()}, query_focus(query))
 
     def test_mixed_demo_omits_invoice_units_not_session_negation_or_decorators(self):
-        root = Path(__file__).resolve().parents[3] / "demonstration/04_pruning_inputs"
+        root = Path(__file__).resolve().parents[3] / "demonstration/tokenwise_demo"
         sources = {str(path.relative_to(root)).replace("\\", "/"): path.read_text(encoding="utf-8")
                    for path in root.rglob("*.py")}
         views, warnings = self.view(sources)

@@ -1,30 +1,45 @@
-# TokenWise Demonstration Repositories
+# One TokenWise Demonstration Project
 
-Start with [the complete teacher presentation guide](../demonstation.md).
+Open **[tokenwise_demo](tokenwise_demo/README.md)** itself in Antigravity. Keep
+this same workspace open for the entire presentation. Do not open the TokenWise
+checkout or the `demonstration` parent as the retrieval workspace.
 
-Open one leaf folder at a time in Antigravity:
+The complete, ordered teacher script is **[demonstation.md](../demonstation.md)**.
+The 0.6.5 local extension also opens it with **TokenWise: Open Demonstration Guide**.
 
-| Project | Focus | Tests |
-| --- | --- | --- |
-| [01_account_security](01_account_security/README.md) | Lockout and session boundaries | 8 |
-| [02_checkout_delivery](02_checkout_delivery/README.md) | Coupon expiry, pricing, inventory | 8 |
-| [03_issue_tracker](03_issue_tracker/README.md) | Permissions, transitions, audit | 6 |
-| [04_pruning_inputs](04_pruning_inputs/README.md) | Session logic versus unrelated invoice/shipping source | 6 |
-| [baseline_lab](baseline_lab/README.md) | Source-empty fresh-chat comparison | None |
+The application contains account lockout, sessions, invoices, shipping, and
+activity reports. All features work; unrelated features serve as pruning controls,
+not filler. Eleven Python files and twenty deterministic tests provide the
+ground truth for the three teacher scenarios:
 
-Run `py -3.12 demonstration/run_checks.py` from the checkout root to check all
-projects without installing application dependencies: four apps and 28 tests.
-Start with `04_pruning_inputs` and **0.6.4**'s **TokenWise:
-Demonstrate Pruning Inputs** to inspect repository discovery, exact selected-source
-neural pruning, and a clearly labeled user-history replay. Install its matching
-backend too. Download the installer and complete demo ZIP from the
-[0.6.4 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
-**Compare Context Strategies** remains an optional packet comparison,
-not the primary demonstration of how pruning decisions are made.
-Use [the results worksheet](results-template.md) for actual observations.
-See [the verification record](VERIFICATION.md) for dated checks and their limits.
+1. Repository discovery with no selected file.
+2. Neural pruning of an entire file or an exact highlighted excerpt.
+3. Earlier same-topic user intent resolving a referring follow-up.
 
-Do not enable TokenWise in `baseline_lab`, and do not open this parent folder
-as the workspace during a single-project retrieval experiment. Generated
-packets and metrics under `results/` are ignored by Git. No committed table
-pretends that source-marker checks are cloud-agent answer-quality scores.
+The same folder also demonstrates project overviews, thresholds, budgeted context,
+copy/export controls, token accounting, approximate carbon estimates, topic
+exclusions, indexing/cache freshness, and optional all-code/selected/automatic
+packet comparisons. No second application or `baseline_lab` is necessary.
+
+From the TokenWise checkout or extracted bundle root:
+
+```powershell
+py -3.12 demonstration/run_checks.py
+```
+
+From the open `tokenwise_demo` folder:
+
+```powershell
+py -3.12 app.py
+py -3.12 -m unittest discover -s tests -v
+```
+
+The demo app needs no pip packages, server, account, clock mocking, or network.
+The extension backend is a separate installation and does require its pretrained
+model and dependencies. Check [verification notes](VERIFICATION.md) and use the
+[blank evidence worksheet](results-template.md) for actual presentation results.
+
+The new layout is in the **0.6.5 local build**. The already-published 0.6.4 ZIP
+contains the previous four-project layout; it has not been silently replaced.
+Generated exports under `results/`, `.agents`, `.tokenwise`, and Python caches
+are not demonstration source and must not be shipped as classroom evidence.

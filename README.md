@@ -9,6 +9,13 @@ install Node.js, compile the extension, press F5, or manually start a server.**
 
 ## Version 0.6.4
 
+The current checkout also prepares an **unreleased 0.6.5 local build** with one
+complete [demonstration project](demonstration/tokenwise_demo/README.md), twenty
+tests, and a rewritten [teacher walkthrough](demonstation.md). Run
+`TokenWise: Open Demonstration Guide` in that build. Build/install
+`tokenwise-vscode-0.6.5.vsix` locally to try it. The public 0.6.4 assets below
+still contain the previous four examples; they have not been overwritten.
+
 **0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
 `Explain session expiry, not invoice pricing.` Get the corrected installer and
 demonstration bundle from the
@@ -32,12 +39,13 @@ or erase validated downloads to retry.
 
 ## Before You Start
 
-For a teacher presentation, start with [the demonstration guide](demonstation.md)
-and the four independent [Python demo repositories](demonstration/README.md).
-The updated guide focuses on **how pruning works** with repository discovery,
+For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
+and the single [Python demo project](demonstration/tokenwise_demo/README.md).
+The updated 0.6.5 local guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
-command requires **0.6.4 and its matching backend** for the latest fixes. Download the installer or
-complete demonstration bundle below. The optional packet-comparison command is
+command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
+Build 0.6.5 locally for the new guide command and single-project bundle; the
+published downloads below contain the older examples. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
 
@@ -356,6 +364,7 @@ the original included source against retained source plus separate overhead.
 | **Demonstrate Pruning Inputs** (0.6.3+) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
 | **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
+| **Open Demonstration Guide** (0.6.5 local build) | Open the bundled one-project teacher walkthrough |
 | **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
 
 All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
@@ -490,7 +499,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.4/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.5/` for the current local build with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

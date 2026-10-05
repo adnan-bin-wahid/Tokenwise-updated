@@ -60,6 +60,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("tokenwise.startBackend", () => backend.start()),
     vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
+    vscode.commands.registerCommand("tokenwise.openDemonstrationGuide", () => backend.demonstrationGuide()),
     vscode.commands.registerCommand("tokenwise.compareContextStrategies",
       createCompareContextStrategiesCommand(panel, context.extensionUri, () => backend.backgroundUrl(true))),
     vscode.commands.registerCommand("tokenwise.demonstratePruning",

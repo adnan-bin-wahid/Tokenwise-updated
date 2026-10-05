@@ -44,11 +44,24 @@ async function main() {
   await fs.writeFile(path.join(target, "backend-manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   await fs.copyFile(path.join(root, "README.md"), path.join(resourceRoot, "user-guide.md"));
   await fs.copyFile(path.join(root, "demonstation.md"), path.join(resourceRoot, "demonstation.md"));
-  await fs.cp(path.join(root, "demonstration"), path.join(resourceRoot, "demonstration"), {
+  const demoTarget = path.join(resourceRoot, "demonstration");
+  const demoSource = path.join(root, "demonstration");
+  const demoCases = JSON.parse(await fs.readFile(path.join(demoSource, "cases.json"), "utf8")).cases;
+  if (!Array.isArray(demoCases) || !demoCases.length || demoCases.some(item => !item || typeof item.project !== "string" || !/^[a-z0-9_]+$/.test(item.project))) {
+    throw new Error("Invalid demonstration project manifest.");
+  }
+  const demoProjects = new Set(demoCases.map(item => item.project));
+  try { if ((await fs.lstat(demoTarget)).isSymbolicLink()) { throw new Error("The generated demonstration cannot be a symbolic link."); } }
+  catch (error) { if (error.code !== "ENOENT") { throw error; } }
+  // Replace generated examples so deleted source projects cannot survive an upgrade.
+  await fs.rm(demoTarget, { recursive: true, force: true });
+  await fs.cp(demoSource, demoTarget, {
     recursive: true,
     filter: async source => {
       if (["results", "__pycache__", ".agents", ".tokenwise"].includes(path.basename(source))) { return false; }
       const entry = await fs.lstat(source);
+      const relative = path.relative(demoSource, source);
+      if (relative && entry.isDirectory() && !demoProjects.has(relative.split(path.sep)[0])) { return false; }
       return entry.isDirectory() || (entry.isFile() && /\.(py|json|md)$/.test(source));
     },
   });

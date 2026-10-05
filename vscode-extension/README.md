@@ -4,6 +4,12 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
+The current **0.6.5 local build** replaces the examples with one
+`demonstration/tokenwise_demo` application and twenty deterministic tests.
+Run **TokenWise: Open Demonstration Guide** for the complete teacher script.
+Build/install `tokenwise-vscode-0.6.5.vsix` locally; this version is not yet a
+public release. The 0.6.4 public links below still serve the previous examples.
+
 **0.6.4** fixes optional zero-valued carbon settings and explicit topic contrasts
 such as `Explain session expiry, not invoice pricing`. Focused repository
 retrieval omits independent excluded units while preserving required helpers.
@@ -15,7 +21,7 @@ excerpts. CO2 remains an approximate configured-scenario estimate.
 discovery without editor hints, neural pruning of an exact file/excerpt, and an
 explicitly labeled earlier-user replay. Results expose the effective objective,
 scope, history source, thresholds, selected-source line scores, and JSON export.
-Use the matching updated backend. The release ZIP includes four runnable
+Use the matching updated backend. The historical 0.6.3/0.6.4 release ZIPs include four runnable
 projects, the teacher guide, and the results worksheet. Older published assets
 remain unchanged.
 
@@ -29,7 +35,7 @@ The release ZIP below includes the demonstration projects and teacher guide.
 
 Download the [TokenWise 0.6.4 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix)
 from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
-For the teacher guide and four example repositories, download
+For the previously published teacher guide and four example repositories, download
 [TokenWise-0.6.4.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/TokenWise-0.6.4.zip).
 Do not download the source-code ZIP for normal installation.
 

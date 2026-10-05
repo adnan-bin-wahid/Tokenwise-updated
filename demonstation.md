@@ -1,540 +1,864 @@
-# TokenWise: Teacher Demonstration
+# TokenWise: One-Project Teacher Demonstration
 
-## 1. What Your Teacher Is Asking
+This is your presentation script. Follow it in order, with **one Python project
+open throughout**: `demonstration/tokenwise_demo`.
 
-Your teacher appears to be asking **how different inputs affect pruning**,
-not merely whether one context packet is smaller than another.
+The three central experiments answer your teacher's question about how pruning
+changes when the input is repository code, selected source, or earlier
+conversation intent. The remaining experiments demonstrate the extension's
+integration, metrics, exports, setup, and reliability without switching projects.
 
-| Scenario | Available input | Demonstration |
-| --- | --- | --- |
-| All repository code, no selected file | Eligible saved Python source in the workspace | Automatic discovery without an editor anchor |
-| Selected code | Exactly one captured file or highlighted excerpt | Neural pruning of that exact scope |
-| Earlier conversation context | Current task plus a bounded same-topic user reference | History changing the effective retrieval/pruning objective |
+## Quick Route
 
-Two distinctions matter:
+| Order | Do this | Show this | Main point |
+| --- | --- | --- | --- |
+| Before class | Setup, warm backend, run 20 tests | Working application and healthy backend | Rehearsal, not a first installation in class |
+| 1 | Ask for a project overview in chat | Fresh tool call, overview, component map | Automatic context for a normal prompt |
+| 2 | Repository input, no selection | Goal, files, methods, budget | Discover relevant code without choosing files |
+| 3 | Entire `security/models.py` | Session lines and line scores | Actual neural pruning of a supplied file |
+| 4 | Highlight only Session | Exact input and original coordinates | Selection scope is different from pruning |
+| 5 | Entire `workflows.py`, two thresholds | Actual masks and final excerpts | Tradeoff between reduction and evidence |
+| 6 | Earlier-user replay | Earlier intent inside effective objective | Controlled history-informed pruning |
+| 7 | Same-chat then new-chat questions | Current tool output and event IDs | Real integration and chat isolation |
+| 8 | Compare Context Strategies | All Python / selected / TokenWise packets | Literal context-baseline comparison |
+| 9 | Explain token/CO2 values | Baseline, assumptions, signed change | Honest evaluation, not just a large percentage |
+| After class | Export observations; optional cleanup | JSON, worksheet, tests, limitations | Repeatable evidence |
 
-- **Repository discovery is not sending every line to the neural model.**
-  All indexed files are searchable; only bounded candidates are processed.
-- **Same-chat history is not cross-chat memory.** Earlier user intent can resolve
-  a referring follow-up. Unrelated chats must not silently share their topics.
+For a 15-minute slot, do steps 1-7 and explain the metrics. Treat comparison,
+index-edit checks, and cleanup as backup material for questions. For 25 minutes,
+perform all sections. Save recorded evidence before class, but label it recorded
+if you use it instead of a live run.
 
-The teacher's wording is ambiguous. Present these three input scenarios first.
-If they meant literally sending every file to the final agent, use the optional
-comparison in Section 12. If they meant persistent memory across separate chats,
-explain that this is not implemented and would need explicit consent and scope.
+## 1. Prepare Before Class
 
-## 2. Version and Installation
+### Choose the Correct Build
 
-The new input trace, line decisions, and **TokenWise: Demonstrate Pruning Inputs**
-command require **0.6.4 and its matching backend** for the latest fixes. Download them from the
-[0.6.4 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
-Older releases remain unchanged.
+This one-project layout and **Open Demonstration Guide** command belong to the
+**0.6.5 local build**. Do not expect them in the already-published 0.6.4 ZIP.
+Public 0.6.4 remains unchanged and already supports the core pruning commands.
+There is no claim here that 0.6.5 is published yet.
 
-### Install the Release VSIX
-
-1. In Antigravity, open **Extensions > ... > Install from VSIX...**.
-2. Select the downloaded `tokenwise-vscode-0.6.4.vsix`. For a local source build,
-   the same file is under `releases/TokenWise-0.6.4/`.
-3. Reload the editor window.
-4. Run **TokenWise: Set Up Backend** and approve installing the matching backend.
-5. Open a demo leaf folder, trust it, and run **Enable Automatic Context**.
-6. Re-run Enable in previously configured folders to refresh generated rules.
-7. Warm the model with **TokenWise: Start Backend** before class.
-
-Python 3.12 (64-bit) and supported CPU dependencies are required. Initial setup
-needs download access and disk space. Verified model downloads can be reused.
-Do not uninstall or clear all local data just to update.
-
-### Development Host Alternative
-
-From `vscode-extension`:
+From the source checkout, prepare the installer:
 
 ```powershell
+cd vscode-extension
 npm ci
-npm run prepare-backend
-npm run compile
+npm test
+npm run package
 ```
 
-Press F5 and open a demo leaf folder in the development host. Update the managed
-backend there too. For a checkout backend, restart its own process from the new
-source. Reloading the extension does not reload a running Python service.
-Use `npm run package` to create the local VSIX and shareable release folder.
+Install `vscode-extension/tokenwise-vscode-0.6.5.vsix` using **Extensions > ... >
+Install from VSIX...**, then reload. The shareable folder is
+`releases/TokenWise-0.6.5/`; its `demonstration/tokenwise_demo` is the same project.
+Never install the source-code ZIP as an extension.
 
-## 3. Demonstration Repositories
+For your existing F5 workflow, run `npm run prepare-backend` and `npm run compile`
+in `vscode-extension`, press F5, and use the new Extension Development Host.
+Running compile alone does not refresh bundled guides/examples. A friend's
+ordinary installation does not need Node, compiling, or F5.
 
-Download `TokenWise-0.6.4.zip` from the release assets and extract it for these
-examples. Open one leaf folder at a time, not the `demonstration` parent.
+### Open and Configure One Folder
 
-| Folder | Behavior | Tests | Purpose |
-| --- | --- | --- | --- |
-| `04_pruning_inputs` | Sessions plus unrelated invoice/shipping logic | 6 | First example: inspect actual line decisions |
-| `01_account_security` | Failed-login lockout and session boundaries | 8 | Repository retrieval and referring follow-ups |
-| `02_checkout_delivery` | Coupons, pricing, inventory, delivery | 8 | Repeat with another dependency structure |
-| `03_issue_tracker` | Permissions, transitions, audit | 6 | Generalization to another application |
+1. Use **File > Open Folder** and open `demonstration/tokenwise_demo` itself.
+2. Trust the folder only after checking its contents.
+3. Run **TokenWise: Set Up Backend**. Approve the managed dependency/model setup
+   or reuse your complete existing backend. Update an older managed backend when
+   offered; reloading TypeScript does not update a running Python service.
+4. Run **TokenWise: Enable Automatic Context** in this folder. Confirm enabling
+   the workspace. Existing unrelated rules/settings should remain intact.
+5. Run **TokenWise: Start Backend** before the presentation.
+6. Run **TokenWise: Diagnose Setup** and inspect **Output > TokenWise Setup**.
+7. Confirm a TokenWise rule exists in Antigravity **Customizations > Rules**.
+8. Inspect **Output > TokenWise Index**. This project has eleven saved Python files.
+9. Open this script through **TokenWise: Open Demonstration Guide**, or keep
+   the source `demonstation.md` preview beside your project window.
 
-These standard-library fixtures are teaching examples, not production security
-or financial software. Their executable source/tests are the behavior baseline.
+Use 64-bit Python 3.12. The application itself needs no pip packages. The
+extension's backend is different: initial dependency and pretrained-model
+downloads need internet and may take several minutes. Keep it warm afterward.
+If setup fails, repair the named problem and choose **Retry Failed Step**.
+Do not delete validated downloads or uninstall as your first retry action.
 
-From the TokenWise checkout root:
+### Fix the Experiment Settings
+
+In Settings, use a stable scenario throughout:
+
+| Setting | Rehearsal value |
+| --- | --- |
+| Default threshold | `0.45` |
+| Repository token budget | `8192` for the main presentation |
+| Enable carbon estimation | Enabled |
+| Target model name | `meta-llama-3-8b-instruct` |
+| Expected output tokens | `256` |
+| Carbon intensity | `475` gCO2/kWh |
+| Optional model size and input/output latency | Unset or `0` for registry features |
+| Optional GPU | Blank for registry features |
+
+These carbon settings describe an estimation scenario; they do not detect the
+Antigravity model or the cloud provider's actual hardware. Keep them identical
+for before/after estimates. Positive overrides can be used, but record them.
+
+Do not change the task, source snapshot, threshold, and budget all at once.
+Vary one factor when explaining its effect. Separate cold startup from warm
+preparation time; a cache hit is not a new neural inference benchmark.
+
+## 2. Establish the Application's Ground Truth
+
+In the terminal of the open `tokenwise_demo` folder:
+
+```powershell
+py -3.12 app.py
+py -3.12 -m unittest discover -s tests -v
+```
+
+The test command should finish with **20 tests, OK**. The app should print:
+
+```text
+Locked until: 160
+Login before expiry: False
+Login at expiry: True
+Session expiry: 400
+Session at 399: True
+Session at 400: False
+Revoked session at 101: False
+Invoice total: 12000
+Shipping days: 4
+Activity: {'invoice': 1, 'login': 1}
+```
+
+From a checkout or extracted bundle root, this checks the same app and tests:
 
 ```powershell
 py -3.12 demonstration/run_checks.py
 ```
 
-This runs four apps and 28 tests. From a leaf project:
+### What Is in This One Project?
 
-```powershell
-py -3.12 -m unittest discover -s tests -v
-py -3.12 app.py
-```
+| Source | Working behavior | Why it is useful in the demonstration |
+| --- | --- | --- |
+| `security/models.py` | Account/Session dataclasses and teaching digest | Session is relevant to one query; Account/digest are unrelated |
+| `security/settings.py` | 3 failures, 60-second lockout, 300-second session | Essential facts outside the main selected implementation |
+| `security/auth_service.py` | Lockout, rejection before deadline, reset at deadline | Cross-file repository retrieval with related tests |
+| `workflows.py` | Sessions, invoice totals, shipping times | One whole-file input with relevant and unrelated functions |
+| `reports.py` | Action counts and CSV | A genuine unrelated feature, not padding |
+| `app.py` | Deterministic runnable example | Architecture, callers, and behavior baseline |
+| `tests/test_auth.py` | Five lockout/reset tests | Boundary evidence for lockout questions |
+| `tests/test_workflows.py` | Ten session/invoice/shipping tests | Mixed test methods and topic exclusions |
+| `tests/test_models.py` | Two default/digest tests | Data-model evidence |
+| `tests/test_reports.py` | Three report/CSV tests | Independent feature validation |
 
-Do not enable automatic context in `baseline_lab`; it is for the optional
-context-only answer comparison.
+All time values are function inputs. Nothing waits for a real minute. The
+SHA-256 password digest is explicitly a teaching fixture, not production
+password storage. The application has no database, real users, or payment API.
 
-## 4. Explain the Pipeline
+**Say:**
+
+> This small application is the ground truth for my experiments. Its features
+> and tests are real, but deterministic. I can check whether the prepared context
+> retains the facts needed for the task instead of judging only compression.
+
+## 3. Explain TokenWise in One Minute
+
+**Say:**
+
+> TokenWise is a local context-preparation extension. A developer supplies a task.
+> It discovers relevant Python source or accepts exact selected source, prepares
+> task-dependent excerpts, and packs a bounded context. Antigravity uses that
+> reference data in its ordinary agent workflow. TokenWise is not the final
+> reasoning model, and it does not replace the source file with pruned text.
 
 ```text
-Current task + optional bounded earlier user reference
-  -> effective task / synthesized objective
-  -> repository discovery OR exact selected source
-  -> task-dependent representation / neural line decisions
-  -> retained excerpts
-  -> bounded formatted context
-  -> Antigravity's ordinary model request
+Latest task + optional bounded same-topic earlier user intent
+    -> effective objective
+    -> repository discovery OR exact captured file/excerpt
+    -> relevant candidates / source representation / neural line scores
+    -> preservation and formatting
+    -> bounded context packet
+    -> Antigravity's normal agent request
 ```
 
-TokenWise is a local **context preparation layer**, not the final reasoning
-model. It prepares reference data. It does not modify application source or
-automatically turn pruned text into a patch.
+The two source modes are different. In repository mode, every eligible indexed
+file is searchable, but only bounded candidates receive further processing.
+In selected mode, the model sees only the captured file or excerpt; it does
+not automatically add constants, callers, or tests from other files.
 
-Show **Pruning inputs** in the result panel. It records:
+On stable Antigravity, a workspace rule asks the agent to run the TokenWise tool.
+This is not guaranteed interception before the first cloud model call. Native
+hooks, where supported, are a separate integration path. Always show the actual
+current tool invocation when claiming the agent used the context.
 
-- Mode, current task, and exact code scope.
-- Requested threshold and history source.
-- Actual inference objective.
-- Earlier user reference, when one was used.
-- Indexed file count or original excerpt starting line.
+## 4. Start with a Normal Automatic Prompt
 
-Use **Export Pruning Run** to preserve the actual trace. A percentage alone does
-not explain why code was retained or omitted.
+1. Close Python tabs or clear selection. Start a **new Antigravity chat**.
+2. Type this into chat, not into the command palette:
 
-## 5. Scenario A: No File Is Selected
+```text
+Give me the full overview of my project. Do not modify any files.
+```
 
-For the exclusions and CO2-setting fixes below, install the
-**0.6.4 VSIX**, reload, run **Set Up Backend**, and re-enable the workspace.
-The previously published 0.6.3 installer does not contain these fixes. See the
-README's **Version 0.6.4** section for the download and retry steps.
+3. Show the agent's TokenWise command/tool call and returned
+   `[TokenWise automatic context]`.
+4. Show the fresh automatic result and its overview/file map.
+5. Open `.tokenwise/latest.json` if necessary. Check its current query,
+   timestamp, new event ID, `status: "ready"`, and `verification: false`.
+6. Check the final answer against the app: account lockout, sessions, invoices,
+   shipping, reports, and tests. Note any missing component rather than hiding it.
 
-Open `demonstration/04_pruning_inputs`. You may close editor tabs. The teaching
-command sends no active-file, symbol, selection, or diagnostic hint, even if a
-file remains open.
+If the automatic panel does not open, run **TokenWise: Show Automatic Context**.
+This displays the last result; verify that it belongs to the current prompt.
+The status bar count alone is not proof of a new retrieval or agent consumption.
+
+An overview is a **structural representation**, not narrow neural line pruning.
+It uses bounded root documentation and representative application components.
+Coverage warnings and file/token limits still apply. A model-generated summary
+can use tools to read more files; distinguish those later reads from the initial
+TokenWise packet.
+
+**Say:**
+
+> I typed a normal project question without selecting source. The agent retrieved
+> the current repository context. For a broad overview, TokenWise preserves
+> architecture rather than treating generic words like PROJECT as code symbols.
+
+## 5. Teacher Scenario A: All Repository Code Available, No Selection
+
+For a controlled input trace, use the teaching command. It deliberately sends
+no active-file, selected text, current-symbol, or diagnostic hint, even if an
+editor is open. This separates repository discovery from accidental editor bias.
 
 1. Run **TokenWise: Demonstrate Pruning Inputs**.
 2. Choose **Repository: no selected file**.
-3. Enter `Explain session expiry and revocation, not invoice pricing.`
-4. Use threshold `0.45`.
-5. Show repository mode, scope, indexed count, and the inference objective.
-6. Show included files, their relations, methods, applied thresholds, and excerpts.
-7. Export the run and record its actual omissions and counts.
-
-With 0.6.4, show **Excluded topics: invoice pricing**. The goal identifiers must
-not promote `invoice` or `pricing`. In this mixed demo, inspect the final packet
-for session expiry/revocation and their tests, and verify that the independent
-`invoice_total`, invoice tests, and invoice display call are omitted. This is a
-query-specific reference view, not a change to the demonstration files. Then
-ask `Explain invoice pricing.` separately: invoice code must still be retrievable.
-
-### What Happens Internally
-
-The index discovers eligible saved Python files and extracts AST-based symbols,
-signatures, lexical terms, and dependency metadata. Task words and identifiers
-rank candidate source. Dependency expansion can add related implementation,
-constants, interfaces, and tests.
-
-The full repository is the **discovery scope**, not necessarily neural input.
-The teaching command allows eight candidates; normal automatic setup defaults
-to six. At most three candidate files receive neural line pruning per request.
-Other candidates can use interfaces or short-source retention. The complete
-formatted output is bounded by the token budget afterward.
-
-Per-file methods make the different branches visible:
-
-| Method | Meaning |
-| --- | --- |
-| `neural_lines` | Neural relevance and thresholds applied to source |
-| `scope_filter+...` | Independent explicitly excluded units omitted before the indicated packing/pruning method |
-| `short_source_retained` | Small task-matched body retained without another model pass |
-| `signature_interface` | Interfaces, signatures, or relevant constants |
-| `overview_excerpt` | Structural overview coverage; no neural line pruning |
-| `original_source_fallback` / `signature_fallback` | Recovery after a pruning failure |
-
-Neural anchors use `max(0.10, requested_threshold - 0.15)`; other neural
-candidates use `min(0.85, requested_threshold + 0.15)`. Show the applied value
-rather than claiming every file used the same threshold.
-
-The explicit topic filter is a separate AST-based stage, not an extra neural
-score or a claim that the model perfectly understood negation. Shared helpers
-needed by the positive task can remain with a warning. Ordinary conditions such
-as `not session.revoked` must remain eligible. Selected-source commands do not
-apply this repository filter, and broad overview mode remains structural.
-
-### What to Say
-
-> No file was selected. TokenWise searched repository metadata using the task,
-> followed relevant dependencies, and prepared bounded excerpts. It did not
-> concatenate every repository file into a single neural-model call.
-
-Then repeat the task in a **new actual Antigravity chat** with no selection and
-`Do not modify files.` Inspect the current TokenWise tool output and fresh event.
-The teaching command's panel does not itself inject a packet into a chat or
-prove that the cloud agent consumed it.
-
-## 6. Scenario B: Selected File or Excerpt
-
-Keep the project and task unchanged so the source scope is the variable.
-
-### Entire File
-
-1. Open `workflows.py` and clear the text selection.
-2. Run **Demonstrate Pruning Inputs**.
-3. Choose **Selected file or highlighted excerpt**.
-4. Use the same task and threshold `0.45`.
-5. Show **Selected entire file**, Original, **Line decisions**, and Pruned context.
-6. Inspect actual decisions around sessions versus invoice/shipping source.
-7. Export the run.
-
-The regular **Prune Current File** command always processes the complete file,
-even if text is highlighted. A highlight no longer accidentally changes scope.
-
-### Exact Excerpt
-
-1. Highlight only the definition/body of `session_is_valid`.
-2. Run the teaching command and choose selected mode.
-3. Use the same task and threshold.
-4. Show **Selected excerpt**, First source line, and the captured Original text.
-5. Explain that invoice code and neighboring definitions were never supplied.
-
-The regular **Prune Selected Code** also uses exactly the highlighted fragment.
-Direct selected pruning does not expand dependencies or retrieve related tests.
-The fragment can therefore omit imports, constants, or callers needed to explain
-it. Source excluded by selection was not removed by the model.
-
-Both operations capture a buffer snapshot before waiting for the backend. Source
-line coordinates show the original excerpt location. Scores correspond to lines
-of the supplied fragment. The registered managed backend URL is used rather than
-an assumed fixed port.
-
-### Threshold Experiment
-
-Repeat the exact entire-file input with threshold `0.85`. Keep task, source,
-and preservation settings unchanged. Compare the actual line scores, masks, and
-final text with the `0.45` run.
-
-Higher thresholds generally retain fewer scored lines, but formatting and
-preservation affect final text. Do not promise a particular percentage or
-specific removed line. A tiny relevant excerpt can legitimately remain intact.
-Record whether necessary evidence was lost, not just how much text disappeared.
-
-### What to Say
-
-> This input is exactly the captured file or fragment. The task conditions
-> neural line relevance. Unlike repository mode, no extra file is retrieved.
-> Selecting less input and pruning supplied input are different operations.
-
-## 7. How Neural Line Pruning Works
-
-The local pretrained query/document model returns token-level relevance logits
-and a document-level relevance score. Token logits pass through sigmoid; source
-offset mappings associate tokens with lines. TokenWise averages the scores of
-constituent scored tokens for each line:
+3. Enter:
 
 ```text
-line relevance = mean(relevance of scored tokens belonging to the line)
-initial line decision = line relevance >= threshold
+Explain session expiry and revocation, not invoice pricing.
 ```
 
-These are task-conditioned model scores, not a correctness proof or calibrated
-probability that a line is necessary. Repository file-ranking scores combine
-other evidence and are not the same quantity.
+4. Enter threshold `0.45`.
+5. Show **Pruning inputs**: repository mode, current task, no selection scope,
+   no history, eleven indexed Python files, and the inference objective.
+6. Show **Excluded topics: invoice pricing**. Excluded terms should not be
+   promoted as positive goal identifiers.
+7. Show included files, relations, tiers, pruning methods, applied thresholds,
+   retained source, packed tokens, and the actual unified context.
+8. Check for `session_is_valid`, `revoke_session`, and session boundary tests.
+   Verify the independent `invoice_total`, invoice test methods, and invoice
+   print call are not included. Shipping/report interfaces may still appear
+   through dependency expansion; inspect and report the actual packet.
+9. Click **Export Pruning Run** and save the JSON as `A-repository.json` in your
+   presentation evidence folder, not in an indexed Python source directory.
 
-Depending on settings, preservation can retain the first line. The mask can
-bridge one-line gaps. Formatting may restore short removed ranges where a marker
-would be larger, and treats blank lines specially. That is why the table says
-**decision mask includes preservation and gap bridging, before output formatting**. `keptFrags`
-is not guaranteed exact membership in final displayed text.
+Now rerun repository mode with `Explain invoice pricing.` Invoice source must
+still be retrievable: the exclusion altered a query-specific view, not the file.
+The app/tests should still pass unchanged.
 
-Long source is chunked with overlap. Scores for duplicate source offsets are
-averaged before line aggregation. The current wrapper uses an 8,192-token model
-input window and 50-token document overlap. Source offsets, not approximate text
-search, map scores back to code. The panel displays up to 200 lines; JSON export
-retains the full returned scores.
+### How to Explain the Methods
 
-Repository packing can trim source after neural selection. Its applied threshold
-describes the neural step, not the final budget cutoff.
+| Method shown in panel | What happened |
+| --- | --- |
+| `neural_lines` | Task-conditioned neural line relevance and a threshold |
+| `scope_filter+...` | Independent explicitly excluded AST units omitted before the following method |
+| `short_source_retained` | Small task-matched source retained without another neural pass |
+| `signature_interface` | Bounded signatures/interfaces/relevant constants |
+| `overview_excerpt` | Structural overview representation, not neural pruning |
+| `original_source_fallback` / `signature_fallback` | Recovery after a pruning failure |
 
-Pruned text is **context**, not executable replacement code. Omissions and markers
-can make it incomplete or syntactically invalid. TokenWise does not insert it
-into your file automatically.
+Repository processing searches cached AST/symbol/lexical/dependency metadata.
+The teaching command allows eight candidates; ordinary automatic setup defaults
+to six. At most three candidate files receive neural line pruning per request.
+Others can use short bodies or interfaces. The final wrapper is included in the
+token budget; not every discovered file fits in the packet.
 
-## 8. Scenario C: Earlier Conversation Context
+For neural candidates, the anchor threshold is
+`max(0.10, requested_threshold - 0.15)` and other candidates use
+`min(0.85, requested_threshold + 0.15)`. With requested `0.45`, these can be
+`0.30` and `0.60`. Show **Applied threshold** instead of claiming every file used
+exactly `0.45`. Methods without a neural pass say **not applied**.
 
-A follow-up such as `Which tests cover that behavior?` does not identify the
-behavior by itself. Show whether earlier intent changes the actual retrieval/
-pruning objective, not merely the final agent's answer.
+Topic exclusion is a separate AST-based step, not a neural probability of
+negation. Required shared helpers can remain with a warning. Conditions such
+as `not session.revoked` are not deletion instructions. Selected-source pruning
+does not apply this repository topic filter.
 
-### Controlled Replay
+**Say:**
 
-Open `demonstration/01_account_security`.
+> All eligible repository code is available for discovery, but I did not select
+> a file. The task ranks relevant evidence, dependencies and tests can be added,
+> and the final packet is bounded. This is not one giant model call over every
+> file. The panel tells me which representation was actually used.
 
-1. Run **Demonstrate Pruning Inputs**.
+For **real automatic integration**, type the same task plus `Do not modify files.`
+in a new Antigravity chat and show its actual tool output. The teaching-command
+panel is a controlled experiment; it does not itself inject that packet into chat.
+
+## 6. Teacher Scenario B1: Entire Selected File
+
+This repeats the experiment visible in your Session output.
+
+1. Open `security/models.py` and clear all highlighted text.
+2. Run **TokenWise: Demonstrate Pruning Inputs**.
+3. Choose **Selected file or highlighted excerpt**.
+4. Enter `Explain the Session class.`
+5. Enter threshold `0.45`.
+6. Show **Selected entire file**, the exact path, First source line `1`, and
+   History source **None**.
+7. Show Original, **Line decisions**, and Pruned context.
+8. Explain the three fields: `username`, `expires_at`, and `revoked = False`.
+9. Compare retained Session lines with the unrelated Account/password-digest
+   lines in Original. Inspect actual scores rather than predicting them.
+10. Export `B1-session-entire-file.json`.
+
+The regular **TokenWise: Prune Current File** command also captures the whole
+file, even if a highlight exists. Its explicit name matters. The teaching command
+uses a highlight when present, so clear it for a whole-file demonstration.
+
+### Explain Your Existing Screenshot Correctly
+
+Your recorded run used the task `explain me the session class` and reported:
+
+| Recorded value | Explanation |
+| --- | --- |
+| Original `117` tokens | Supplied full-file source measured by the pruning tokenizer |
+| Pruned `26` tokens | Final selected-source excerpt, including its omission formatting |
+| Reduction `77.78%` | `(117 - 26) / 117 * 100`, rounded |
+| Model input `195` tokens | Query/instruction/source input; not the same denominator |
+| Relevance `0.4693` | Document/task relevance score, not percentage accuracy |
+| Kept line fragments `19-22` | Actual decision-mask source coordinates for that run |
+| Session fields around `0.93-0.95` | Mean task-conditioned relevance of scored tokens on those lines |
+
+These numbers are historical observations from your screenshot, not guaranteed
+results for another machine, task spelling, setting, or build. Re-export the
+new run and report its own values. You may show the screenshot as recorded
+evidence, provided no personal information needs hiding.
+
+The recorded mask omitted `@dataclass` while retaining the class and fields.
+That is an important limitation: the excerpt is useful for identifying the data
+fields, but it does not contain every fact about construction or behavior.
+An explanation of automatically generated initialization/equality methods needs
+the original decorator or a repository view that supplies it. Do not claim that
+this excerpt is complete or executable replacement source.
+
+**Say:**
+
+> The whole file was input. The Session fields scored above the threshold,
+> while unrelated Account and digest lines did not. This demonstrates task-aware
+> line selection. I still check completeness: losing a decorator can lose
+> important semantics even when the reduction percentage is impressive.
+
+## 7. Teacher Scenario B2: Exact Highlighted Excerpt
+
+Keep `security/models.py` open.
+
+1. Highlight the `@dataclass` immediately above `class Session` and all of the
+   Session class body. Do not include Account or the password function.
+2. Run **Demonstrate Pruning Inputs** and choose selected mode again.
+3. Use the same task and threshold.
+4. Show **Selected excerpt**, the original starting line, and captured Original.
+5. Check whether the decorator survives this run; do not assume it must.
+6. Export `B2-session-excerpt.json`.
+
+The ordinary **TokenWise: Prune Selected Code** command uses exactly a highlighted
+fragment. With no selection it asks you to highlight code; it does not mean
+repository discovery. No extra files or tests are automatically added.
+
+**Say:**
+
+> In this run Account was never input. Its absence is due to my selection, not
+> the model removing it. Neural pruning only operates within this captured
+> fragment. A smaller input can legitimately need little or no pruning.
+
+Selections capture the editor buffer, including unsaved text. Repository search
+uses saved files. Record that distinction before comparing experiments. Selected
+source coordinates are the fragment's original position, not a fresh line 1.
+
+## 8. Threshold Experiment in the Same Project
+
+1. Open `workflows.py`, clear selection, and use selected entire-file mode.
+2. Task: `Explain session expiry and revocation, not invoice pricing.`
+3. Run with `0.45` and export `B3-workflows-threshold-045.json`.
+4. Run again with the same source/task and threshold `0.85`.
+5. Export `B4-workflows-threshold-085.json`.
+6. Compare session functions with invoice/shipping functions in Original,
+   line scores, masks, final context, reduction, and omitted necessary facts.
+
+This is a neural experiment on the same mixed file, not the repository AST
+exclusion stage. The words `not invoice pricing` are part of the neural query;
+selected mode does not guarantee perfect handling of them. Report any unrelated
+retained line honestly. The higher threshold generally retains fewer scored
+lines, but preservation/formatting affect final text.
+
+### Explain the Neural Decisions
+
+```text
+query + source -> pretrained relevance model
+token logits -> sigmoid relevance scores
+source offset mappings -> tokens belonging to each line
+line relevance -> mean of scored token relevance on that line
+initial keep decision -> line relevance >= threshold
+preservation/gap bridging -> decision mask
+formatting -> final reference excerpt
+```
+
+Scores are not calibrated probabilities that a line is required or correct.
+Blank lines can be unscored. First-line preservation, one-line gap bridging,
+and formatting can retain or restore low-scoring lines. For short removed
+ranges, a marker can be larger than the source it replaces. The table describes
+the **mask before output formatting**, not exact final membership.
+
+Long inputs are chunked with overlap; duplicate source-offset scores are averaged
+before line aggregation. The wrapper uses an 8,192-token input window and
+50-token document overlap. The panel shows at most 200 source lines; JSON
+export retains the full returned line scores. This small fixture is not a
+benchmark of huge-repository/chunking throughput.
+
+**Say:**
+
+> Threshold controls which scored lines initially qualify. It is not a quality
+> score or a guaranteed compression setting. I compare the final context with
+> source/tests to see whether necessary evidence was lost.
+
+## 9. Teacher Scenario C1: Controlled Earlier-User Replay
+
+Keep the same `tokenwise_demo` folder open. No new project is needed.
+
+1. Run **TokenWise: Demonstrate Pruning Inputs**.
 2. Choose **Conversation: replay earlier user context**.
-3. Supply the earlier user task:
-   `Explain account lockout after failed login attempts and its related tests.`
-4. Supply the current task: `Which tests cover that behavior?`
+3. Earlier user task:
+
+```text
+Explain account lockout after failed login attempts and its related tests.
+```
+
+4. Current task:
+
+```text
+Which tests cover that behavior?
+```
+
 5. Use threshold `0.45`.
-6. Show conversation-informed mode and **Supplied replay (not live chat capture)**.
-7. Expand Earlier user reference and Inference objective. The lockout subject
-   should be present in the actual effective objective.
-8. Inspect source/tests and export the run.
+6. Show **Supplied replay (not live chat capture)**.
+7. Expand Earlier user reference and Inference objective. Check that the actual
+   effective objective includes the lockout subject from the earlier task.
+8. Inspect lockout implementation, settings and relevant tests.
+9. Export `C1-history-replay.json`.
 
-The replay uses the real backend, but you deliberately supply an earlier task.
-It does **not capture Antigravity chat automatically**. Label it as replay.
+Then run two controls:
 
-For a negative control, run repository mode with only the ambiguous follow-up
-and no reference. Missing-subject clarification or a limited result is expected.
+| Control | Input | Expected distinction |
+| --- | --- | --- |
+| No earlier reference | Repository mode; only `Which tests cover that behavior?` | Missing-subject clarification or limited context, not an invented topic |
+| Explicit topic switch | Replay lockout, current task `Explain session expiry and revocation and their tests.` | New task is self-contained; unrelated lockout hint is ignored |
 
-For a topic-switch control, replay the lockout task but use the self-contained
-current query `Explain session expiry boundary tests.` The backend ignores the
-unrelated hint; repository mode with no history is then intentional.
+The replay uses the real backend and actual supplied history, but **you entered
+the earlier task manually**. It is not proof of automatic Antigravity transcript
+capture. A referring follow-up changes the effective retrieval/pruning objective;
+it is not merely a history phrase appended to the final answer.
 
-### Live Same-Chat Test
+**Say:**
 
-Start a new actual Antigravity chat in the account-security project:
+> That behavior is ambiguous on its own. The earlier user requirement supplies
+> the subject, and the effective objective shows how it changes retrieval.
+> This experiment is explicitly a replay; I will test live integration next.
+
+## 10. Teacher Scenario C2: Actual Same-Chat and New-Chat Tests
+
+Start one **new actual Antigravity chat** in the same folder.
+
+First prompt:
 
 ```text
 Explain account lockout after failed login attempts and its related tests.
 Do not modify any files.
 ```
 
-Then, in that same chat:
+Second prompt in that same chat:
 
 ```text
-What about its expiry boundary?
+What about its expiry boundary? Do not modify any files.
 ```
 
-Then:
+Third prompt:
+
+```text
+Which tests cover that behavior? Do not modify any files.
+```
+
+For each prompt, show the current tool call/output and fresh `latest.json`.
+Check the task/reference/effective objective, event ID, included files, and
+the answer. Boundary evidence should distinguish lockout from session expiry.
+
+| Integration path | How earlier intent reaches the backend |
+| --- | --- |
+| Native PreInvocation hook, where supported | Bounded earlier explicit user turns; trace can say `native_scoped_user_turns` |
+| Stable-build workspace rule/tool fallback | Agent resolves the subject into a self-contained current query; backend sees that query, not raw earlier chat |
+
+Do not require a native history label on a fallback build. Instead inspect the
+resolved current query and current tool output. The backend cannot prove exactly
+how the fallback agent constructed that query or claim it saw the whole chat.
+
+### Isolation Controls Without Another Project
+
+1. In the same chat, ask a new explicit topic:
+
+```text
+Explain invoice tax rounding and its related tests. Do not modify files.
+```
+
+2. Show that the new query/objective is about invoices, not attached lockout intent.
+3. Start another **new chat** and ask only:
 
 ```text
 Which tests cover that behavior?
 ```
 
-For each retrieval inspect actual current tool output and the fresh
-`.tokenwise/latest.json`. Distinguish these integration paths:
+4. The agent should clarify the missing subject, not silently reuse another
+   chat's topic. If it clarifies without a tool call, no new retrieval event is
+   expected. An unchanged status or old JSON is not evidence of a new run.
 
-| Path | How history reaches pruning | What the backend can show |
+Native state retains at most **three earlier user turns** from the current topic,
+within **2,000 combined characters**, preserving the topic opening and recent
+constraints. Explicit new tasks reset the topic. Reuse requires a conversation
+ID and is workspace-scoped. Assistant answers, injected context, unrelated chats,
+and unresolved questions are not authoritative remembered user intent.
+
+**Say:**
+
+> This is bounded same-topic context, not permanent memory or model training.
+> Separate chats must be isolated. I show a replay and live tool behavior
+> separately because they establish different facts.
+
+## 11. Optional Literal All-Code / Selected / Automatic Comparison
+
+This answers the alternative interpretation: what context reaches the final
+agent under three strategies? It is different from how the neural mask is made.
+
+1. Open and save `security/auth_service.py`; clear selection.
+2. Run **TokenWise: Compare Context Strategies**.
+3. Use this common task:
+
+```text
+Explain account lockout after failed login attempts, the expiry boundary,
+and its related tests. Do not modify any files.
+```
+
+4. Show the three strategies, actual token counts, file lists and CO2 scenario.
+5. Inspect each packet and use its copy control. Export the comparison JSON.
+
+| Strategy | What it contains | What to inspect |
 | --- | --- | --- |
-| Native PreInvocation hook | Bounded earlier user turns, scoped by workspace/conversation ID | `native_scoped_user_turns`, reference, and effective objective |
-| Stable-build rule/tool fallback | Agent resolves the reference into a self-contained query | That current query, not the raw earlier transcript |
+| All Python | Unpruned eligible indexed Python from the same saved snapshot | Constants, implementation, tests, and unrelated workflows |
+| Selected | Unpruned saved file/excerpt | Implementation only; settings values and tests may be missing |
+| TokenWise | Bounded retrieved packet with no selection bias | Whether the necessary cross-file evidence fits |
 
-Native state retains at most **three earlier user turns** for the current topic,
-within **2,000 combined characters**. With more turns, it preserves the topic
-opening and the most recent two. Text can be truncated to enforce the bound.
-Only recognized referring follow-ups reuse it; explicit tasks reset the topic.
+The Selected baseline here is **unpruned**, not the neural selected-source
+experiment. All Python excludes ignored paths and non-Python assets. Oversized
+baselines and changed snapshots fail visibly rather than silently truncating an
+all-code baseline. The command compares packets; it does not grade answers.
 
-A nonempty conversation ID is required. Without one, reuse is disabled. State
-is workspace-scoped too. Records from another conversation, model/assistant
-answers, and injected context are not treated as authoritative remembered intent.
-An unresolved referring question does not become a new remembered topic.
+### Optional Answer-Quality Trial
 
-Fallback rules request the same bounded current-topic user intent when rewriting
-a query, or clarification if its subject is missing. Their execution depends on
-the agent following the rule. The backend cannot certify how a fallback agent
-constructed its query or claim access to the full Antigravity chat.
+Use fresh independent chats with the same agent model/settings, one packet and
+the same question per chat. Rotate strategy order. Ask answers to use only the
+supplied packet, cite evidence, and state what is missing. No browsing, file
+reads, terminals, or extra context tools are allowed in a context-only trial.
 
-### Isolation Controls
+A project-connected Antigravity chat still has potential repository access and
+TokenWise rules. Reject a context-only trial if any extra tool runs. For strict
+isolation, paste exported packets into independent chats outside this workspace,
+with no repository attachment/integration. This needs no second Python project.
+If you cannot enforce it, label the trial a **tool-assisted workflow**, not a
+controlled context-only quality comparison.
 
-1. Ask a self-contained new topic in the same chat. Inspect a fresh objective;
-   unrelated lockout history should not remain attached.
-2. Start a **new chat** and ask only `Which tests cover that behavior?`.
-   It should clarify the missing subject, not silently reuse another chat's topic.
-3. Open a different demo leaf project and start a fresh chat. Verify included
-   paths belong to it and previous topics are not inherited.
+Score against facts defined from the tests **before** viewing answers:
 
-If the agent asks for clarification without running a tool, there is no new
-retrieval event. An old status item is not proof of history leakage. Check event
-IDs, timestamps, and the actual chat call.
+- Threshold: three failed attempts.
+- Duration: 60 seconds from the lockout-triggering failed login.
+- Correct password rejected while `now < locked_until`.
+- Exact deadline allows timed reset; successful login clears failures.
+- Wrong password at expiry starts a fresh count.
+- Relevant boundary/reset test names and supported assertions.
 
-### What to Say
+Record supported facts, omissions, unsupported claims, packet/answer timing,
+and tool violations separately. Literal source-marker presence is not semantic
+answer correctness. One small demo does not prove universal superiority.
 
-> Earlier user intent can resolve a referring follow-up and change retrieval
-> and the pruning objective. This is bounded same-topic context, not permanent
-> model learning or memory shared across unrelated chats. Assistant answers are
-> not trusted as user requirements.
+## 12. Token Metrics and Your CO2 Screenshot
 
-## 9. Honest Metrics
+### Different Counts Have Different Meanings
 
-Compression alone is not usefulness. Removing a relevant boundary check can
-reduce tokens while making the answer worse. Compare evidence against source/tests.
+| Metric | Meaning |
+| --- | --- |
+| Original/source | Input source or original included-source baseline |
+| Pruned/retained source | Retained excerpt source |
+| Packed tokens | Complete repository wrapper, headings, fences and excerpts |
+| Formatting overhead | Packet tokens beyond retained source |
+| Raw context tokens | Matched packet with same files/formatting before pruning |
+| Model input tokens | Query/instruction/source input, not total multi-pass/provider compute |
 
-### Token Counts
+Source reduction is `(original - retained) / original * 100`. Do not compare
+17 source tokens with a 117-token wrapped packet and call it -588.24% useful
+reduction: unchanged source has 0% source reduction and 100 overhead tokens.
+Actual increases are valid and must be labeled as increases, not hidden.
 
-- Source/retained source: before/after supplied or included source.
-- Packed tokens: complete formatted repository context including wrapper/fences.
-- Formatting overhead: wrapper contribution, not removed source.
-- Raw context: matched formatted bundle with unpruned included source.
-- Model input tokens: query/code input count, not measured total computation across
-  overlapping chunks, repository passes, or final agent requests.
+### Why 77.78% Fewer Tokens Does Not Mean 77.78% Less CO2
 
-Keeping 17 source tokens in a 117-token packet means **0% source reduction and
-100 tokens overhead**, not -588.24% useful savings. Report actual expansion as
-an increase. A selected excerpt's counts do not describe the entire repository.
+Your **recorded selected-file** run estimated:
 
-### Carbon Estimates
-
-Selected-source predictions use backend-native original/retained source counts.
-Repository predictions use matched formatted bundles. Identify that different
-baseline before comparing these values.
-
-Both sides keep the configured target model, output-token assumption, hardware
-scenario, and carbon intensity fixed. These are approximate SEAL-derived scenario
-predictions, **not measured provider emissions**, local pruning energy, or proven
-net environmental savings. The actual agent model is not detected automatically.
-
-Pending, disabled, unavailable, zero savings, and actual increases are legitimate.
-A carbon error does not discard prepared context. No fixture guarantees savings.
-
-## 10. Evidence and Presentation Schedule
-
-Use [the blank worksheet](demonstration/results-template.md). Record actual task,
-scope, reference/history source, objective, thresholds, methods, scores, omissions,
-tokens, timing, and errors. Attach exported Pruning Run JSON and dated screenshots.
-
-A live-integration claim also needs the actual chat's current tool output.
-A result panel or saved status count alone is insufficient.
-
-Private transcripts should only be retained with consent. Generated results
-under `demonstration/results/` are ignored by Git. Do not commit secrets or
-full private chat logs.
-
-The native-hook verifier uses a **generated USER transcript** and real local
-HTTP/model calls. Its report says `verification_only: true` and
-`antigravity_cloud_called: false`. It does not prove live cloud-agent behavior
-or grade semantic answers.
-
-| Time | Demonstration | Main point |
+| Quantity | Before | After |
 | --- | --- | --- |
-| 0-2 minutes | Explain pipeline and input modes | Task-dependent context preparation |
-| 2-5 minutes | Repository, no editor hint | Automatic discovery, bounded processing |
-| 5-8 minutes | Whole file, excerpt, two thresholds | Scope versus actual line pruning |
-| 8-11 minutes | History replay and negative control | Earlier intent changes the objective |
-| 11-13 minutes | Rehearsed same-chat/new-chat test | Real integration and isolation |
-| 13-15 minutes | Metrics, omissions, executable tests | Quality and honest limitations |
+| Prefill energy | 17.0119 J | 3.7804 J |
+| Decode energy | 981.9252 J | 981.9252 J |
+| Total energy | 998.9371 J | 985.7057 J |
+| CO2 | 0.131804 g | 0.130058 g |
 
-Warm the backend before class. Keep dated recorded runs as a fallback for slow
-startup or connectivity, but label them as recorded, not current live activity.
+The difference is **13.2315 J** and approximately **0.001746 g CO2**. At the
+displayed intensity, the conversion is:
 
-## 11. Defense Questions
+```text
+CO2 grams = energy joules / 3,600,000 * carbon intensity gCO2/kWh
+13.2315 / 3,600,000 * 475 ~= 0.001746 g
+```
 
-**What determines what gets removed?**
-The effective task and supplied scope. Selected mode uses mean neural line
-relevance and threshold/preservation/formatting rules. Repository mode first
-discovers candidates and uses several representation branches before packing.
+The token reduction mainly changes estimated **prefill**. The assumed output
+length stays fixed, so estimated **decode** is unchanged and dominates this
+small-input scenario. Total estimated CO2 reduction is about **1.32%**, not
+77.78%. This is expected under those assumptions, not proof of measured savings.
 
-**Does no selection mean every file enters the model?**
-No. Indexed source is searchable; candidate limits, interfaces, short bodies,
-and capped neural passes bound processing.
+### Baselines and Limits You Must State
 
-**Does selecting a fragment add its dependencies?**
-Not in direct selected-source pruning. Repository retrieval is a separate path.
+- Selected-source estimates use the source-only original/retained counts.
+- Repository estimates compare matched formatted packets with the same files.
+- Context-strategy estimates compare each actual complete packet's input count.
+- Hold target model, hardware assumptions, output length, and intensity fixed.
+- `artifact_models:model_registry` means registered features; a suffix
+  `+request_overrides` means explicit scenario overrides also contributed.
+- The displayed prefill/decode routes identify the actual estimator branch.
+- These are trained SEAL-derived scenario predictions, not measured Antigravity
+  consumption, provider emissions, or energy used by local indexing/pruning.
+- The extension does not automatically identify the agent's cloud hardware/model.
+- A net environmental claim would also require measuring local pruning overhead
+  and actual downstream inference. This presentation does not establish that.
+- Pending, disabled, unavailable, zero savings, or an increase are valid states.
+  A carbon error should not discard prepared context or invent a green number.
 
-**Does history affect pruning or just the final answer?**
-For recognized follow-ups, it enters the actual effective retrieval/pruning
-objective. Show that objective. Fallback can provide a resolved query instead;
-the backend does not see that path's raw earlier chat.
+**Say:**
 
-**Does TokenWise remember all chats?**
-No. Native state is bounded and workspace/conversation-scoped. Explicit topics
-replace older ones. Separate chats are isolated.
+> The estimator compares a fixed inference scenario before and after context
+> reduction. Input processing falls, while assumed output processing is fixed.
+> I report the baseline and assumptions and do not call predictions measured
+> emissions or claim a guaranteed net environmental benefit.
 
-**Why can a low-scoring line remain?**
-Preservation, gap bridging, and output formatting. The mask and final context
-are distinct; subsequent repository packing can remove retained source too.
+## 13. Budget, Indexing, and Freshness Checks
 
-**Why not maximize reduction?**
-Necessary evidence can be lost. Evaluate correctness and omissions as well as size.
+These are optional questions-and-answers demonstrations, not changes needed for
+the main run. Record original settings/content before changing anything.
 
-**Why are overviews different?**
-They preserve representative architecture and bounded root documentation, rather
-than apply narrow neural pruning to generic words such as PROJECT.
+### Bounded Context
 
-**Did you train the neural model from scratch?**
-This implementation integrates pretrained SWE-pruner. Your contribution includes
-retrieval/indexing, task preparation, bounded packing, Antigravity integration,
-managed setup, tracing, and evaluation. Credit upstream model/code and carbon
-work; do not claim their training as your own.
+1. Save the main repository result at an 8,192-token budget.
+2. Temporarily set **Repository Token Budget** to `512` in this workspace.
+3. Repeat the same repository task and threshold.
+4. Show packed tokens within the new budget and any coverage/omission warnings.
+5. Do not assume a tiny packet still contains all required evidence.
+6. Restore the budget to `8192`.
 
-**Is it universal or guaranteed?**
-No. The beta targets trusted local Python repositories and is Windows-tested.
-Remote/virtual workspaces, arbitrary coreference, native macOS/Linux validation,
-perfect retrieval, and guaranteed cloud-agent rule compliance remain limitations.
+The automatic launcher has its own `.agents/tokenwise.json` budget; changing an
+editor setting for teaching commands does not necessarily change that generated
+configuration. Read the panel's actual budget. Keep the automatic run's settings
+fixed unless deliberately testing them too.
 
-## 12. Optional Literal Context-Packet Comparison
+### Background Index / Cache Freshness
 
-If the teacher wants to compare *what reaches the final agent*, use
-**TokenWise: Compare Context Strategies**, available from 0.6.2 onward:
+1. Observe the configured workspace in **Output > TokenWise Index**.
+2. Repeat exactly the same task with no saved changes. Record cold/warm/cache
+   conditions rather than claiming every quicker run reran neural inference.
+3. If you want an edit test, change `SESSION_SECONDS = 300` to `301` in
+   `security/settings.py`, save, and wait for the index update.
+4. Run repository mode with `Explain SESSION_SECONDS session expiry.` Show
+   that fresh context uses `301`, not a stale cached result.
+5. Restore `300`, save, and rerun all 20 tests. Boundary tests intentionally
+   fail if the constant remains changed; do not leave the fixture modified.
 
-| Strategy | Packet |
+Already configured trusted workspaces index in the background. Saved Python
+create/change/delete/rename events update affected metadata; periodic
+reconciliation catches missed events. Cached terms, symbols, signatures,
+dependencies, and token counts are reused. Answer reuse is tied to the task,
+history, configuration and source fingerprint; similar wording alone must not
+reuse another task's answer. Exact selected pruning uses a buffer snapshot.
+
+## 14. Save the Evidence
+
+Use [the blank worksheet](demonstration/results-template.md). For each run record:
+
+- Date, machine, editor/extension/backend/source versions.
+- Task spelling, scope, current saved snapshot, selected buffer and starting line.
+- Effective objective, history source/reference, requested/applied thresholds.
+- Actual methods, relevant retained facts, unnecessary context, necessary omissions.
+- Source/retained/packed/raw counts, budget, timing and cache conditions.
+- CO2 scenario, baseline, values, state or error.
+- JSON export and dated screenshot filename.
+- Actual current chat tool output when claiming live integration.
+
+Suggested filenames: `01-overview`, `A-repository`, `B1-session-entire-file`,
+`B2-session-excerpt`, `B3-workflows-threshold-045`,
+`B4-workflows-threshold-085`, `C1-history-replay`, `C2-live-same-chat`,
+`C3-new-chat-control`, and `D-context-strategies`.
+
+Export selected/repository runs using **Export Pruning Run**. The comparison
+panel also has comparison export/copy controls. Copy Unified Context and Copy
+Pruned Context copy the excerpts, not an executable application replacement.
+
+Generated evidence under `demonstration/results/` is ignored by Git. Do not
+commit secrets, personal chat history, local absolute-path registrations, or
+model weights. Keep private transcript evidence only with permission.
+
+### Developer Verification Is Different from a Live Defense
+
+`scripts/verify_demonstration.py` exercises real local weights, HTTP calls,
+compiled client mappings, and a generated explicit-user transcript. Its reports
+say `verification_only: true` and `antigravity_cloud_called: false`. That is
+useful local verification, not proof of a real cloud-agent answer or live native
+hook support in every Antigravity build. Historical results from the previous
+four demos are not numeric results for the new project.
+
+## 15. Troubleshooting During Rehearsal
+
+| Symptom | What to do |
 | --- | --- |
-| All Python | Unpruned eligible indexed Python, with explicit export size limits |
-| Selected | Unpruned saved file or excerpt |
-| TokenWise | Retrieved, bounded context with no hidden selection anchor |
+| New guide command missing | Install the 0.6.5 local VSIX; reload the correct host/profile |
+| First setup failed | Read Output > TokenWise Setup; fix the named cause; Retry Failed Step |
+| Slow first retrieval | Warm with Start Backend; record startup separately; do not hide timeouts |
+| Trace/method fields absent | Update the matching Python backend and repeat the task |
+| Wrong file list | Open `tokenwise_demo` itself, not its parent/TokenWise root |
+| Automatic context never runs | Check workspace rule, command approval, new chat, current tool call |
+| Old panel/status remains | Verify timestamp/query/event ID; Show Automatic Context only reopens latest |
+| History replay is ignored | Use a referring follow-up; an explicit new task intentionally resets subject |
+| No native history source | Stable rule fallback may supply a resolved query instead |
+| New-chat question only gets clarification | Expected for an unidentified subject; a new event may not exist |
+| Selected excerpt lacks imports/decorator/tests | Inspect Original; exact selection and neural pruning can omit semantics |
+| 0% reduction | Input can be tiny or wholly relevant; report it as a valid result |
+| Extra invoice/shipping line retained | Identify mode/method; inspect dependency/preservation; record the limitation |
+| CO2 unavailable | Check Enable Carbon Estimation, scenario settings, backend artifacts and health |
+| Carbon error mentions zero size/latency | Use corrected 0.6.4+ client; unset/zero optional overrides; rerun |
+| PowerShell profile execution-policy warning | Distinguish the terminal's outer profile warning from TokenWise tool output; use a clean no-profile shell for rehearsal |
+| Changed session constant makes tests fail | Restore `SESSION_SECONDS = 300`, save, rerun tests |
 
-The unpruned Selected baseline is **not** the neural selected-source experiment
-in Section 6. All Python excludes ignored paths and non-Python source; it does
-not mean every project asset. The command counts packets and estimates a fixed
-carbon scenario. It does not automatically grade answers.
+Do not globally disable execution-policy protections just for the demo. Generated
+Windows launchers already use their scoped no-profile/bypass process. An outer
+terminal profile can still emit a warning independently, as in your pasted chat;
+check whether the actual TokenWise context command succeeded afterward.
 
-For a controlled context-only quality trial:
+For a saved evidence fallback, tell the teacher when/where it was recorded and
+what failed live. Do not present recorded results as a current successful run.
 
-1. Export the three packets from one unchanged snapshot and task.
-2. Open `baseline_lab`, with no application source and no TokenWise integration.
-3. Use independent fresh chats, same model/settings/global rules, and rotate order.
-4. Paste one packet and the same task; require answers only from supplied evidence,
-   no tools or file reads, and explicit missing-evidence statements.
-5. Check the tool log. Extra reads violate a context-only protocol.
-6. Define expected facts from the runnable source/tests before scoring answers.
-   Record supported facts, unsupported claims, and omissions separately.
+## 16. Teacher Defense Answers
 
-A tool-assisted answer can be evaluated as a separate workflow, but not silently
-mixed into context-only scores. Source-marker diagnostics are not semantic grades.
-Four small fixtures do not prove universal superiority.
+**What did you build?**
+The extension workflow, repository indexing/retrieval, goal preparation, bounded
+packing, Antigravity integration, managed setup/recovery, inspection/export
+controls, carbon integration, and verification/demonstration infrastructure.
+The implementation integrates pretrained SWE-Pruner; credit upstream work.
 
-## 13. Troubleshooting and Cleanup
+**Did you train every model from scratch?**
+No. The neural pruning model is pretrained upstream. Explain your implementation
+and the SEAL-derived carbon estimator pipeline accurately; do not attribute
+upstream training or research to yourself.
 
-| Symptom | Check / retry |
+**How does it know what is relevant?**
+Task-dependent lexical/symbol/dependency retrieval chooses candidates; selected
+or neural candidates use token relevance aggregated by source line. Other methods
+are visible in the panel. The scores are not a correctness guarantee.
+
+**Does all code mean all files are sent to the model?**
+No. All eligible indexed Python is discoverable, but candidate limits, method
+selection, a cap on neural passes, and token packing bound actual processing.
+The optional All Python export is a separate unpruned baseline.
+
+**Why do repository thresholds differ from my input?**
+Anchor and related neural files use adjusted thresholds; interfaces/short bodies
+may not use a neural threshold. Show requested and applied values separately.
+
+**Why did the Session decorator disappear?**
+Neural line selection is not a complete AST reconstruction. The recorded score
+fell below the threshold. It is a visible completeness limitation, not something
+to call correct executable code. Inspect original source before semantic claims.
+
+**Does history affect pruning, or only the final response?**
+For a recognized referring follow-up, bounded earlier user intent contributes to
+the effective retrieval/pruning objective. Show the trace. Fallback may provide
+a self-contained query rather than a raw transcript.
+
+**Does it remember conversations in other chats?**
+No. This is scoped same-topic history, not persistent cross-chat memory. New
+chats and explicit topic switches must not reuse unrelated intent.
+
+**Why not remove the maximum amount?**
+Useful evidence, boundary checks, constants, and test assertions can be lost.
+Evaluation includes correctness, omissions, overhead and latency, not just size.
+
+**What does the carbon number prove?**
+A prediction under fixed configured assumptions. It is not measured emissions,
+the actual provider's hardware, or a demonstrated net savings after local work.
+
+**Is the extension guaranteed to work everywhere?**
+No. It targets trusted local Python repositories and is Windows-tested.
+Remote/virtual workspaces, native macOS/Linux verification, arbitrary coreference,
+perfect retrieval, and guaranteed agent-rule compliance remain limitations.
+
+**Does the one-project demo prove generalization?**
+No. It makes the presentation controlled and understandable. Larger diverse
+repositories, repeated trials, supported-fact scoring and failure reporting are
+needed for broad performance/quality claims.
+
+## 17. Optional Setup and Cleanup Demonstration
+
+### Complete Command Checklist
+
+All names below have the **TokenWise:** prefix. The demonstration and comparison
+commands are controlled experiments; everyday automatic use still starts with
+your normal prompt in Antigravity chat.
+
+| Command | How to demonstrate it in this same project |
 | --- | --- |
-| New command missing | Install 0.6.4, reload the correct window/profile |
-| Input trace unavailable | Update/restart the matching Python backend |
-| Slow first run | Warm backend; separate cold loading from warm preparation |
-| Replay uses no history | Explicit tasks intentionally ignore hints; use a recognized follow-up |
-| No native history label | Stable builds may use rule fallback; inspect its resolved query |
-| New-chat prompt has no fresh event | Agent may clarify without retrieval; old status is not a new event |
-| Selected output lacks dependencies | Exact selected mode does not retrieve extra source |
-| Tiny excerpt is not reduced | All supplied lines can be relevant; inspect scores |
-| CO2 unavailable | Check settings/artifacts/health and record the visible error |
-| Wrong project source | Open the leaf folder, begin a fresh chat |
-| Unsaved edits absent in retrieval | Indexing reads saved disk files; selected mode captures the buffer |
+| Enable Automatic Context | Configure `tokenwise_demo`; show the loaded rule, then a fresh normal chat tool call |
+| Set Up Backend | Show numbered managed setup/recovery before class; reuse validated downloads |
+| Start Backend | Warm the local model before class; show its actual health/port |
+| Diagnose Setup | Show installation, backend health and workspace registration in Output |
+| Check Backend Health | Show the direct API health check; inspect a missing/offline backend error instead of assuming readiness |
+| Open Setup Guide | Open the bundled installation and recovery documentation |
+| Open Demonstration Guide | Open this script from the installed 0.6.5 extension |
+| Show Automatic Context | Reopen the current automatic packet; check timestamp/query first |
+| Build Repository Context | Run the manual repository-context command from an open Python file with the lockout task; unlike controlled no-anchor mode, editor hints can affect this route |
+| Prune Current File | Process all of `security/models.py` even when a highlight exists |
+| Prune Selected Code | Process only the highlighted Session definition |
+| Demonstrate Pruning Inputs | Run the repository, exact selection, and supplied-history experiments above |
+| Compare Context Strategies | Export the all-Python, unpruned selected, and automatic packets from one saved snapshot |
+| Remove All Local Data | Destructive cleanup only after exporting evidence and finishing the presentation |
 
-Setup preserves unrelated rules/settings. Set `enabled: false` in
-`.agents/tokenwise.json` to temporarily disable automatic retrieval/indexing, or
-use **Remove All Local Data** to remove owned integration when finished. Customized
-or unrecognized files are preserved rather than deleted indiscriminately.
+The manual repository command is an editor-assisted workflow, so do not label
+its result the no-selection control. The teaching command's repository mode
+is the route that deliberately removes editor hints.
 
-## 14. Closing Statement
+Use **Diagnose Setup** to show the central installation, health, model readiness,
+and repository link. Explain seven-step setup and **Retry Failed Step** using the
+guide/logs; do not deliberately break a working installation during class.
+Unrelated rules/settings are preserved, and multiple Python workspaces can use
+one centrally managed backend without nesting inside the TokenWise checkout.
 
-> TokenWise prepares task-relevant Python context locally. With no selected file,
-> it discovers repository evidence and packs bounded excerpts. With selected
-> source, it prunes exactly that scope. For a referring same-chat follow-up,
-> bounded earlier user intent can change the retrieval/pruning objective.
-> I show actual inputs and decisions, distinguish replay from live integration,
-> and evaluate omissions as well as token savings.
+Only after finishing and exporting evidence, demonstrate cleanup if requested.
+**TokenWise: Remove All Local Data** removes owned integration/backend data with
+warnings; it is not a harmless switch and can require setup again. Ordinary
+Uninstall invokes cleanup when removal completes, potentially after a full IDE
+restart. Customized/unrecognized files, checkout backends, Python itself and
+editor-managed history are preserved. Do not promise absolutely zero traces.
+
+## 18. Closing Statement
+
+> In one working Python repository I have shown three pruning inputs: repository
+> discovery without a selected file, exact selected source, and bounded earlier
+> user intent for a follow-up. I have shown actual objectives, line decisions,
+> context budgets and tool output, and checked them against executable tests.
+> I distinguish token savings from formatting overhead, estimates from measured
+> emissions, and recorded/replayed evidence from live integration. The goal is
+> useful task evidence with less unnecessary context, not the largest percentage
+> at any cost.

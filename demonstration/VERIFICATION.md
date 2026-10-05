@@ -1,5 +1,31 @@
 # Local Verification Record
 
+## Current Single-Project Layout
+
+The **unreleased 0.6.5 local build** uses only `tokenwise_demo`: one runnable
+application, eleven Python files, and twenty standard-library tests. The app
+and its twenty tests pass in this Windows/Python 3.12 checkout. The demo manifest,
+exclusion regression fixture and real-backend verifier use this same folder.
+
+Checked on 2026-10-06:
+
+- All 166 extension tests passed, including bundled guide access, stale-demo
+  removal, manifest validation, runtime exclusion and junction protection.
+- Backend suite: 106 tests, 105 passed and one Windows file-symlink privilege
+  skip. The new single-project scope and packet-comparison tests passed.
+- The application's twenty tests and deterministic app output passed.
+- The 0.6.5 local VSIX and shareable folder were built. This is not publication.
+- A fresh real-weight inference/CO2 run and live Antigravity cloud rehearsal
+  were not performed for this consolidated fixture during these checks.
+
+The historical records below keep their original project names, source snapshots,
+counts and limitations. They are not measurements for the consolidated project.
+An app/test check alone does not establish live Antigravity integration, actual
+model line scores or CO2 predictions. Rehearse the new guide, export fresh runs,
+and label generated-transcript verification separately from a live chat.
+
+## Historical Multi-Project Runs
+
 Date: 2026-10-05. Environment: this Windows checkout, Python 3.12, CPU inference,
 local pruning weights, trained carbon artifacts, local 0.6.2 code. Command:
 `.venv\Scripts\python.exe scripts/verify_demonstration.py`.

@@ -217,6 +217,16 @@ test("setup guide opens the bundled markdown instead of relying on a checkout", 
   manager.dispose();
 });
 
+test("demonstration guide opens the bundled teacher walkthrough without a checkout", async () => {
+  const manager = new BackendManager(context);
+  await manager.demonstrationGuide();
+  const call = calls.find((item) => item[0] === "command");
+  assert.equal(call[1], "markdown.showPreview");
+  assert.match(call[2].fsPath, /resources\/demonstation.md$/);
+  assert.ok(!calls.some((item) => ["install", "process", "setting"].includes(item[0])));
+  manager.dispose();
+});
+
 test("background indexing never installs missing backends or changes user settings", async () => {
   const manager = new BackendManager(context);
   assert.equal(await manager.backgroundUrl(true), undefined);

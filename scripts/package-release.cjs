@@ -17,11 +17,16 @@ async function main() {
     files.push([path.join(root, "docs", name), `docs/${name}`]);
   }
   const checksums = [];
+  const demoCases = JSON.parse(await fs.readFile(path.join(root, "demonstration/cases.json"), "utf8")).cases;
+  if (!Array.isArray(demoCases) || !demoCases.length || demoCases.some(item => !item || typeof item.project !== "string" || !/^[a-z0-9_]+$/.test(item.project))) {
+    throw new Error("Invalid demonstration project manifest.");
+  }
+  const demoProjects = new Set(demoCases.map(item => item.project));
   async function demoFiles(relative) {
     for (const entry of await fs.readdir(path.join(root, relative), { withFileTypes: true })) {
       if (["results", "__pycache__", ".agents", ".tokenwise"].includes(entry.name)) { continue; }
       const name = `${relative}/${entry.name}`;
-      if (entry.isDirectory()) { await demoFiles(name); }
+      if (entry.isDirectory() && (relative !== "demonstration" || demoProjects.has(entry.name))) { await demoFiles(name); }
       else if (entry.isFile() && /\.(py|json|md)$/.test(entry.name)) { files.push([path.join(root, name), name]); }
     }
   }

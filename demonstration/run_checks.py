@@ -1,4 +1,4 @@
-"""Run each independent teaching project; optionally export live context comparisons."""
+"""Check the single teaching application; optionally export live context comparisons."""
 
 import argparse
 import csv

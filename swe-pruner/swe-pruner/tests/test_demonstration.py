@@ -1,4 +1,5 @@
 import asyncio
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,39 @@ from swe_pruner.repository.repository_index import RepositoryIndexCache
 from swe_pruner.retrieval.context_comparison import ComparisonTooLarge, build_comparison
 from swe_pruner.retrieval.workspace_context import WorkspaceContextBuilder
 from test_antigravity import ReferenceModel
+
+
+class DemonstrationFixtureTests(unittest.TestCase):
+    def setUp(self):
+        self.demo = Path(__file__).resolve().parents[3] / "demonstration"
+        self.cases = json.loads((self.demo / "cases.json").read_text(encoding="utf-8"))["cases"]
+        self.root = self.demo / self.cases[0]["project"]
+
+    def test_one_runnable_project_and_valid_presentation_scopes(self):
+        self.assertEqual(len(self.cases), 1)
+        self.assertEqual([path.parent.name for path in self.demo.glob("*/app.py")], ["tokenwise_demo"])
+        for key in ("selection_file", "mixed_selection_file", "class_selection_file"):
+            path = (self.root / self.cases[0][key]).resolve()
+            self.assertTrue(path.is_relative_to(self.root.resolve()))
+            self.assertTrue(path.is_file())
+
+    def test_one_project_covers_unpruned_baselines_and_budgeted_retrieval(self):
+        case = self.cases[0]
+        index = RepositoryIndex(str(self.root))
+        index.build_index()
+        self.assertEqual(len(index.index), 11)
+        query = case["query"]
+        model = ReferenceModel()
+        goal = GoalCompiler(None).deterministic_fallback(query, None, [])
+        result = WorkspaceContextBuilder().build(index, goal, model, None, query, .45, 8192, 8)
+        comparison = build_comparison(index, model, result, case["selection_file"], None)
+        all_code, selected, automatic = comparison["methods"]
+        self.assertEqual(len(all_code["files"]), 11)
+        for marker in case["evidence_markers"]:
+            self.assertIn(marker, all_code["context"])
+        self.assertNotIn("LOCKOUT_THRESHOLD = 3", selected["context"])
+        self.assertEqual(automatic["context"], result["unified_prompt"])
+        self.assertLessEqual(result["pruned_tokens"], 8192)
 
 
 class ConversationTests(unittest.TestCase):

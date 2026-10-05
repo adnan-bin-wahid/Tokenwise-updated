@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.5 - Unreleased
+
+### Changed
+
+- Replaced four teaching repositories with one deterministic account-security,
+  session, billing, and reporting application with 20 standard-library tests.
+- Rewrote the teacher guide into one-folder rehearsals, exact prompts, expected
+  application facts, screenshots/exports, history controls, and defense answers.
+- Bundled examples are regenerated cleanly so removed demo projects cannot remain
+  inside a newly packaged extension.
+- Demonstration manifests, exclusion regression tests, and real-backend verifier
+  now use the same project.
+
+### Added
+
+- **TokenWise: Open Demonstration Guide** opens the packaged teacher walkthrough
+  without needing a TokenWise source checkout.
+
+0.6.5 is a local build until a new release is explicitly published. The existing
+0.6.4 public assets still contain the previous examples and remain unchanged.
+
 ## 0.6.4 - 2026-10-06
 
 ### Fixed

@@ -1,13 +1,7 @@
-from dataclasses import dataclass
+"""Small session and billing workflows; unrelated units share one pruning input."""
 
-SESSION_SECONDS = 300
-
-
-@dataclass
-class Session:
-    username: str
-    expires_at: int
-    revoked: bool = False
+from security.models import Session
+from security.settings import SESSION_SECONDS
 
 
 def issue_session(username: str, now: int) -> Session:

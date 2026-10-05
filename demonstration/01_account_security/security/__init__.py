@@ -1,1 +1,0 @@
-"""Deterministic account security demonstration."""

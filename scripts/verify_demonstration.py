@@ -1,4 +1,4 @@
-"""Real-weight comparison checks on demonstration projects in an owned backend process."""
+"""Real-weight checks on the single demonstration in an owned backend process."""
 
 import importlib.util
 import ast
@@ -17,10 +17,11 @@ from verify_context_results import ROOT, SOURCE, isolated_directory, request
 
 
 def verify_pruning_inputs(base, storage, demo):
-    directory = demo.ROOT / "04_pruning_inputs"
-    filename = directory / "workflows.py"
+    case = demo.cases()[0]
+    directory = demo.ROOT / case["project"]
+    filename = directory / case["mixed_selection_file"]
     source = filename.read_text(encoding="utf-8")
-    query = "Explain session expiry and revocation, not invoice pricing."
+    query = case["session_query"]
     repository = request(base, "/prune-workspace", {"workspace_root": str(directory), "query": query,
                          "token_budget": 4096, "max_candidates": 8})
     assert repository["input_trace"]["mode"] == "repository"
@@ -63,7 +64,7 @@ def verify_pruning_inputs(base, storage, demo):
     sys.path.insert(0, str(SOURCE / "src"))
     from swe_pruner.antigravity_hook import run_hook
     workspace = storage / "conversation-workspace"
-    shutil.copytree(demo.ROOT / "01_account_security", workspace,
+    shutil.copytree(directory, workspace,
                     ignore=shutil.ignore_patterns("__pycache__", ".agents", ".tokenwise"))
     transcript = workspace / "transcript.jsonl"
     payload = {"workspacePaths": [str(workspace)], "transcriptPath": str(transcript),
@@ -143,7 +144,7 @@ def main() -> None:
                 assert not new_chat["context_hint_used"] and new_chat["structured_goal"]["clarification_required"]
                 switched = request(base, "/prune-workspace", {**payload, "query": case["topic_switch"], "context_hint": case["query"]})
                 assert not switched["context_hint_used"]
-                assert "security/session_service.py" in [file["file_path"] for file in switched["files"]]
+                assert "workflows.py" in [file["file_path"] for file in switched["files"]]
                 summary = {"comparison_rows": len(rows), "same_chat_hint": True, "new_chat_clarification": True,
                            "topic_switch_ignores_old_hint": True, "real_weights": True, "antigravity_cloud_called": False}
                 (ROOT / "demonstration/results/verification.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
