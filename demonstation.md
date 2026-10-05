@@ -34,9 +34,20 @@ if you use it instead of a live run.
 ### Choose the Correct Build
 
 This one-project layout and **Open Demonstration Guide** command belong to the
-**0.6.5 local build**. Do not expect them in the already-published 0.6.4 ZIP.
+**0.6.5 release**. Do not expect them in the already-published 0.6.4 ZIP.
 Public 0.6.4 remains unchanged and already supports the core pruning commands.
-There is no claim here that 0.6.5 is published yet.
+Download [the 0.6.5 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5)
+for the VSIX, one-project demonstration ZIP and checksums.
+
+### Normal Installation
+
+1. Download `tokenwise-vscode-0.6.5.vsix` from the release and install it with
+   **Extensions > ... > Install from VSIX...**. Reload the editor.
+2. Download and extract `TokenWise-0.6.5.zip`. Open its
+   `demonstration/tokenwise_demo` folder in Antigravity.
+3. Follow **Open and Configure One Folder** below. No compiling or F5 is needed.
+
+### Source Build Alternative
 
 From the source checkout, prepare the installer:
 
@@ -725,7 +736,7 @@ four demos are not numeric results for the new project.
 
 | Symptom | What to do |
 | --- | --- |
-| New guide command missing | Install the 0.6.5 local VSIX; reload the correct host/profile |
+| New guide command missing | Install the 0.6.5 VSIX; reload the correct host/profile |
 | First setup failed | Read Output > TokenWise Setup; fix the named cause; Retry Failed Step |
 | Slow first retrieval | Warm with Start Backend; record startup separately; do not hide timeouts |
 | Trace/method fields absent | Update the matching Python backend and repeat the task |

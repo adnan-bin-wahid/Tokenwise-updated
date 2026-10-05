@@ -33,11 +33,11 @@ Push without force and create an annotated version tag on the release commit:
 
 ```powershell
 git push origin main
-git tag -a v0.6.4 -m "TokenWise 0.6.4 - Windows Beta"
-git push origin v0.6.4
+git tag -a v0.6.5 -m "TokenWise 0.6.5 - Windows Beta"
+git push origin v0.6.5
 ```
 
-Use the new version instead of `v0.6.4` for future releases. Never move a
+Use the new version instead of `v0.6.5` for future releases. Never move a
 published tag or replace a published installer; release a new version instead.
 
 ## Publish

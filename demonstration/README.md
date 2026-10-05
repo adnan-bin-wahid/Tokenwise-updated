@@ -5,7 +5,7 @@ this same workspace open for the entire presentation. Do not open the TokenWise
 checkout or the `demonstration` parent as the retrieval workspace.
 
 The complete, ordered teacher script is **[demonstation.md](../demonstation.md)**.
-The 0.6.5 local extension also opens it with **TokenWise: Open Demonstration Guide**.
+The 0.6.5 extension also opens it with **TokenWise: Open Demonstration Guide**.
 
 The application contains account lockout, sessions, invoices, shipping, and
 activity reports. All features work; unrelated features serve as pruning controls,
@@ -39,7 +39,8 @@ The extension backend is a separate installation and does require its pretrained
 model and dependencies. Check [verification notes](VERIFICATION.md) and use the
 [blank evidence worksheet](results-template.md) for actual presentation results.
 
-The new layout is in the **0.6.5 local build**. The already-published 0.6.4 ZIP
+Get the new layout from the [0.6.5 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
+The already-published 0.6.4 ZIP
 contains the previous four-project layout; it has not been silently replaced.
 Generated exports under `results/`, `.agents`, `.tokenwise`, and Python caches
 are not demonstration source and must not be shipped as classroom evidence.

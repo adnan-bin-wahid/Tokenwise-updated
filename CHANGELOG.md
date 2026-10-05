@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.5 - Unreleased
+## 0.6.5 - 2026-10-06
 
 ### Changed
 
@@ -15,11 +15,13 @@
 
 ### Added
 
+- TokenWise PNG extension icon, prepared from the supplied logo and bundled
+  locally inside the installer.
 - **TokenWise: Open Demonstration Guide** opens the packaged teacher walkthrough
   without needing a TokenWise source checkout.
 
-0.6.5 is a local build until a new release is explicitly published. The existing
-0.6.4 public assets still contain the previous examples and remain unchanged.
+The 0.6.5 Windows beta release includes the installer, single-project presentation
+bundle and checksums. Existing public assets and tags remain unchanged.
 
 ## 0.6.4 - 2026-10-06
 

@@ -7,24 +7,22 @@ retrieves relevant code and tests without asking you to select files manually.
 **For normal users: install the VSIX. You do not need to clone this repository,
 install Node.js, compile the extension, press F5, or manually start a server.**
 
-## Version 0.6.4
+## Version 0.6.5
 
-The current checkout also prepares an **unreleased 0.6.5 local build** with one
+**0.6.5** adds the TokenWise icon and one
 complete [demonstration project](demonstration/tokenwise_demo/README.md), twenty
 tests, and a rewritten [teacher walkthrough](demonstation.md). Run
-`TokenWise: Open Demonstration Guide` in that build. Build/install
-`tokenwise-vscode-0.6.5.vsix` locally to try it. The public 0.6.4 assets below
-still contain the previous four examples; they have not been overwritten.
+`TokenWise: Open Demonstration Guide` to open it from the installed extension.
+Get the installer and single-project presentation bundle from the
+[0.6.5 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
 
 **0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
-`Explain session expiry, not invoice pricing.` Get the corrected installer and
-demonstration bundle from the
-[0.6.4 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
+`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.5.
 Previously published releases are unchanged.
 
 To install or upgrade:
 
-1. Download [tokenwise-vscode-0.6.4.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix).
+1. Download [tokenwise-vscode-0.6.5.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/tokenwise-vscode-0.6.5.vsix).
    In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
 2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
    as well as the extension: an already-running 0.6.3 backend does not have the
@@ -41,11 +39,11 @@ or erase validated downloads to retry.
 
 For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
 and the single [Python demo project](demonstration/tokenwise_demo/README.md).
-The updated 0.6.5 local guide focuses on **how pruning works** with repository discovery,
+The updated 0.6.5 guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
 command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
-Build 0.6.5 locally for the new guide command and single-project bundle; the
-published downloads below contain the older examples. The optional packet-comparison command is
+Download the 0.6.5 installer and presentation ZIP below for the new guide command
+and single-project bundle. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
 
@@ -89,10 +87,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.4 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix)
-from the [0.6.4 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
+Download [**TokenWise 0.6.5 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/tokenwise-vscode-0.6.5.vsix)
+from the [0.6.5 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, four demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/TokenWise-0.6.4.zip)
+provides an [installer, one demonstration project, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/TokenWise-0.6.5.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -194,7 +192,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.4 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.5 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -364,7 +362,7 @@ the original included source against retained source plus separate overhead.
 | **Demonstrate Pruning Inputs** (0.6.3+) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
 | **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
-| **Open Demonstration Guide** (0.6.5 local build) | Open the bundled one-project teacher walkthrough |
+| **Open Demonstration Guide** (0.6.5+) | Open the bundled one-project teacher walkthrough |
 | **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
 
 All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
@@ -499,7 +497,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.5/` for the current local build with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.5/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

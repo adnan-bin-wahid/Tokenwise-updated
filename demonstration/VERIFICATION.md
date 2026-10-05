@@ -2,19 +2,20 @@
 
 ## Current Single-Project Layout
 
-The **unreleased 0.6.5 local build** uses only `tokenwise_demo`: one runnable
+The **0.6.5 build** uses only `tokenwise_demo`: one runnable
 application, eleven Python files, and twenty standard-library tests. The app
 and its twenty tests pass in this Windows/Python 3.12 checkout. The demo manifest,
 exclusion regression fixture and real-backend verifier use this same folder.
 
 Checked on 2026-10-06:
 
-- All 166 extension tests passed, including bundled guide access, stale-demo
+- All 167 extension tests passed, including the packaged PNG icon, bundled guide access, stale-demo
   removal, manifest validation, runtime exclusion and junction protection.
 - Backend suite: 106 tests, 105 passed and one Windows file-symlink privilege
   skip. The new single-project scope and packet-comparison tests passed.
 - The application's twenty tests and deterministic app output passed.
-- The 0.6.5 local VSIX and shareable folder were built. This is not publication.
+- Local installer builds do not establish publication. Obtain the final assets
+  from the versioned [0.6.5 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
 - A fresh real-weight inference/CO2 run and live Antigravity cloud rehearsal
   were not performed for this consolidated fixture during these checks.
 
