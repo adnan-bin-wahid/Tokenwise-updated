@@ -149,3 +149,22 @@ test("copy controls use exact matching packets; export cancellation and failure 
   assert.match(warnings.at(-1), /export failed.*permission denied/);
   writeFails = false;
 });
+
+test("pruning inputs and actual line masks distinguish threshold decisions from scope/history", async () => {
+  const result = { query: "Task <source>", score: .8, originalCode: "noise=1\nuseful=2", prunedCode: "useful=2",
+    originTokenCount: 20, prunedTokenCount: 10, modelInputTokenCount: 50, reductionPercent: 50, keptFrags: [2],
+    lineScores: { 1: .2, 2: .9 }, input_trace: { mode: "selected_excerpt", current_query: "Task <source>",
+      effective_query: "Task <source>", scope: "mixed.py", first_line: 8, threshold: .45, history_text: "", history_source: "none" } };
+  const panel = new ResultPanel();
+  const html = panel.getHtml(result);
+  assert.match(html, /Selected excerpt/);
+  assert.match(html, /Task &lt;source&gt;/);
+  assert.match(html, /0\.2000/);
+  assert.match(html, /0\.9000/);
+  assert.match(html, /Not selected by mask/);
+  assert.match(html, /Keep: threshold/);
+  panel.show(result, "extension");
+  saveDestination = "pruning.json";
+  await panels.at(-1).receive({ command: "exportPruningRun" });
+  assert.deepEqual(written.at(-1).result, result);
+});

@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from swe_pruner.conversation_context import conversation_hint, is_follow_up
+from swe_pruner.conversation_context import conversation_hint, is_follow_up, next_user_turns, bound_user_turns
 from swe_pruner.goal_compiler import GoalCompiler
 from swe_pruner.repository.repository_index import RepositoryIndex
 from swe_pruner.repository.repository_index import RepositoryIndexCache
@@ -14,6 +14,30 @@ from test_antigravity import ReferenceModel
 
 
 class ConversationTests(unittest.TestCase):
+    def test_current_topic_and_recent_constraints_are_bounded_and_reset_on_new_topic(self):
+        state = {"topic_query": "Explain account lockout"}
+        for query in ("What about its expiry?", "What about its reset?", "Which tests cover that behavior?"):
+            state = {"user_turns": next_user_turns(query, state, True)}
+        self.assertEqual(state["user_turns"], ["Explain account lockout", "What about its reset?", "Which tests cover that behavior?"])
+        self.assertEqual(next_user_turns("Explain shipping", state, True), ["Explain shipping"])
+        self.assertEqual(next_user_turns("What about its tests?", state, False), [])
+        self.assertEqual(next_user_turns("What about its tests?", {}, True), [])
+        self.assertLessEqual(len("\n\n".join(bound_user_turns(["x" * 5000] * 10))), 2000)
+
+    def test_prune_response_exposes_actual_mean_line_scores(self):
+        from types import SimpleNamespace
+        from swe_pruner.prune_wrapper import SwePrunerForCodePruning, PruneRequest
+        from test_antigravity import CharacterTokenizer
+        code = "noise=1\nuseful=2"
+        scores = [(character, .2 if position < 8 else .9) for position, character in enumerate(code)]
+        offsets = [(position, position + 1) for position in range(len(code))]
+        model = SimpleNamespace(tokenizer=CharacterTokenizer(), instruction="Task relevance",
+                                _process_single_chunk=lambda *args, **kwargs: (.8, scores, offsets))
+        result = SwePrunerForCodePruning.prune(model, PruneRequest(query="Explain useful", code=code, threshold=.5))
+        self.assertAlmostEqual(result.line_scores[1], .2)
+        self.assertAlmostEqual(result.line_scores[2], .9)
+        self.assertEqual(result.kept_frags, [2])
+
     def test_only_recognized_followups_use_a_bounded_scoped_user_topic(self):
         for query in ("Which tests cover that behavior?", "What about its expiry tests?", "Why does it fail?"):
             self.assertTrue(is_follow_up(query))

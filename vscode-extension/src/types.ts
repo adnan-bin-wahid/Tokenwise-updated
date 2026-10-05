@@ -13,6 +13,7 @@ export interface PruneResponse {
   left_token_cnt: number;
   model_input_token_cnt: number;
   error_msg: string | null;
+  line_scores?: Record<string, number>;
 }
 
 export interface HealthResponse {
@@ -86,6 +87,20 @@ export interface PruneResultViewModel extends CarbonImpactViewModel {
   modelInputTokenCount: number;
   reductionPercent: number;
   keptFrags: number[];
+  lineScores?: Record<string, number>;
+  input_trace?: PruningInputTrace;
+}
+
+export interface PruningInputTrace {
+  mode: "repository" | "selected_file" | "selected_excerpt" | "conversation";
+  current_query: string;
+  effective_query: string;
+  scope: string;
+  threshold: number;
+  history_text: string;
+  history_source: "none" | "supplied_user_context" | "native_scoped_user_turns" | "supplied_replay";
+  indexed_files?: number;
+  first_line?: number;
 }
 
 export interface WorkspacePruneRequest {
@@ -131,9 +146,12 @@ export interface WorkspaceFilePruneResult {
   original_tokens: number;
   pruned_tokens: number;
   score: number;
+  pruning_method?: string;
+  effective_threshold?: number | null;
 }
 
 export interface WorkspacePruneResponse extends CarbonImpactViewModel {
+  input_trace?: PruningInputTrace | null;
   automatic_context?: {
     query: string;
     timestamp: string;

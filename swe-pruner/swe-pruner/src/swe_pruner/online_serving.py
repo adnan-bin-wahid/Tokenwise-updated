@@ -108,6 +108,7 @@ class WorkspacePruneResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
     context_hint_used: bool = False
     comparison: Optional[dict] = None
+    input_trace: Optional[dict] = None
 
 
 def resolve_model_path() -> Path:
@@ -274,6 +275,13 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
             )
 
     result = await asyncio.to_thread(build)
+    result["input_trace"] = {
+        "mode": "conversation" if context_hint else "repository",
+        "current_query": request.query.strip(), "effective_query": goal.objective,
+        "history_text": context_hint, "history_source": "supplied_user_context" if context_hint else "none",
+        "scope": "Repository discovery without editor hints" if active_rel_path is None else f"Repository anchored on {active_rel_path}",
+        "threshold": request.threshold, "indexed_files": len(repo_index.index),
+    }
     return WorkspacePruneResponse(**result, index_cache_hit=cache_hit)
 
 

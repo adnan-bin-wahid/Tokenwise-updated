@@ -18,6 +18,8 @@ export function createPruneSelectedCommand(
     }
 
     const { code, isSelection } = getSelectedOrFullCode(editor);
+    const resource = editor.document.uri;
+    const firstLine = editor.selection.start.line + 1;
     if (!isSelection) {
       void vscode.window.showWarningMessage(
         "TokenWise: select code first, or use Prune Current File.",
@@ -30,7 +32,7 @@ export function createPruneSelectedCommand(
       return;
     }
 
-    const cfg = getTokenWiseConfig();
+    const cfg = getTokenWiseConfig(resource);
     const threshold = await askThreshold(cfg.defaultThreshold);
     if (threshold === undefined) {
       return;
@@ -43,13 +45,13 @@ export function createPruneSelectedCommand(
       },
       async () => {
         try {
-          const result = await service.prune(query, code, threshold);
+          const result = await service.prune(query, code, threshold, { resource, mode: "selected_excerpt", firstLine });
           if (cfg.autoOpenResultPanel) {
             panel.show(result, extensionUri);
           }
           onSuccess?.();
           void vscode.window.showInformationMessage(
-            `TokenWise: done. Token reduction ${result.reductionPercent.toFixed(2)}%.`,
+            `TokenWise: done. Source ${result.reductionPercent < 0 ? "increase" : "reduction"} ${Math.abs(result.reductionPercent).toFixed(2)}%.`,
           );
         } catch (error) {
           void vscode.window.showErrorMessage(

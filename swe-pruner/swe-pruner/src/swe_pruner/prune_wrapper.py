@@ -26,6 +26,7 @@ class PruneResponse(BaseModel):
     left_token_cnt: int
     model_input_token_cnt: int
     error_msg: Optional[str] = None
+    line_scores: Dict[int, float] = Field(default_factory=dict)
 
 
 def format_instruction(instruction: Optional[str], query: str) -> str:
@@ -635,6 +636,7 @@ class SwePrunerForCodePruning(SwePrunerForCodeCompression):
 
         return PruneResponse(
             score=predicted_score,
+            line_scores=line_scores,
             pruned_code=pruned_code,
             token_scores=token_scores_response,
             kept_frags=kept_frags,

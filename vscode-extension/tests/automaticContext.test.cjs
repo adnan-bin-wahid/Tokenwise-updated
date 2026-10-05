@@ -77,6 +77,23 @@ test("accepts a complete hook activity record", () => {
   assert.equal(parseAutomaticActivity(ready).result.files[0].file_path, "services/payment_service.py");
 });
 
+test("validates input provenance and thresholds without rejecting older records", () => {
+  const trace = { mode: "conversation", current_query: "Which tests cover that behavior?", effective_query: "Account lockout tests",
+    scope: "Repository discovery without editor hints", history_text: "Explain account lockout", history_source: "native_scoped_user_turns",
+    threshold: .45, indexed_files: 6 };
+  const record = input_trace => ({ ...ready, result: { ...ready.result, input_trace } });
+  assert.equal(parseAutomaticActivity(record(trace)).result.input_trace.history_source, "native_scoped_user_turns");
+  assert.ok(parseAutomaticActivity(record(null)));
+  for (const change of [{ mode: "global_memory" }, { threshold: NaN }, { threshold: 1.1 }, { history_source: "all_chats" },
+    { effective_query: 42 }, { indexed_files: -1 }, { first_line: 0 }]) {
+    assert.equal(parseAutomaticActivity(record({ ...trace, ...change })), undefined);
+  }
+  assert.equal(parseAutomaticActivity(record([])), undefined);
+  const withFile = file => ({ ...ready, result: { ...ready.result, files: [{ ...ready.result.files[0], ...file }] } });
+  assert.ok(parseAutomaticActivity(withFile({ pruning_method: "neural_lines", effective_threshold: .6 })));
+  assert.equal(parseAutomaticActivity(withFile({ effective_threshold: "0.6" })), undefined);
+});
+
 test("rejects incomplete activity instead of crashing the result view", () => {
   assert.equal(parseAutomaticActivity({ ...ready, result: {} }), undefined);
   assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, pruned_tokens: "100" } }), undefined);

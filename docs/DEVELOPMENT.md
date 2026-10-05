@@ -195,12 +195,19 @@ From the checkout root, after compiling the extension:
 .\.venv\Scripts\python.exe scripts/verify_demonstration.py
 ```
 
-The first checks 22 example tests and three runnable apps. The second starts an
+The first checks 28 example tests and four runnable apps. The second starts an
 isolated backend with real local weights/carbon artifacts, exports three context
-strategies per project, checks scoped follow-ups/new-chat clarification/topic
-switches, and stops only its own process. Results are ignored under
+strategies per project, exercises real selected-file/excerpt pruning through the
+compiled service, and checks multi-turn native-hook state/new-chat isolation with
+a generated USER transcript. It stops only its own process. Results are ignored under
 `demonstration/results/`; source markers are not semantic agent-answer scores.
-See `demonstation.md` for the fresh-chat answer-quality protocol.
+See `demonstation.md` for the three primary input scenarios and the optional
+fresh-chat answer-quality protocol. The replay command is local 0.6.3; update the
+backend as well. No automated verifier here calls Antigravity's cloud model.
 
 The panel browser verifier also accepts a demonstration `comparison.json` as its
 first argument. It checks desktop/narrow layouts and all copy/export messages.
+It also accepts `demonstration/results/pruning-inputs.json` to check repository,
+selected file at two thresholds, selected excerpt, native-history, and new-chat
+result views. Use `scripts/verify_demonstration.py --inputs-only` to retry just
+these real input paths without regenerating the optional packet comparisons.

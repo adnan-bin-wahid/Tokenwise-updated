@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
-from .conversation_context import conversation_hint, HINT_LIMIT
+from .conversation_context import conversation_hint, next_user_turns
 
 
 MARKER = "[TokenWise automatic context]"
@@ -336,13 +336,16 @@ def run_hook(payload: dict, project_root: Path, workspace: Path) -> dict:
             scoped = isinstance(payload.get("conversationId"), str) and bool(payload["conversationId"].strip())
             hint = conversation_hint(query, previous, scoped)
             base_url, result = retrieve_context(project_root, workspace, query, settings, hint)
+            if isinstance(result.get("input_trace"), dict):
+                result["input_trace"]["history_source"] = "native_scoped_user_turns" if hint else "none"
             event.update({
                 "status": "ready", "result": result, "backend_url": base_url,
                 "elapsed_ms": round((time.monotonic() - started) * 1000),
             })
             write_json(runtime / "latest.json", event)
+            turns = next_user_turns(query, previous, scoped)
             write_json(state_path, {"prompt_id": prompt_id, "event_id": event["event_id"],
-                                    "topic_query": (hint or query[:HINT_LIMIT]) if scoped else ""})
+                                    "topic_query": turns[0] if turns else "", "user_turns": turns})
             # userMessage keeps repository text at user priority and persists it for later tool steps.
             return {"injectSteps": [{"userMessage": result["unified_prompt"]}]}
     except Exception as exc:

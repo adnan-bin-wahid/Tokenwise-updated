@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { CarbonImpactViewModel, PruneResultViewModel, WorkspacePruneResponse } from "../types";
+import { CarbonImpactViewModel, PruneResultViewModel, PruningInputTrace, WorkspacePruneResponse } from "../types";
 
 export class ResultPanel {
   private static readonly viewType = "tokenwise.resultPanel";
@@ -26,6 +26,15 @@ export class ResultPanel {
     });
 
     this.panel.webview.onDidReceiveMessage(async (message: { command?: string; method?: string }) => {
+      if (message.command === "exportPruningRun") {
+        const result = this.latestResult ?? this.latestWorkspaceResult;
+        if (!result) { return; }
+        try {
+          const destination = await vscode.window.showSaveDialog({ saveLabel: "Export Pruning Run", filters: { JSON: ["json"] } });
+          if (destination) { await vscode.workspace.fs.writeFile(destination, Buffer.from(JSON.stringify(result, null, 2), "utf8")); }
+        } catch (error) { await vscode.window.showWarningMessage(`TokenWise: pruning export failed: ${String(error)}`); }
+        return;
+      }
       if (message.command === "exportComparison" && this.latestWorkspaceResult?.comparison) {
         const result = this.latestWorkspaceResult;
         try {
@@ -100,6 +109,7 @@ export class ResultPanel {
       "TokenWise — Neural Pruning",
       `
       <div class="subtle">Task: <strong>${escapeHtml(result.query)}</strong></div>
+      ${this.renderInputTrace(result.input_trace)}
       <div class="stats">
         ${stat("Relevance", result.score.toFixed(4))}
         ${stat("Original", `${result.originTokenCount} tokens`)}
@@ -115,6 +125,7 @@ export class ResultPanel {
         </div>
       </div>
       <div class="actions"><button onclick="send('copyPruned')">Copy Pruned Context</button></div>
+      ${this.renderLineScores(result)}
       <div class="code-grid">
         <div class="card"><div class="card-title">Original</div><pre>${escapeHtml(result.originalCode)}</pre></div>
         <div class="card"><div class="card-title">Pruned context</div><pre>${escapeHtml(result.prunedCode)}</pre></div>
@@ -122,6 +133,46 @@ export class ResultPanel {
       <div class="notice">The pruned output is context for an AI coding workflow, not a source-code patch. TokenWise therefore does not insert it into your file automatically.</div>
       `,
     );
+  }
+
+  private renderInputTrace(trace?: PruningInputTrace | null): string {
+    if (!trace) { return ""; }
+    const modes = { repository: "Repository discovery (no file selected)", selected_file: "Selected entire file",
+      selected_excerpt: "Selected excerpt", conversation: "Conversation-informed repository discovery" };
+    const sources = { none: "None", supplied_user_context: "User context supplied in request",
+      native_scoped_user_turns: "Native hook: current-chat user turns", supplied_replay: "Supplied replay (not live chat capture)" };
+    return `<section><h2>Pruning inputs</h2><div class="meta-grid">
+      <span>Mode</span><strong>${escapeHtml(modes[trace.mode])}</strong>
+      <span>Current task</span><strong>${escapeHtml(trace.current_query)}</strong>
+      <span>Code scope</span><strong>${escapeHtml(trace.scope)}</strong>
+      <span>Requested threshold</span><strong>${trace.threshold.toFixed(2)}</strong>
+      <span>History source</span><strong>${escapeHtml(sources[trace.history_source])}</strong>
+      ${trace.indexed_files !== undefined ? `<span>Indexed Python files</span><strong>${trace.indexed_files}</strong>` : ""}
+      ${trace.first_line !== undefined ? `<span>First source line</span><strong>${trace.first_line}</strong>` : ""}
+      </div><details><summary>Inference objective</summary><pre>${escapeHtml(trace.effective_query)}</pre></details>
+      ${trace.history_text ? `<details open><summary>Earlier user reference</summary><pre>${escapeHtml(trace.history_text)}</pre></details>` : ""}
+      <div class="actions"><button onclick="send('exportPruningRun')">Export Pruning Run</button></div></section>`;
+  }
+
+  private renderLineScores(result: PruneResultViewModel): string {
+    if (!result.input_trace) { return ""; }
+    if (!result.lineScores || !Object.keys(result.lineScores).length) {
+      return `<div class="notice">Line-score trace unavailable for this backend response.</div>`;
+    }
+    const threshold = result.input_trace.threshold;
+    const kept = new Set(result.keptFrags);
+    const lines = result.originalCode.split(/\r\n|\r|\n/);
+    const rows = lines.slice(0, 200).map((source, index) => {
+      const number = index + 1;
+      const score = result.lineScores?.[String(number)];
+      const decision = score !== undefined && score >= threshold ? "Keep: threshold"
+        : kept.has(number) ? "Keep: preservation/gap" : "Not selected by mask";
+      return `<tr><td>${(result.input_trace?.first_line ?? 1) + index}</td>
+        <td>${score === undefined ? "not scored" : score.toFixed(4)}</td><td>${decision}</td><td class="source-line">${escapeHtml(source)}</td></tr>`;
+    }).join("");
+    return `<section><h2>Line decisions</h2><div class="subtle">Decision mask includes preservation and gap bridging, before output formatting. ${lines.length > 200 ? "First 200 lines; full scores are in the JSON export." : ""}</div>
+      <div class="table-wrap"><table><thead><tr><th>Source line</th><th>Mean relevance</th><th>Decision mask</th><th>Original source</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></section>`;
   }
 
   private renderCarbonSection(result: CarbonImpactViewModel): string {
@@ -187,6 +238,8 @@ export class ResultPanel {
           <td class="num">${file.original_tokens}</td>
           <td class="num">${file.pruned_tokens}</td>
           <td class="num">${file.score.toFixed(4)}</td>
+          <td>${escapeHtml(file.pruning_method ?? "unavailable")}</td>
+          <td class="num">${file.effective_threshold === undefined || file.effective_threshold === null ? "not applied" : file.effective_threshold.toFixed(2)}</td>
         </tr>`,
       )
       .join("");
@@ -198,6 +251,7 @@ export class ResultPanel {
       ${overview ? `<div class="subtle"><strong>Repository overview</strong> | ${result.indexed_files ?? 0} indexed Python files</div>` : ""}
       ${(result.warnings ?? []).map(warning => `<div class="notice">${escapeHtml(warning)}</div>`).join("")}
       ${this.renderComparison(result)}
+      ${this.renderInputTrace(result.input_trace)}
       <div class="card">
         <div class="card-title">Synthesized goal</div>
         <div class="meta-grid">
@@ -221,7 +275,7 @@ export class ResultPanel {
         <div class="card-title">Included files</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>File</th><th>Relation</th><th>Tier</th><th>Source</th><th>Retained</th><th>${overview ? "Priority" : "Score"}</th></tr></thead>
+            <thead><tr><th>File</th><th>Relation</th><th>Tier</th><th>Source</th><th>Retained</th><th>${overview ? "Priority" : "Score"}</th><th>Pruning method</th><th>Applied threshold</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
@@ -300,6 +354,7 @@ export class ResultPanel {
     button:hover { background: var(--buttonHover); }
     .actions { margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
     .table-wrap { overflow-x: auto; }
+    .source-line { min-width: 240px; font-family: monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; }
     th { color: var(--muted); font-size: 10px; text-transform: uppercase; }

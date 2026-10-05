@@ -40,7 +40,7 @@ export async function askThreshold(
     ignoreFocusOut: true,
     validateInput: (raw) => {
       const n = Number(raw);
-      if (Number.isNaN(n)) {
+      if (!raw.trim() || !Number.isFinite(n)) {
         return "Threshold must be a number.";
       }
       if (n < 0 || n > 1) {

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.3 - Local Development
+
+### Added
+
+- Demonstrate Pruning Inputs command for no-anchor repository discovery, exact
+  selected-source neural pruning, and an explicitly labeled user-history replay.
+- Input traces expose current/effective task, source scope, history provenance,
+  requested/per-file thresholds, pruning methods, and an exportable run.
+- Real selected-source line relevance and decision masks, with original line
+  coordinates and explicit preservation/formatting caveats.
+- A fourth runnable teaching repository and a rewritten three-scenario guide.
+- Native same-topic history retains up to three earlier user turns within a
+  combined 2,000-character bound, isolated by workspace/conversation ID.
+
+### Fixed
+
+- Prune Current File always captures the entire file, independent of selection.
+- Direct pruning resolves the managed backend's actual URL and scoped settings.
+- Selected-source carbon uses backend-native token counts; invalid/empty counts
+  fail visibly rather than fabricating a positive token baseline.
+
+This local build requires its matching backend. It does not modify the public
+0.6.2 release, add cross-chat memory, or certify live cloud-agent answer quality.
+
 ## 0.6.2 - 2026-10-05
 
 ### Added

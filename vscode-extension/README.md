@@ -4,12 +4,20 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
+The local **0.6.3** build adds **TokenWise: Demonstrate Pruning Inputs**: repository
+discovery without editor hints, neural pruning of an exact file/excerpt, and an
+explicitly labeled earlier-user replay. Results expose the effective objective,
+scope, history source, thresholds, selected-source line scores, and JSON export.
+Use the matching updated backend. This local change does not replace the public
+0.6.2 release linked below. The checkout's teacher guide now includes four runnable
+projects; the older public 0.6.2 ZIP contains three.
+
 **0.6.2** adds **TokenWise: Compare Context Strategies**. Open a saved Python
 file for the manual baseline, enter one common task, then compare all indexed
 Python code, the selection, and automatic context. Copy or export the actual
 packets and evaluate answers in independent chats. The command requires the
 matching updated backend; it does not grade agent answers. The source checkout's
-`demonstation.md` includes three runnable example repositories and a teacher guide.
+`demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
 Download the [TokenWise 0.6.2 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/tokenwise-vscode-0.6.2.vsix)

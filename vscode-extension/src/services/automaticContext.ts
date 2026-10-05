@@ -53,6 +53,17 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
       return undefined;
     }
     if (result.context_hint_used !== undefined && typeof result.context_hint_used !== "boolean") { return undefined; }
+    const trace = result.input_trace;
+    if (trace != null && (typeof trace !== "object" || Array.isArray(trace)
+      || !["repository", "conversation", "selected_file", "selected_excerpt"].includes(trace.mode)
+      || ![trace.current_query, trace.effective_query, trace.scope, trace.history_text].every(value => typeof value === "string")
+      || !["none", "supplied_user_context", "native_scoped_user_turns", "supplied_replay"].includes(trace.history_source)
+      || !Number.isFinite(trace.threshold) || trace.threshold < 0 || trace.threshold > 1
+      || (trace.indexed_files !== undefined && (!Number.isInteger(trace.indexed_files) || trace.indexed_files < 0))
+      || (trace.first_line !== undefined && (!Number.isInteger(trace.first_line) || trace.first_line < 1)))) { return undefined; }
+    if (result.files.some(file => (file.pruning_method !== undefined && typeof file.pruning_method !== "string")
+      || (file.effective_threshold != null && (!Number.isFinite(file.effective_threshold)
+        || file.effective_threshold < 0 || file.effective_threshold > 1)))) { return undefined; }
     for (const name of ["raw_context_tokens", "retained_source_tokens", "context_overhead_tokens", "indexed_files"] as const) {
       const count = result[name];
       if (count !== undefined && (!Number.isInteger(count) || count < 0)) { return undefined; }

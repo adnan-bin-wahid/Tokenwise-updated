@@ -11,12 +11,13 @@ import { BackendManager } from "./services/backendManager";
 import { UninstallTracker } from "./services/uninstallTracker";
 import { RepositoryIndexSync } from "./services/repositoryIndexSync";
 import { createCompareContextStrategiesCommand } from "./commands/compareContextStrategies";
+import { createDemonstratePruningCommand } from "./commands/demonstratePruning";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const tracker = new UninstallTracker(context);
   try { await tracker.prepare(); }
   catch (error) { await vscode.window.showErrorMessage(`TokenWise cannot register uninstall cleanup: ${String(error)}`); return; }
-  const service = new PruneService();
+  const service = new PruneService((start) => backend.backgroundUrl(start));
   const panel = new ResultPanel();
   const backend: BackendManager = new BackendManager(context, () => tracker.prepare(), () => indexSync.backendChanged());
   const indexSync = new RepositoryIndexSync(context, (start) => backend.backgroundUrl(start));
@@ -61,6 +62,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
     vscode.commands.registerCommand("tokenwise.compareContextStrategies",
       createCompareContextStrategiesCommand(panel, context.extensionUri, () => backend.backgroundUrl(true))),
+    vscode.commands.registerCommand("tokenwise.demonstratePruning",
+      createDemonstratePruningCommand(service, panel, context.extensionUri, () => backend.backgroundUrl(true))),
     vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(async () => {
       indexSync.pause(); await backend.cancelSetup();
     })),

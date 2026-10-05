@@ -66,3 +66,59 @@ This record describes pre-publication local verification. The 0.6.2 installer
 and demonstration bundle are distributed through the versioned GitHub release.
 Install the VSIX, update the matching backend, and follow `../demonstation.md` to
 rehearse the actual agent interaction before presenting it as a live result.
+
+## Local 0.6.3 Input-Scenario Checks
+
+Separately checked on 2026-10-05 in the same Windows/Python 3.12 CPU environment.
+The earlier 0.6.2 measurements above are historical, not rewritten as new runs.
+These 0.6.3 changes have not been published merely by building a local VSIX.
+
+- 155 extension tests passed, including scope capture, managed URL resolution,
+  native token counts, input-trace validation, line decisions, and export.
+- Backend suite: 93 tests, 92 passed and one Windows file-symlink privilege skip.
+- Four demonstration apps and 28 tests passed; the original Test_project's six
+  tests also passed.
+- Real pretrained weights exercised repository discovery without editor hints,
+  exact whole-file/excerpt pruning through the compiled extension service, and
+  a two-threshold comparison using identical source/task.
+- A generated USER transcript exercised the real native hook and HTTP backend:
+  the effective objective contained both earlier lockout intent and the subsequent
+  boundary follow-up. A different conversation ID did not inherit that reference.
+- Six real result views passed at 1280x1000 and 390x844: repository, entire file,
+  higher threshold, excerpt, native history, and new chat. There were no page
+  errors, document overflow, or overlapping stats. Copy/export messages passed.
+- The verifier stopped its own isolated backend and removed temporary chat state;
+  it did not modify demonstration application source or call Antigravity's cloud.
+
+### Observed Selected-Source Results
+
+Task: `Explain session expiry and revocation, not invoice pricing.` Source:
+`04_pruning_inputs/workflows.py`. Counts use the real pruning tokenizer.
+
+| Input | Threshold | Original source tokens | Retained tokens | Source reduction |
+| --- | --- | --- | --- | --- |
+| Entire file | 0.45 | 287 | 222 | 22.65% |
+| Same entire file | 0.85 | 287 | 19 | 93.38% |
+| Exact session_is_valid excerpt | 0.45 | 27 | 27 | 0.00% |
+
+The 0.85 output contained only `session.revoked = True` between filtered-lines
+markers. It lost the expiry evidence and function context. **This is observed
+over-pruning, not a claim of excellent quality.** At 0.45, unrelated invoice
+source also remained; this model is not a perfect relevance filter. The excerpt
+needed no reduction because both supplied lines were relevant. The two thresholds
+produced the same line relevance scores; the decision criterion changed.
+
+All three selected-source carbon comparisons were ready; the unchanged excerpt
+had equal before/after predictions and zero estimated savings. These are still
+configured-scenario predictions, not measured emissions.
+
+The fourth fixture's optional all-code/automatic packets were 787 and 790 tokens:
+an approximately 0.38% packet increase. Its matched unpruned automatic bundle was
+860 tokens; these are different baselines. Wrapper overhead can outweigh reduced
+source on a small repository. Do not hide that result or enlarge the fixture just
+to manufacture savings.
+
+Ignored reports: `results/pruning-inputs.json`, project comparison JSON/CSV, and
+`results/result-panel/checks.json` plus screenshots. Regenerate them for a new
+source snapshot. The native-hook transcript is test input, not a live cloud chat.
+Run the teacher guide's actual Antigravity rehearsal before claiming live behavior.

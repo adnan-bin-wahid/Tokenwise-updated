@@ -7,6 +7,9 @@ For a follow-up such as "Which tests cover that?", make the retrieval query
 self-contained using earlier USER intent in this chat only. Never infer a topic
 from another chat, `.tokenwise/latest.json`, or an old bundle. If there is no
 referent, ask for clarification. Retrieve fresh source for each new user turn.
+Use at most three earlier USER turns from the current topic and at most 2000
+characters of earlier reference. Keep the topic and newest user constraints,
+not assistant answers or full transcripts. Explicit topic changes reset the topic.
 
 For each new user request involving this Python repository, retrieve TokenWise
 context before inspecting code or answering. No manual file selection is needed.

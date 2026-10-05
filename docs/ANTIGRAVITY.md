@@ -196,7 +196,10 @@ settings to keep the status bar and logs without opening a result panel.
 
 - `.tokenwise/latest.json` in the workspace: current prompt, selected files, tokens,
   result and errors.
-- `.tokenwise/conversations/` in the workspace: duplicate-injection state.
+- `.tokenwise/conversations/` in the workspace: duplicate-injection state and
+  bounded current-topic user intent, scoped by conversation ID. Local 0.6.3 keeps
+  at most three user turns within 2,000 combined characters; explicit tasks
+  replace the topic. This is not cross-chat memory or a full transcript.
 - `.tokenwise/backend-link.json` in the workspace: extension user registration path.
 - `backend/installation.json` in extension user storage: shared installation and
   runtime directory paths.

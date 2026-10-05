@@ -161,15 +161,23 @@ class ContextBuilder:
 
             original_tokens = (prepruned[rel_path].origin_token_cnt if prepruned and rel_path in prepruned
                                else self._file_count(file_meta, content, tokenizer))
+            pruning_method = "signature_interface"
+            effective_threshold = None
             if overview:
+                pruning_method = "overview_excerpt"
                 pruned_content = file_meta.get("_overview_content") or self._signatures_only(file_meta, rel_path)
             elif prepruned and rel_path in prepruned:
+                pruning_method = "neural_lines"
+                effective_threshold = max(0.10, threshold - 0.15) if rel_path == active_file else min(0.85, threshold + 0.15)
                 result = prepruned[rel_path]
                 pruned_content = result.pruned_code
                 original_tokens = result.origin_token_cnt
             elif preserve_source and rel_path in preserve_source:
+                pruning_method = "short_source_retained"
                 pruned_content = content
             elif tier == 1:
+                pruning_method = "neural_lines"
+                effective_threshold = max(0.10, threshold - 0.15)
                 try:
                     result = pruner_model.prune(
                         PruneRequest(
@@ -182,9 +190,13 @@ class ContextBuilder:
                     pruned_content = result.pruned_code
                     original_tokens = result.origin_token_cnt
                 except Exception as exc:
+                    pruning_method = "original_source_fallback"
+                    effective_threshold = None
                     logger.warning("Tier-1 pruning failed for %s: %s", rel_path, exc)
                     pruned_content = content
             elif tier == 2:
+                pruning_method = "neural_lines"
+                effective_threshold = min(0.85, threshold + 0.15)
                 try:
                     result = pruner_model.prune(
                         PruneRequest(
@@ -197,6 +209,8 @@ class ContextBuilder:
                     pruned_content = result.pruned_code
                     original_tokens = result.origin_token_cnt
                 except Exception as exc:
+                    pruning_method = "signature_fallback"
+                    effective_threshold = None
                     logger.warning("Tier-2 pruning failed for %s: %s", rel_path, exc)
                     pruned_content = self._signatures_only(file_meta, rel_path)
             else:
@@ -247,6 +261,8 @@ class ContextBuilder:
                     "original_tokens": original_tokens,
                     "pruned_tokens": pruned_tokens,
                     "score": score,
+                    "pruning_method": pruning_method,
+                    "effective_threshold": effective_threshold,
                 }
             )
 

@@ -1,18 +1,84 @@
 """Real-weight comparison checks on demonstration projects in an owned backend process."""
 
 import importlib.util
+import ast
+import argparse
 import json
 import os
 import socket
+import shutil
 import subprocess
 import sys
 import time
 from urllib.error import URLError
+from unittest.mock import patch
 
 from verify_context_results import ROOT, SOURCE, isolated_directory, request
 
 
+def verify_pruning_inputs(base, storage, demo):
+    directory = demo.ROOT / "04_pruning_inputs"
+    filename = directory / "workflows.py"
+    source = filename.read_text(encoding="utf-8")
+    query = "Explain session expiry and revocation, not invoice pricing."
+    repository = request(base, "/prune-workspace", {"workspace_root": str(directory), "query": query,
+                         "token_budget": 4096, "max_candidates": 8})
+    assert repository["input_trace"]["mode"] == "repository"
+
+    def manual(code, mode, first_line, threshold=.45):
+        result = subprocess.run(["node", str(ROOT / "scripts/verify-pruning-client.cjs")], cwd=ROOT,
+            input=json.dumps({"base": base, "query": query, "code": code, "file_path": str(filename),
+                              "threshold": threshold, "mode": mode, "first_line": first_line}),
+            capture_output=True, text=True, encoding="utf-8", timeout=120, check=True)
+        mapped = json.loads(result.stdout)
+        assert mapped["originalCode"] == code and mapped["lineScores"]
+        assert mapped["input_trace"]["mode"] == mode
+        assert mapped["carbonStatus"] == "ready"
+        return mapped
+
+    entire = manual(source, "selected_file", 1)
+    stricter = manual(source, "selected_file", 1, .85)
+    assert stricter["input_trace"]["threshold"] == .85
+    assert stricter["originTokenCount"] == entire["originTokenCount"]
+    assert stricter["lineScores"].keys() == entire["lineScores"].keys()
+    assert all(abs(score - stricter["lineScores"][line]) < .0001 for line, score in entire["lineScores"].items())
+    assert set(stricter["keptFrags"]).issubset(entire["keptFrags"])
+    function = next(node for node in ast.parse(source).body if isinstance(node, ast.FunctionDef) and node.name == "session_is_valid")
+    excerpt = manual(ast.get_source_segment(source, function), "selected_excerpt", function.lineno)
+    assert "invoice_total" not in excerpt["originalCode"]
+    sys.path.insert(0, str(SOURCE / "src"))
+    from swe_pruner.antigravity_hook import run_hook
+    workspace = storage / "conversation-workspace"
+    shutil.copytree(demo.ROOT / "01_account_security", workspace,
+                    ignore=shutil.ignore_patterns("__pycache__", ".agents", ".tokenwise"))
+    transcript = workspace / "transcript.jsonl"
+    payload = {"workspacePaths": [str(workspace)], "transcriptPath": str(transcript),
+               "conversationId": "tokenwise-verification-pruning-history", "tokenwiseVerification": True}
+    with patch("swe_pruner.antigravity_hook.ensure_backend", return_value=base):
+        for number, task in enumerate(("Explain account lockout after failed login attempts.",
+                                       "What about its expiry boundary?", "Which tests cover that behavior?")):
+            with transcript.open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps({"type": "USER_INPUT", "source": "USER_EXPLICIT", "step_index": number, "content": task}) + "\n")
+            assert run_hook(payload, ROOT, workspace).get("injectSteps")
+        conversation = json.loads((workspace / ".tokenwise/latest.json").read_text(encoding="utf-8"))["result"]
+        trace = conversation["input_trace"]
+        assert trace["history_source"] == "native_scoped_user_turns"
+        assert "account lockout" in trace["history_text"] and "expiry boundary" in trace["history_text"]
+        assert trace["history_text"] in trace["effective_query"]
+        assert run_hook({**payload, "conversationId": "tokenwise-verification-new-chat"}, ROOT, workspace).get("injectSteps")
+        new_chat = json.loads((workspace / ".tokenwise/latest.json").read_text(encoding="utf-8"))["result"]
+        assert not new_chat["context_hint_used"] and new_chat["structured_goal"]["clarification_required"]
+    report = {"repository": repository, "selected_file": entire, "selected_high_threshold": stricter, "selected_excerpt": excerpt,
+              "conversation": conversation, "new_chat": new_chat,
+              "verification_only": True, "antigravity_cloud_called": False}
+    (demo.ROOT / "results/pruning-inputs.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print("Real pruning inputs verified: repository, whole file/two thresholds, excerpt, native user history, new-chat isolation.", flush=True)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--inputs-only", action="store_true", help="Retry just the real pruning-input paths, without regenerating packet comparisons.")
+    arguments = parser.parse_args()
     spec = importlib.util.spec_from_file_location("demo_checks", ROOT / "demonstration/run_checks.py")
     demo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(demo)
@@ -45,7 +111,11 @@ def main() -> None:
                         pass
                     time.sleep(.3)
                 assert health.get("model_loaded") and health.get("carbon_models_loaded")
-                rows = demo.compare_projects(base, ROOT / "demonstration/results")
+                (ROOT / "demonstration/results").mkdir(exist_ok=True)
+                rows = [] if arguments.inputs_only else demo.compare_projects(base, ROOT / "demonstration/results")
+                verify_pruning_inputs(base, storage, demo)
+                if arguments.inputs_only:
+                    return
                 case = demo.cases()[0]
                 payload = {"workspace_root": str(demo.ROOT / case["project"]), "token_budget": 4096, "max_candidates": 8}
                 follow = request(base, "/prune-workspace", {**payload, "query": case["follow_up"], "context_hint": case["query"]})

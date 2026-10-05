@@ -1,56 +1,71 @@
-# Classroom Results Worksheet
+# Pruning Inputs: Classroom Worksheet
 
-Record real runs only. Empty fields are intentional; no outcome is predicted.
+Record real observations only. Empty fields are intentional.
 
 - Date/machine/OS:
-- Extension/backend versions:
-- Antigravity model/version/settings:
-- Project fingerprint(s):
-- Token budget and candidate limit:
-- Manual file/excerpt scope:
-- Carbon target model/output assumption/intensity:
-- Cold startup time and warm preparation time:
-- Global rules or other common context:
+- Extension/backend versions and source revision:
+- Project / fingerprint / saved or unsaved selected buffer:
+- Antigravity model/settings, if a live chat is involved:
+- Warm/cold backend, task, budget, candidate limit, preservation:
+- Carbon scenario / output assumption / intensity:
 
-## Independent Fresh-Chat Trials
+## Three Input Scenarios
 
-Score: five supported facts per project, one point each. Record unsupported
-claims and tool violations separately. Rotate strategy order between repeats.
-
-| Project | Strategy | Repeat | Packet tokens | Facts / 5 | Unsupported claims | Tool violation? | Answer seconds | Notes |
+| Run | Input mode | Exact scope | Current task | Earlier reference / source | Effective objective | Requested / applied threshold | Method / scores | Output / omissions |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Account security | All Python | | | | | | | |
-| Account security | Selected | | | | | | | |
-| Account security | TokenWise | | | | | | | |
-| Checkout | All Python | | | | | | | |
-| Checkout | Selected | | | | | | | |
-| Checkout | TokenWise | | | | | | | |
-| Issue tracker | All Python | | | | | | | |
-| Issue tracker | Selected | | | | | | | |
-| Issue tracker | TokenWise | | | | | | | |
+| A | Repository, no editor hint | | | None | | | | |
+| B1 | Entire file | | | None | | | | |
+| B2 | Exact excerpt | | | None | | | | |
+| B3 | Same file, higher threshold | | | None | | | | |
+| C1 | Conversation replay | | | Supplied replay, not live capture | | | | |
+| C2 | Actual same-chat integration | | | Native hook or fallback | | | | |
 
-## Workflow and Conversation Tests
+## Selected-Source Decisions
 
-| Test | Current task/event evidence | Included paths | Answer/tool observation | Passed or limitation |
-| --- | --- | --- | --- | --- |
-| Main prompt with no selection | | | | |
-| Same-chat ambiguous follow-up | | | | |
-| Explicit topic switch | | | | |
-| New-chat ambiguous prompt | | | | |
-| Different project/new chat | | | | |
-
-Record whether follow-ups used native scoped hints or fallback self-contained
-queries. If the agent asks for clarification without retrieval, record that;
-an old status item is not a new event. Workflow extra file reads are allowed
-but must not be silently included in context-only answer scores.
-
-## Carbon and Interpretation
-
-| Project | Strategy | Modeled energy J | Modeled CO2 g | Change versus all-code | Scenario/error |
+| Original line | Mean relevance | Threshold | Mask decision | In final context? | Preservation / formatting explanation |
 | --- | --- | --- | --- | --- | --- |
 | | | | | | |
 
-Attach exported comparison JSON, transcript evidence, and dated screenshots.
-Summarize omissions and failed trials as well as successful runs. Distinguish
-source-marker diagnostics from human answer scores and configured carbon
-predictions from measured end-to-end emissions.
+The mask does not guarantee exact final membership. Record restoration and
+unscored lines instead of silently assuming threshold-only output.
+
+## History and Isolation
+
+| Test | Current event/query evidence | History source / reference | Effective objective | Actual tool/answer observation | Outcome / limitation |
+| --- | --- | --- | --- | --- | --- |
+| Replay follow-up | | | | | |
+| Same-chat follow-up after two user turns | | | | | |
+| Explicit new topic | | | | | |
+| New-chat ambiguous follow-up | | | | | |
+| Different project/new chat | | | | | |
+
+Fallback may rewrite the current query; the backend cannot see its raw history.
+Clarification without retrieval produces no new event. Generated-transcript
+verification is not a live cloud-agent test.
+
+## Metrics and Evidence
+
+| Run | Source / retained | Packed / raw context | Source change | Preparation seconds | CO2 before / after | Scenario / baseline / error |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |
+
+Selected-source carbon uses native source counts; repository carbon uses matched
+formatted bundles. Predictions are not measured provider/net emissions.
+Attach exported Pruning Run JSON, dated screenshots, and actual chat tool output
+for live claims. Record failed runs and omitted necessary facts.
+
+## Optional Independent Answer-Quality Comparison
+
+Use identical tasks/source/settings and separate fresh chats in baseline_lab.
+Rotate order. Disallow tools/file reads for a context-only trial, or label the
+result a tool-assisted workflow instead.
+
+| Project / repeat | Strategy | Packet tokens | Supported facts | Unsupported claims | Tool violation? | Answer seconds | Omissions |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| | All Python, unpruned | | | | | | |
+| | Selected, unpruned | | | | | | |
+| | Automatic TokenWise | | | | | | |
+
+The unpruned Selected baseline is not selected-source neural pruning. Define
+expected facts from runnable source/tests before grading answers. Source-marker
+checks are not semantic grades.

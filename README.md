@@ -10,10 +10,13 @@ install Node.js, compile the extension, press F5, or manually start a server.**
 ## Before You Start
 
 For a teacher presentation, start with [the demonstration guide](demonstation.md)
-and the three independent [Python demo repositories](demonstration/README.md).
-The controlled comparison command requires **0.6.2 and its updated backend**.
-Download the release below. See the guide for
-installation, exact prompts, answer checklists, and conversation-isolation tests.
+and the four independent [Python demo repositories](demonstration/README.md).
+The updated guide focuses on **how pruning works** with repository discovery,
+exact selected source, and bounded same-chat user references. Its input-trace
+command requires the **local 0.6.3 build and matching backend**; the published
+0.6.2 download below is unchanged. The optional packet-comparison command is
+available in 0.6.2. See the guide for installation, exact steps, line decisions,
+and the distinction between a history replay and live Antigravity integration.
 
 | Requirement | Details |
 | --- | --- |
@@ -300,12 +303,22 @@ not written back into `.tokenwise/latest.json` or injected as agent instructions
 | **Start Backend** | Warm the model before a prompt; updates the manual API URL to its actual port |
 | **Diagnose Setup** | Check the registered installation, actual backend health, and workspace links |
 | **Show Automatic Context** | Reopen the latest supplied context |
+| **Demonstrate Pruning Inputs** (local 0.6.3) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
+| **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
 | **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
 
 All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
 **Prune Current File**, and **Build Repository Context** commands remain available
 in VS Code as well; automatic chat retrieval needs Antigravity's agent integration.
+
+In local 0.6.3, recognized native follow-ups can use at most three earlier user
+turns from the current topic, with a combined 2,000-character bound. Explicit
+tasks reset the topic; missing conversation IDs and new chats do not inherit it.
+Stable-build fallback resolves user intent into a self-contained query rather
+than exposing the full chat to the backend. The teaching command's history mode
+is a supplied replay, not live capture. See the demonstration guide for evidence
+and isolation controls.
 
 For a smaller context, edit your repository's `.agents/tokenwise.json`:
 
