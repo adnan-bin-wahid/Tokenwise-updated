@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "token_budget": 4096,
+  "threshold": 0.45,
+  "max_candidates": 6,
+  "backend_port": 8000,
+  "auto_start_backend": true,
+  "startup_timeout_seconds": 40,
+  "request_timeout_seconds": 90
+}

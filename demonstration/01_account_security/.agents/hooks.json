@@ -1,0 +1,12 @@
+{
+  "tokenwise-automatic-context": {
+    "enabled": true,
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-hook.ps1",
+        "timeout": 150
+      }
+    ]
+  }
+}
