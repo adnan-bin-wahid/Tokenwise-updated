@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.4 - Unreleased
+## 0.6.4 - 2026-10-06
 
 ### Fixed
 
@@ -21,7 +21,7 @@
   cold starts and tests zero carbon overrides against the actual HTTP endpoint.
 
 Install the matching 0.6.4 backend with **Set Up Backend** after upgrading the
-VSIX. Local packaging does not publish or replace any existing GitHub release.
+VSIX. Previously published releases and installers remain unchanged.
 
 ## 0.6.3 - 2026-10-06
 

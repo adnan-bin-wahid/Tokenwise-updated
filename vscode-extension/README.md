@@ -4,6 +4,13 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
+**0.6.4** fixes optional zero-valued carbon settings and explicit topic contrasts
+such as `Explain session expiry, not invoice pricing`. Focused repository
+retrieval omits independent excluded units while preserving required helpers.
+The panel shows excluded topics and the applied scope-filter method. Install its
+matching backend; the filter does not edit your files or guarantee perfect neural
+excerpts. CO2 remains an approximate configured-scenario estimate.
+
 **0.6.3** adds **TokenWise: Demonstrate Pruning Inputs**: repository
 discovery without editor hints, neural pruning of an exact file/excerpt, and an
 explicitly labeled earlier-user replay. Results expose the effective objective,
@@ -20,10 +27,10 @@ matching updated backend; it does not grade agent answers. The source checkout's
 `demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
-Download the [TokenWise 0.6.3 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/tokenwise-vscode-0.6.3.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
+Download the [TokenWise 0.6.4 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
 For the teacher guide and four example repositories, download
-[TokenWise-0.6.3.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/TokenWise-0.6.3.zip).
+[TokenWise-0.6.4.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/TokenWise-0.6.4.zip).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
@@ -58,7 +65,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.3 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.4 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified

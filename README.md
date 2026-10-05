@@ -7,17 +7,18 @@ retrieves relevant code and tests without asking you to select files manually.
 **For normal users: install the VSIX. You do not need to clone this repository,
 install Node.js, compile the extension, press F5, or manually start a server.**
 
-## Local 0.6.4 Update
+## Version 0.6.4
 
-This checkout builds **0.6.4**, with fixes for zero-valued CO2 settings and explicit
-topic exclusions such as `Explain session expiry, not invoice pricing.` The
-published GitHub links below still refer to **0.6.3**; building locally does not
-publish a GitHub release or change an older installer.
+**0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
+`Explain session expiry, not invoice pricing.` Get the corrected installer and
+demonstration bundle from the
+[0.6.4 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
+Previously published releases are unchanged.
 
-To use or share the corrected build:
+To install or upgrade:
 
-1. In Antigravity, use **Extensions > ... > Install from VSIX...** and select
-   `releases/TokenWise-0.6.4/tokenwise-vscode-0.6.4.vsix` from this checkout.
+1. Download [tokenwise-vscode-0.6.4.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix).
+   In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
 2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
    as well as the extension: an already-running 0.6.3 backend does not have the
    new retrieval filter. Existing validated model downloads can be reused.
@@ -35,7 +36,7 @@ For a teacher presentation, start with [the demonstration guide](demonstation.md
 and the four independent [Python demo repositories](demonstration/README.md).
 The updated guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
-command requires **0.6.3 and its matching backend**. Download the installer or
+command requires **0.6.4 and its matching backend** for the latest fixes. Download the installer or
 complete demonstration bundle below. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
@@ -80,10 +81,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.3 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/tokenwise-vscode-0.6.3.vsix)
-from the [0.6.3 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
+Download [**TokenWise 0.6.4 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/tokenwise-vscode-0.6.4.vsix)
+from the [0.6.4 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.4).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, four demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/TokenWise-0.6.3.zip)
+provides an [installer, four demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.4/TokenWise-0.6.4.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -185,7 +186,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.3 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.4 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.

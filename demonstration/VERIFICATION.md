@@ -119,6 +119,44 @@ an approximately 0.38% packet increase. Its matched unpruned automatic bundle wa
 source on a small repository. Do not hide that result or enlarge the fixture just
 to manufacture savings.
 
+## Local 0.6.4 Regression Checks
+
+Checked on 2026-10-06 in this Windows/Python 3.12 CPU checkout. Earlier records
+above describe their original versions and are not relabeled as new runs.
+
+- 161 extension tests passed. Backend: 104 tests, 103 passed and one Windows
+  file-symlink privilege skip. Four demo applications and 28 tests passed.
+- Six real result views passed desktop/narrow checks: no page errors, document
+  overflow, or overlapping statistics; copy/export controls were exercised.
+- The mixed demo's repository task was `Explain session expiry and revocation,
+  not invoice pricing.` No editor-selection anchor was supplied. The final
+  packet included session expiry/revocation and their tests, while the independent
+  invoice function, tests, and display call were omitted. Files were not edited.
+- Source tokens: **701 before, 439 retained (37.38% reduction)**; packed context:
+  **606 tokens**; matched unpruned bundle: **868 tokens**. These are different
+  baselines and are not an all-repository answer-quality score.
+- Compiled-client carbon calls succeeded despite zero optional model-size and
+  latency overrides, using `artifact_models:model_registry` features. The
+  matched formatted-context predictions were **0.133644221 g before** and
+  **0.128633917 g after**, a modeled difference of **0.005010304 g**. These do
+  not measure Antigravity hardware, local pruning energy, or net emissions.
+- Required-helper, import-alias, ordinary-negation, source-preservation,
+  query-cache isolation, and saved-file-edit invalidation regressions passed.
+
+The real-weight run completed its repository, selected-source, two-threshold,
+excerpt, native-history, and new-chat assertions, but Windows locked its
+temporary log during cleanup. A repeat run timed out on local inference.
+Temporary backend PIDs were confirmed stopped and both owned scratch folders
+were subsequently removed. Do not describe these as two clean verifier exits,
+a controlled latency benchmark, or a live Antigravity cloud test. The generated
+report from the completed assertions remains under ignored `results/` locally.
+
+The explicit repository filter is separate from neural line relevance. Direct
+selected-source commands still use the model on exactly the captured source,
+including its previously observed over-pruning risk. Install the v0.6.4 VSIX
+and matching backend, and evaluate the actual answers before presenting quality
+claims. No older published installer or historical measurement was replaced.
+
 Ignored reports: `results/pruning-inputs.json`, project comparison JSON/CSV, and
 `results/result-panel/checks.json` plus screenshots. Regenerate them for a new
 source snapshot. The native-hook transcript is test input, not a live cloud chat.
