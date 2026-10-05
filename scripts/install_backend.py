@@ -18,10 +18,28 @@ from pathlib import Path, PurePosixPath
 BACKEND = Path("swe-pruner/swe-pruner")
 TORCH_VERSION = "2.14.1"
 CORE_PINS = ["transformers==4.57.6", "huggingface-hub==0.36.2", "fastapi==0.141.1", "uvicorn==0.52.4"]
+STEPS = {"prerequisites": 1, "files": 2, "environment": 3, "tools": 4,
+         "torch": 4, "dependencies": 4, "model": 5, "verify": 5, "check": 6, "complete": 7}
+HINTS = {
+    "prerequisites": "Use 64-bit Python 3.12 and a trusted local folder. Reinstall the VSIX if bundled files fail verification.",
+    "files": "Check free disk space and permissions for TokenWise user storage, then retry.",
+    "environment": "Check your Python 3.12 installation and storage permissions, then retry.",
+    "tools": "Check internet/proxy access to PyPI and free disk space, then retry. Completed steps are retained.",
+    "torch": "Check access to download.pytorch.org and free disk space, then retry. No GPU is required.",
+    "dependencies": "Check access to PyPI and free disk space, then retry. Verified completed dependency steps are reused.",
+    "model": "Check access to Hugging Face and free disk space, then retry. Partial downloads resume when supported.",
+    "verify": "Retry to verify or replace the download. Corrupt weights are not used.",
+    "check": "Open TokenWise Setup output for the import error. Retry rechecks dependencies and repairs failed checks.",
+    "complete": "Check storage/settings permissions, then retry. The verified installation is retained.",
+}
+current_stage = "prerequisites"
 
 
 def progress(stage: str, message: str, **extra) -> None:
-    print("TOKENWISE_PROGRESS " + json.dumps({"stage": stage, "message": message, **extra}), flush=True)
+    global current_stage
+    current_stage = stage
+    print("TOKENWISE_PROGRESS " + json.dumps({"stage": stage, "message": message,
+          "step": STEPS.get(stage, 1), "total_steps": 7, **extra}), flush=True)
 
 
 def checksum(filename: Path) -> str:
@@ -76,6 +94,10 @@ def download_model(model: dict, cache: Path, local_file: Path | None = None) -> 
         progress("model", "Reusing the verified model download")
         return destination
     partial = safe_path(cache, model["sha256"] + ".part")
+    if partial.is_file() and partial.stat().st_size == model["size"] and checksum(partial) == model["sha256"]:
+        progress("verify", "Recovering an already complete, verified partial download")
+        os.replace(partial, destination)
+        return destination
     if local_file:
         if local_file.stat().st_size != model["size"] or checksum(local_file) != model["sha256"]:
             raise ValueError("The selected model does not match the pinned SWE-Pruner weights.")
@@ -127,8 +149,29 @@ def execute(arguments: list[str], **kwargs) -> None:
                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0, **kwargs)
 
 
+def read_checkpoint(filename: Path, fingerprint: str) -> set[str]:
+    try:
+        if filename.stat().st_size > 16384:
+            return set()
+        data = json.loads(filename.read_text(encoding="utf-8"))
+        if (isinstance(data, dict) and data.get("schema_version") == 1
+                and data.get("bundle_sha256") == fingerprint and isinstance(data.get("completed"), list)):
+            return {stage for stage in data["completed"] if isinstance(stage, str) and stage in {"tools", "torch", "dependencies"}}
+    except (OSError, ValueError):
+        pass
+    return set()
+
+
+def write_checkpoint(installation: Path, fingerprint: str, completed: set[str]) -> None:
+    temporary = safe_path(installation, "setup-state.json.tmp")
+    temporary.write_text(json.dumps({"schema_version": 1, "bundle_sha256": fingerprint,
+                                    "completed": sorted(completed)}), encoding="utf-8")
+    os.replace(temporary, safe_path(installation, "setup-state.json"))
+
+
 def install(bundle: Path, storage: Path, version: str, local_model: Path | None = None) -> Path:
-    if sys.version_info[:2] != (3, 12):
+    progress("prerequisites", "Checking Python and bundled file integrity")
+    if sys.version_info[:2] != (3, 12) or sys.maxsize <= 2**32:
         raise ValueError("Install 64-bit Python 3.12, then run TokenWise setup again.")
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ValueError("Invalid TokenWise version.")
@@ -152,18 +195,59 @@ def install(bundle: Path, storage: Path, version: str, local_model: Path | None 
             shutil.copyfile(safe_path(bundle, entry["path"]), target)
         venv = safe_path(installation, ".venv")
         python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        if not python.exists():
+        checkpoint = safe_path(installation, "setup-state.json")
+        completed = read_checkpoint(checkpoint, fingerprint)
+        progress("environment", "Checking the private Python environment")
+        usable = python.exists()
+        if usable:
+            try:
+                execute([str(python), "-c", "import sys, struct, pip; assert sys.version_info[:2] == (3, 12) and struct.calcsize('P') == 8"])
+            except (subprocess.CalledProcessError, OSError):
+                usable = False
+        if not usable:
             progress("environment", "Creating a private Python environment")
-            execute([sys.executable, "-m", "venv", str(installation / ".venv")])
-        progress("dependencies", "Installing CPU dependencies; first setup may take several minutes")
+            execute([sys.executable, "-m", "venv", "--clear", str(venv)])
+            completed.clear()
+            write_checkpoint(installation, fingerprint, completed)
         package_environment = os.environ.copy()
         package_environment["PIP_CACHE_DIR"] = str(safe_path(storage, "backend/pip-cache"))
-        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", "--upgrade", "pip", "setuptools", "wheel"], env=package_environment)
+        environment = os.environ.copy()
+        environment.update({"PYTHONUTF8": "1", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
+                            "PYTHONPATH": str(installation / BACKEND / "src"),
+                            "SWEPRUNER_MODEL_PATH": str(installation / BACKEND / "model"),
+                            "SWEPRUNER_CARBON_ARTIFACTS_DIR": str(installation / BACKEND / "carbon_artifacts")})
+
+        def packages(stage: str, message: str, arguments: list[str], check: str) -> None:
+            progress(stage, message)
+            if stage in completed:
+                try:
+                    execute([str(python), "-c", check], cwd=installation, env=environment)
+                except (subprocess.CalledProcessError, OSError):
+                    completed.remove(stage)
+                    write_checkpoint(installation, fingerprint, completed)
+                    progress(stage, "Repairing a previously completed dependency step")
+                    if stage == "dependencies" and sys.platform != "darwin":
+                        arguments += [f"torch=={TORCH_VERSION}+cpu", "--extra-index-url", "https://download.pytorch.org/whl/cpu"]
+                    arguments.append("--force-reinstall")
+                else:
+                    progress(stage, "Completed dependency step verified and reused")
+                    return
+            execute(arguments, env=package_environment)
+            execute([str(python), "-c", check], cwd=installation, env=environment)
+            completed.add(stage)
+            write_checkpoint(installation, fingerprint, completed)
+
+        packages("tools", "Installing packaging tools", [str(python), "-m", "pip", "install", "--disable-pip-version-check", "--upgrade", "pip", "setuptools", "wheel"],
+                 "import importlib.metadata as m; [m.version(name) for name in ('pip', 'setuptools', 'wheel')]")
         torch_args = [str(python), "-m", "pip", "install", "--disable-pip-version-check", f"torch=={TORCH_VERSION}"]
         if sys.platform != "darwin":
             torch_args += ["--index-url", "https://download.pytorch.org/whl/cpu"]
-        execute(torch_args, env=package_environment)
-        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", *CORE_PINS, str(installation / BACKEND)], env=package_environment)
+        packages("torch", "Installing CPU PyTorch; first setup may take several minutes", torch_args,
+                 f"import torch; assert torch.__version__.split('+')[0] == {TORCH_VERSION!r}")
+        dependency_check = ("import importlib.metadata as m; import fastapi, uvicorn, transformers, swe_pruner.online_serving; "
+                            f"assert all(m.version(name) == version for name, version in {[pin.split('==') for pin in CORE_PINS]!r}); m.version('swe-pruner')")
+        packages("dependencies", "Installing TokenWise backend dependencies", [str(python), "-m", "pip", "install", "--disable-pip-version-check", *CORE_PINS, str(installation / BACKEND)], dependency_check)
+        progress("model", "Checking or downloading the verified model")
         model = download_model(manifest["model"], safe_path(storage, "backend/downloads"), local_model)
         target = safe_path(installation, f"{BACKEND.as_posix()}/model/model.safetensors")
         if target.exists() and (target.stat().st_size != manifest["model"]["size"] or checksum(target) != manifest["model"]["sha256"]):
@@ -174,11 +258,6 @@ def install(bundle: Path, storage: Path, version: str, local_model: Path | None 
             except OSError:
                 shutil.copyfile(model, target)
         progress("check", "Checking backend imports, tokenizer, and trained carbon artifacts")
-        environment = os.environ.copy()
-        environment.update({"PYTHONUTF8": "1", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
-                            "PYTHONPATH": str(installation / BACKEND / "src"),
-                            "SWEPRUNER_MODEL_PATH": str(installation / BACKEND / "model"),
-                            "SWEPRUNER_CARBON_ARTIFACTS_DIR": str(installation / BACKEND / "carbon_artifacts")})
         check = "import swe_pruner.online_serving as s; from tokenizers import Tokenizer; assert s.check_model_path(s.resolve_model_path()); Tokenizer.from_file(str(s.resolve_model_path()/'tokenizer.json')); assert s.carbon_estimator and s.carbon_estimator.is_ready(); print('TOKENWISE_BACKEND_IMPORTS_OK')"
         execute([str(python), "-c", check], cwd=installation, env=environment)
         marker = safe_path(installation, "managed-install.json")
@@ -201,6 +280,8 @@ def main() -> int:
         install(args.bundle, args.storage, args.version, args.model_file)
         return 0
     except Exception as exc:
+        print("TOKENWISE_SETUP_ERROR " + json.dumps({"stage": current_stage, "message": str(exc),
+              "hint": HINTS.get(current_stage, HINTS["prerequisites"]), "step": STEPS.get(current_stage, 1)}), file=sys.stderr, flush=True)
         print(f"TokenWise setup failed: {exc}", file=sys.stderr, flush=True)
         return 1
 

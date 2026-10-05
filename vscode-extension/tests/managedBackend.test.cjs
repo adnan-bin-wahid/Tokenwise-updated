@@ -4,13 +4,40 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const os = require("node:os");
 const childProcess = require("node:child_process");
-const { parseSetupProgress, findPython312, runSetupProcess, installManagedBackend } = require("../dist/services/managedBackend.js");
+const { parseSetupProgress, parseSetupError, setupProgressMessage, SetupError, findPython312, runSetupProcess, installManagedBackend } = require("../dist/services/managedBackend.js");
 
 test("structured installer progress is separated from normal output", () => {
   assert.deepEqual(parseSetupProgress('TOKENWISE_PROGRESS {"stage":"model","message":"Downloading","current":1,"total":2}'), { stage: "model", message: "Downloading", current: 1, total: 2 });
   assert.equal(parseSetupProgress("Collecting torch"), undefined);
   assert.equal(parseSetupProgress("TOKENWISE_PROGRESS broken"), undefined);
   assert.equal(parseSetupProgress('TOKENWISE_PROGRESS {"stage":1}'), undefined);
+});
+
+test("setup progress has readable numbered steps and safe download percentages", () => {
+  assert.equal(setupProgressMessage({ stage: "model", message: "Downloading model", step: 5, total_steps: 7, current: 50, total: 100 }), "Step 5/7: Downloading model (50%)");
+  assert.equal(setupProgressMessage({ stage: "check", message: "Checking", step: 0, total_steps: 0, current: 0, total: 0 }), "Checking");
+});
+
+test("structured errors retain the failed step and recovery advice", () => {
+  const error = parseSetupError('pip output\nTOKENWISE_SETUP_ERROR {"stage":"model","message":"offline","hint":"Reconnect, then retry","step":5}\n');
+  assert.ok(error instanceof SetupError);
+  assert.equal(error.stage, "model"); assert.equal(error.step, 5);
+  assert.equal(error.hint, "Reconnect, then retry");
+  assert.equal(parseSetupError("TOKENWISE_SETUP_ERROR broken"), undefined);
+  assert.equal(parseSetupError('TOKENWISE_SETUP_ERROR {"stage":1,"message":"bad"}'), undefined);
+});
+
+test("process failures expose structured setup errors rather than a raw JSON line", async () => {
+  const record = { stage: "torch", message: "package unavailable", hint: "Check PyTorch connectivity", step: 4 };
+  await assert.rejects(runSetupProcess(process.execPath, ["-e", `console.error('TOKENWISE_SETUP_ERROR '+JSON.stringify(${JSON.stringify(record)})); process.exit(1);`], { log() {} }),
+    error => error instanceof SetupError && error.stage === "torch" && error.step === 4 && error.message === "package unavailable");
+});
+
+test("cancelling Python detection does not spawn an interpreter", async t => {
+  const abort = new AbortController(); abort.abort();
+  const call = t.mock.method(childProcess, "execFile", () => { throw new Error("Unexpected spawn"); });
+  await assert.rejects(findPython312("python", abort.signal), error => error instanceof SetupError && error.cancelled);
+  assert.equal(call.mock.callCount(), 0);
 });
 
 test("Python detection checks version and bitness without a shell", async (t) => {

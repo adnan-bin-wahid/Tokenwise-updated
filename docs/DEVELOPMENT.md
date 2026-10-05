@@ -20,10 +20,11 @@ For an end-user environment, use the extension's managed installer instead.
 ## Tests
 
 ```powershell
+$env:PYTHONPATH = (Join-Path (Get-Location).Path 'swe-pruner\swe-pruner\src')
 .\.venv\Scripts\python.exe -m unittest discover -s swe-pruner/swe-pruner/tests -v
 cd vscode-extension
 npm test
-npm run package
+npm run prepare-backend
 cd ..
 ```
 
@@ -38,7 +39,92 @@ The verifiers do not call Antigravity's cloud model. The portable verifier uses
 two temporary repositories outside the checkout and leaves real workspace
 activity alone. The original demo verifier marks its activity `verification: true`.
 
+## Try the Background Index
+
+Background indexing is included in 0.6.0. From `vscode-extension`, run
+`npm run prepare-backend` and `npm run compile`, then press F5. In the development
+host, open a trusted local Python repository and run **TokenWise: Enable Automatic
+Context** if that folder is not configured yet. A registered backend is required;
+background indexing never performs first-run installation or downloads itself.
+
+The Python service must run the updated source too. For a checkout backend,
+stop its existing process in the terminal where you started it, then start it
+again with your usual backend launch command. Do not terminate unrelated Python
+processes. **Start Backend** reuses a healthy running service; it does not restart
+one to reload source changes. Reloading the extension alone is insufficient.
+
+If using a managed backend, run **TokenWise: Set Up Backend** and approve
+**Install Backend** from the updated development extension.
+The installer uses a version-and-bundle-hash-specific directory and reuses
+verified model downloads. Workspace links resolve the central registration,
+so repositories do not need a different link for each backend bundle.
+Successful setup reconnects the watcher to the newly registered service.
+
+1. Open **Output > TokenWise Index** and wait for the Python file count.
+2. Ask an ordinary Antigravity question. After warm-up, `/prune-workspace`
+   reports `index_cache_hit: true` and `retrieval_cache_hit: true`.
+3. Save a Python source edit. The output fingerprint should change; ask again
+   and check that the excerpts reflect the saved edit.
+4. Try a differently worded prompt: search data can be reused, but the complete
+   answer cache must miss (`context_cache_hit: false`). Repeat the exact prompt
+   without edits to check a complete context-cache hit.
+5. Create/delete a Python file or rename a package directory. Check the index
+   count and subsequent context; unchanged source metadata remains reusable.
+
+Cache flags are raw API diagnostics; the automatic activity record is not a dump
+of every backend field. A file-save update is debounced by 150 ms and becomes
+visible after acknowledgment. Unsaved editor buffers are not indexed.
+
+The extension sends batched relative paths (at most 512 per request) to the local
+`POST /index-workspace` endpoint. A per-window watcher ID and increasing sequence
+number prevent delayed updates from reactivating closed sessions. Heartbeats
+renew a 90-second lease every 30 seconds. The backend checks for reconciliation
+every 15 seconds; due repositories receive a full content-verified scan after
+120 seconds. Without a live watcher, each retrieval checks the repository first.
+Per-repository locks and copy-on-write snapshots isolate source updates from
+in-flight retrieval. Index/search caches retain at most eight repositories;
+complete contexts retain at most 16 exact requests; per-file token counts retain
+at most eight tokenizer/text pairs. Eviction causes rebuilding, not stale reuse.
+
+## Retrieval Benchmark
+
+From the checkout root:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/benchmark_retrieval.py --files 1000 --queries 50
+```
+
+This creates and removes a temporary synthetic repository. It reports cold index
+preparation, warm index/lexical/graph queries, a one-file update, and the
+conservative no-watcher fallback. It asserts zero repository walks/AST parses
+on warm watched requests and exactly one reparse for a one-file content edit.
+These timings exclude neural pruning, HTTP transport, model loading, and
+Antigravity's cloud response; do not present them as end-to-end prompt latency.
+
+A Windows run on 2026-10-05 with 1,000 small generated files and 50 distinct
+queries measured 0.559 ms median / 0.810 ms p95 for watched queries, versus
+328.978 ms median for the content-verified no-watcher fallback. Cold index/search
+preparation took 5.795 seconds; a one-file edit plus search preparation took
+16.876 ms and reparsed one file. Hardware, file sizes, and filesystem caches
+affect results. This is a synthetic measurement, not an Antigravity speed guarantee.
+
 ## Shareable Package
+
+For installer changes, prepare the backend bundle and run the isolated native
+installer/retry/neural HTTP check (requires network access and pinned local weights):
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_managed_setup.py
+```
+
+It creates a fresh private environment in an ignored temporary release directory,
+installs real CPU dependencies, deliberately fails the model step, then retries
+using checksum-verifiable local weights. It checks reuse of all three dependency
+checkpoints, loads the real neural model, and exercises warm indexing, bounded
+retrieval, exact-query caching, and edit invalidation over loopback HTTP. It
+stops its own backend and removes its temporary storage. It does not use or stop
+your running backend, alter real workspace activity, or call Antigravity's cloud
+model. A full 1.35 GB network weight transfer is not part of this verifier.
 
 `npm run package` prepares an integrity-manifested backend bundle, compiles the
 extension, creates the VSIX, and writes the release folder under `releases/`.

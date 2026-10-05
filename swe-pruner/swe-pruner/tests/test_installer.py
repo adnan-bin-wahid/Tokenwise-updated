@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -127,6 +128,141 @@ class InstallerTests(unittest.TestCase):
         with patch.object(installer.urllib.request, "urlopen") as request:
             self.assertEqual(installer.download_model(self.model, self.cache, local).read_bytes(), self.body)
             request.assert_not_called()
+
+    def test_complete_partial_download_is_promoted_without_downloading_again(self):
+        self.cache.mkdir()
+        (self.cache / (self.model["sha256"] + ".part")).write_bytes(self.body)
+        with patch.object(installer.urllib.request, "urlopen") as request:
+            self.assertEqual(installer.download_model(self.model, self.cache).read_bytes(), self.body)
+            request.assert_not_called()
+
+    def install_fixture(self):
+        bundle = self.manifest()
+        config = bundle / installer.BACKEND / "model/config.json"
+        config.parent.mkdir(parents=True)
+        config.write_text("{}", encoding="utf-8")
+        manifest_file = bundle / "backend-manifest.json"
+        manifest = json.loads(manifest_file.read_text())
+        manifest["files"].append({"path": config.relative_to(bundle).as_posix(), "size": 2, "sha256": installer.checksum(config)})
+        manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+        storage = self.root / "storage"
+        local = self.root / "model.safetensors"
+        local.write_bytes(self.body)
+        return bundle, storage, local
+
+    @staticmethod
+    def fake_execute(arguments, **kwargs):
+        if "venv" in arguments:
+            venv = Path(arguments[-1])
+            python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+            python.parent.mkdir(parents=True, exist_ok=True)
+            python.write_bytes(b"private interpreter fixture")
+
+    @staticmethod
+    def pip_calls(mock):
+        return [call.args[0] for call in mock.call_args_list if call.args[0][1:3] == ["-m", "pip"]]
+
+    def test_model_failure_retry_reuses_all_verified_dependency_steps(self):
+        bundle, storage, local = self.install_fixture()
+        with patch.object(installer, "execute", side_effect=self.fake_execute) as command, \
+             patch.object(installer.urllib.request, "urlopen", side_effect=OSError("offline")):
+            with self.assertRaisesRegex(OSError, "offline"):
+                installer.install(bundle, storage, "0.6.0")
+            self.assertEqual(len(self.pip_calls(command)), 3)
+            command.reset_mock()
+            result = installer.install(bundle, storage, "0.6.0", local)
+            self.assertEqual(self.pip_calls(command), [])
+            self.assertTrue((result / "managed-install.json").exists())
+            self.assertEqual(json.loads((result / "setup-state.json").read_text())["completed"], ["dependencies", "tools", "torch"])
+
+    def test_failed_dependency_step_is_not_checkpointed_and_can_resume(self):
+        bundle, storage, local = self.install_fixture()
+        failed = False
+        def execute(arguments, **kwargs):
+            nonlocal failed
+            self.fake_execute(arguments, **kwargs)
+            if f"torch=={installer.TORCH_VERSION}" in arguments and not failed:
+                failed = True
+                raise subprocess.CalledProcessError(1, arguments)
+        with patch.object(installer, "execute", side_effect=execute) as command:
+            with self.assertRaises(subprocess.CalledProcessError):
+                installer.install(bundle, storage, "0.6.0", local)
+            checkpoint = next((storage / "backend/managed").glob("*/setup-state.json"))
+            self.assertEqual(json.loads(checkpoint.read_text())["completed"], ["tools"])
+            command.reset_mock()
+            installer.install(bundle, storage, "0.6.0", local)
+            self.assertEqual(len(self.pip_calls(command)), 2)
+            self.assertTrue(any(f"torch=={installer.TORCH_VERSION}" in args for args in self.pip_calls(command)))
+
+    def test_invalid_checkpoint_does_not_skip_dependency_installation(self):
+        bundle, storage, local = self.install_fixture()
+        with patch.object(installer, "execute", side_effect=self.fake_execute) as command:
+            result = installer.install(bundle, storage, "0.6.0", local)
+            (result / "setup-state.json").write_text("broken checkpoint", encoding="utf-8")
+            command.reset_mock()
+            installer.install(bundle, storage, "0.6.0", local)
+            self.assertEqual(len(self.pip_calls(command)), 3)
+
+    def test_failed_reuse_check_repairs_the_affected_dependency_step(self):
+        bundle, storage, local = self.install_fixture()
+        with patch.object(installer, "execute", side_effect=self.fake_execute):
+            installer.install(bundle, storage, "0.6.0", local)
+        failed = False
+        def execute(arguments, **kwargs):
+            nonlocal failed
+            if "-c" in arguments and arguments[-1].startswith("import torch;") and not failed:
+                failed = True
+                raise subprocess.CalledProcessError(1, arguments)
+            self.fake_execute(arguments, **kwargs)
+        with patch.object(installer, "execute", side_effect=execute) as command:
+            installer.install(bundle, storage, "0.6.0", local)
+            self.assertEqual(len(self.pip_calls(command)), 1)
+            self.assertIn("--force-reinstall", self.pip_calls(command)[0])
+
+    def test_broken_private_environment_is_recreated_and_rechecked(self):
+        bundle, storage, local = self.install_fixture()
+        with patch.object(installer, "execute", side_effect=self.fake_execute):
+            installer.install(bundle, storage, "0.6.0", local)
+        def execute(arguments, **kwargs):
+            if "-c" in arguments and "import sys, struct, pip" in arguments[-1]:
+                raise OSError("private Python is broken")
+            self.fake_execute(arguments, **kwargs)
+        with patch.object(installer, "execute", side_effect=execute) as command:
+            installer.install(bundle, storage, "0.6.0", local)
+            self.assertTrue(any("--clear" in call.args[0] for call in command.call_args_list))
+            self.assertEqual(len(self.pip_calls(command)), 3)
+
+    def test_dependency_repair_keeps_the_cpu_torch_build(self):
+        bundle, storage, local = self.install_fixture()
+        with patch.object(installer, "execute", side_effect=self.fake_execute):
+            installer.install(bundle, storage, "0.6.0", local)
+        failed = False
+        def execute(arguments, **kwargs):
+            nonlocal failed
+            if "-c" in arguments and "import fastapi, uvicorn, transformers" in arguments[-1] and not failed:
+                failed = True
+                raise subprocess.CalledProcessError(1, arguments)
+            self.fake_execute(arguments, **kwargs)
+        with patch.object(installer.sys, "platform", "win32"), patch.object(installer, "execute", side_effect=execute) as command:
+            installer.install(bundle, storage, "0.6.0", local)
+            calls = self.pip_calls(command)
+            self.assertEqual(len(calls), 1)
+            self.assertIn(f"torch=={installer.TORCH_VERSION}+cpu", calls[0])
+            self.assertIn("https://download.pytorch.org/whl/cpu", calls[0])
+            self.assertIn("--force-reinstall", calls[0])
+
+    def test_structured_failure_identifies_the_step_and_recovery_hint(self):
+        bundle = self.manifest()
+        output = io.StringIO()
+        with patch.object(installer.sys, "argv", ["install_backend.py", "--bundle", str(bundle), "--storage", str(self.root / "storage"), "--version", "0.6.0"]), \
+             patch.object(installer, "execute", side_effect=OSError("not enough disk space")), \
+             patch.object(installer.sys, "stderr", output):
+            self.assertEqual(installer.main(), 1)
+        record = next(line for line in output.getvalue().splitlines() if line.startswith("TOKENWISE_SETUP_ERROR "))
+        failure = json.loads(record.split(" ", 1)[1])
+        self.assertEqual(failure["stage"], "environment")
+        self.assertEqual(failure["step"], 3)
+        self.assertIn("permissions", failure["hint"])
 
     def test_failed_setup_releases_its_owned_lock(self):
         bundle = self.manifest()

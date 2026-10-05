@@ -15,7 +15,7 @@ export class UninstallTracker {
     }
   }
 
-  public async removeAll(cancelSetup: () => void): Promise<void> {
+  public async removeAll(cancelSetup: () => void | Promise<void>): Promise<void> {
     if (!vscode.workspace.isTrusted || vscode.env.remoteName) { await vscode.window.showWarningMessage("Clean up TokenWise in a trusted local window."); return; }
     const approval = await vscode.window.showWarningMessage("Remove all local TokenWise data?", {
       modal: true,
@@ -23,7 +23,7 @@ export class UninstallTracker {
     }, "Remove Data");
     if (approval !== "Remove Data") { return; }
     try {
-      cancelSetup();
+      await cancelSetup();
       const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Removing TokenWise data", cancellable: false },
         async () => runCleanup(await buildCleanupPlan(this.context.extensionUri.fsPath)));
       if (result.warnings.length || result.preserved.length) {

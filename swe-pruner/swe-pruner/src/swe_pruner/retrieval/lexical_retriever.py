@@ -2,44 +2,54 @@ import logging
 import math
 import re
 from collections import Counter
-from typing import List, Set
-from ..repository.repository_index import RepositoryIndex
+from typing import List, Set, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..repository.repository_index import RepositoryIndex
 
 logger = logging.getLogger(__name__)
 
+
+def terms(text: str) -> list[str]:
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+    words = re.findall(r"[a-z][a-z0-9]*", text.lower().replace("_", " "))
+    return [
+        word[:-3] + "y" if len(word) > 4 and word.endswith("ies") else
+        word[:-1] if len(word) > 4 and word.endswith("s") and not word.endswith("ss") else word
+        for word in words
+    ]
+
+
+def document_features(path: str, metadata: dict) -> dict:
+    symbols = " ".join(metadata.get("classes", {})) + " " + " ".join(metadata.get("functions", {}))
+    symbols += " " + " ".join(method for cls in metadata.get("classes", {}).values() for method in cls.get("methods", []))
+    return {"content": Counter(terms(metadata.get("content", ""))),
+            "path": frozenset(terms(path)), "symbols": frozenset(terms(symbols))}
+
 class LexicalRetriever:
-    def __init__(self, index: RepositoryIndex):
+    def __init__(self, index: "RepositoryIndex"):
         self.index = index
+        self.postings: dict[str, dict[str, int]] = {}
+        self.frequency: Counter = Counter()
+        self.symbol_files: dict[str, set[str]] = {}
+        for path, metadata in index.index.items():
+            feature = metadata.get("_lexical") or document_features(path, metadata)
+            self.frequency.update(feature["content"].keys())
+            for term in feature["content"].keys() | feature["path"] | feature["symbols"]:
+                self.postings.setdefault(term, {})[path] = (5 * (term in feature["path"])
+                    + 3 * (term in feature["symbols"]) + min(feature["content"][term], 4))
+            for symbol in set(metadata.get("classes", {})) | set(metadata.get("functions", {})):
+                self.symbol_files.setdefault(symbol, set()).add(path)
 
     def search_identifiers(self, identifiers: List[str]) -> Set[str]:
         """
         Scans class and function names in the AST index to find exact matches 
         with the specified list of identifiers.
         """
-        matched_files = set()
-        for rel_path, file_meta in self.index.index.items():
-            for ident in identifiers:
-                # Direct check on class definitions
-                if ident in file_meta.get("classes", {}):
-                    matched_files.add(rel_path)
-                    logger.debug(f"Lexical match for class '{ident}' in {rel_path}")
-                
-                # Direct check on function definitions
-                elif ident in file_meta.get("functions", {}):
-                    matched_files.add(rel_path)
-                    logger.debug(f"Lexical match for function '{ident}' in {rel_path}")
-                    
-        return matched_files
+        return set().union(*(self.symbol_files.get(ident, set()) for ident in identifiers))
 
     @staticmethod
     def _terms(text: str) -> list[str]:
-        text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
-        words = re.findall(r"[a-z][a-z0-9]*", text.lower().replace("_", " "))
-        return [
-            word[:-3] + "y" if len(word) > 4 and word.endswith("ies") else
-            word[:-1] if len(word) > 4 and word.endswith("s") and not word.endswith("ss") else word
-            for word in words
-        ]
+        return terms(text)
 
     def search_query(self, query: str, limit: int = 8) -> list[tuple[str, float]]:
         """Discover files from ordinary task words as well as exact symbol names."""
@@ -53,26 +63,9 @@ class LexicalRetriever:
         terms = set(self._terms(query)) - stop_words
         if not terms:
             return []
-        documents = {
-            path: Counter(self._terms(meta.get("content", "")))
-            for path, meta in self.index.index.items()
-        }
-        frequency = {term: sum(term in doc for doc in documents.values()) for term in terms}
-        ranked = []
-        for path, meta in self.index.index.items():
-            path_terms = set(self._terms(path))
-            symbols = " ".join(meta.get("classes", {})) + " " + " ".join(meta.get("functions", {}))
-            symbols += " " + " ".join(
-                method for cls in meta.get("classes", {}).values() for method in cls.get("methods", [])
-            )
-            symbol_terms = set(self._terms(symbols))
-            score = 0.0
-            for term in terms:
-                weight = math.log(1 + len(documents) / (1 + frequency[term]))
-                score += weight * (
-                    5 * (term in path_terms) + 3 * (term in symbol_terms)
-                    + min(documents[path][term], 4)
-                )
-            if score > 0:
-                ranked.append((path, score))
-        return sorted(ranked, key=lambda item: (-item[1], item[0]))[:limit]
+        scores: dict[str, float] = {}
+        for term in sorted(terms):
+            weight = math.log(1 + len(self.index.index) / (1 + self.frequency[term]))
+            for path, relevance in self.postings.get(term, {}).items():
+                scores[path] = scores.get(path, 0.0) + weight * relevance
+        return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:limit]

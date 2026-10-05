@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.6.0 - 2026-10-05
+
+### Added
+
+- Background Python indexing for configured, trusted local workspaces, with
+  debounced file create/save/delete events and package rename handling.
+- Local `/index-workspace` synchronization, independently leased watchers,
+  ordered updates, and periodic content-verified reconciliation of missed events.
+- Cached per-file term counts, symbol locations, signatures, and bounded
+  tokenizer-specific token counts; reusable lexical postings and dependency graphs.
+- A synthetic retrieval benchmark and tests covering lifecycle, cache freshness,
+  exact-query isolation, and bounded update batches.
+- Seven numbered setup steps, structured recovery advice, **Retry Failed Step**,
+  **Retry Enable**, and validated dependency checkpoints for resumable setup.
+- Recovery of complete verified partial downloads and damaged private environments.
+- Managed backend update prompts and automatic watcher reconnection after setup.
+
+### Changed
+
+- Live watched requests no longer walk the repository. Unchanged source metadata
+  survives edits elsewhere; content fingerprints invalidate affected caches.
+- Already configured backends can warm on workspace open without install/download
+  consent prompts. Disabling context, closing a folder, or cleanup stops watchers.
+- Expired/missing watchers and older backends retain conservative retrieval.
+  Neural pruning behavior and Antigravity's rule/tool integration are unchanged.
+- Successful managed upgrades stop the previous process only after installation
+  succeeds and only through existing strict process-identity checks. Checkout
+  backends and unrelated processes are never stopped by this workflow.
+
 ## 0.5.0 - 2026-10-05
 
 ### Added

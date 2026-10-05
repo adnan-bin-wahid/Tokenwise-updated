@@ -12,7 +12,7 @@ import asyncio
 import logging
 import threading
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 import torch
 import typer
@@ -49,6 +49,21 @@ goal_compiler = GoalCompiler(generator_client)
 repository_cache = RepositoryIndexCache()
 workspace_builder = WorkspaceContextBuilder()
 inference_lock = threading.RLock()
+reconciliation_task: Optional[asyncio.Task] = None
+
+
+class WorkspaceIndexRequest(BaseModel):
+    workspace_root: str
+    watcher_id: str = Field(min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9_-]+$")
+    action: Literal["start", "update", "reconcile", "stop"]
+    paths: List[str] = Field(default_factory=list, max_length=512)
+    sequence: Optional[int] = Field(default=None, ge=0)
+
+
+class WorkspaceIndexResponse(BaseModel):
+    indexed_files: int
+    repository_fingerprint: str
+    retrieval_cache_hit: bool
 
 
 class WorkspacePruneRequest(BaseModel):
@@ -76,6 +91,7 @@ class WorkspacePruneResponse(BaseModel):
     repository_fingerprint: str
     index_cache_hit: bool = False
     context_cache_hit: bool = False
+    retrieval_cache_hit: bool = False
 
 
 def resolve_model_path() -> Path:
@@ -97,7 +113,8 @@ def check_model_path(model_path: str | Path) -> bool:
 
 @app.on_event("startup")
 async def startup_event() -> None:
-    global model
+    global model, reconciliation_task
+    reconciliation_task = asyncio.create_task(reconcile_indexes())
     model_path = resolve_model_path()
     if not check_model_path(model_path):
         logger.warning(
@@ -113,6 +130,32 @@ async def startup_event() -> None:
     except Exception as exc:
         logger.exception("Failed to load pruning model: %s", exc)
         model = None
+
+
+def refresh_indexes() -> None:
+    for index in repository_cache.reconcile_watched():
+        workspace_builder.prepare(index)
+
+
+async def reconcile_indexes() -> None:
+    while True:
+        await asyncio.sleep(15)
+        try:
+            await asyncio.to_thread(refresh_indexes)
+        except Exception:
+            logger.exception("Background repository reconciliation failed")
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    global reconciliation_task
+    if reconciliation_task is not None:
+        reconciliation_task.cancel()
+        try:
+            await reconciliation_task
+        except asyncio.CancelledError:
+            pass
+        reconciliation_task = None
 
 
 @app.get("/health")
@@ -131,7 +174,27 @@ async def health_check():
         "device": device,
         "model_path": str(resolve_model_path()),
         "pid": os.getpid(),
+        "repository_indexing": True,
     }
+
+
+@app.post("/index-workspace", response_model=WorkspaceIndexResponse)
+async def index_workspace(request: WorkspaceIndexRequest) -> WorkspaceIndexResponse:
+    root = Path(request.workspace_root)
+    if not root.is_absolute() or (request.action != "stop" and not root.is_dir()):
+        raise HTTPException(status_code=400, detail="Indexing requires an existing absolute workspace directory")
+
+    def synchronize() -> WorkspaceIndexResponse:
+        try:
+            index = repository_cache.synchronize(str(root), request.watcher_id, request.action, request.paths, request.sequence)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        reused = False
+        if request.action != "stop":
+            _, _, reused = workspace_builder.prepare(index)
+        return WorkspaceIndexResponse(indexed_files=len(index.index), repository_fingerprint=index.fingerprint,
+                                      retrieval_cache_hit=reused)
+    return await asyncio.to_thread(synchronize)
 
 
 @app.post("/prune", response_model=PruneResponse)

@@ -3,7 +3,34 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 export interface PythonCommand { executable: string; args: string[] }
-export interface SetupProgress { stage: string; message: string; current?: number; total?: number; installation_root?: string }
+export interface SetupProgress { stage: string; message: string; current?: number; total?: number; step?: number; total_steps?: number; installation_root?: string }
+export class SetupError extends Error {
+  public constructor(message: string, public readonly stage?: string, public readonly hint?: string, public readonly cancelled = false, public readonly step?: number) {
+    super(message); this.name = "SetupError";
+  }
+}
+
+export function parseSetupError(output: string): SetupError | undefined {
+  for (const line of output.split(/\r?\n/).reverse()) {
+    if (!line.startsWith("TOKENWISE_SETUP_ERROR ")) { continue; }
+    try {
+      const value = JSON.parse(line.slice("TOKENWISE_SETUP_ERROR ".length));
+      if (typeof value.stage === "string" && typeof value.message === "string" && typeof value.hint === "string") {
+        return new SetupError(value.message.slice(0, 2000), value.stage, value.hint.slice(0, 1000), false,
+          Number.isInteger(value.step) && value.step >= 1 && value.step <= 7 ? value.step : undefined);
+      }
+    } catch { /* Keep ordinary errors readable if the installer record is incomplete. */ }
+  }
+  return undefined;
+}
+
+export function setupProgressMessage(item: SetupProgress): string {
+  const numbered = Number.isInteger(item.step) && Number.isInteger(item.total_steps)
+    && item.step! > 0 && item.step! <= item.total_steps! && item.total_steps! <= 20;
+  const percent = Number.isFinite(item.current) && Number.isFinite(item.total) && item.current! >= 0 && item.total! > 0
+    ? ` (${Math.min(100, Math.floor(item.current! / item.total! * 100))}%)` : "";
+  return `${numbered ? `Step ${item.step}/${item.total_steps}: ` : ""}${item.message}${percent}`;
+}
 export interface ProcessOptions {
   log: (line: string) => void;
   progress?: (item: SetupProgress) => void;
@@ -21,9 +48,9 @@ export function parseSetupProgress(line: string): SetupProgress | undefined {
   return undefined;
 }
 
-function inspectPython(command: PythonCommand): Promise<PythonCommand | undefined> {
+function inspectPython(command: PythonCommand, signal?: AbortSignal): Promise<PythonCommand | undefined> {
   return new Promise((resolve) => execFile(command.executable, [...command.args, "-c", "import sys,struct,json; print(json.dumps({'version':list(sys.version_info[:2]),'bits':struct.calcsize('P')*8,'executable':sys.executable}))"],
-    { windowsHide: true, timeout: 10000, encoding: "utf8", maxBuffer: 16384 },
+    { windowsHide: true, timeout: 10000, encoding: "utf8", maxBuffer: 16384, signal },
     (error, stdout) => {
       if (!error) {
         try {
@@ -40,18 +67,23 @@ function inspectPython(command: PythonCommand): Promise<PythonCommand | undefine
     }));
 }
 
-export async function findPython312(preferred = ""): Promise<PythonCommand> {
+export async function findPython312(preferred = "", signal?: AbortSignal): Promise<PythonCommand> {
   const candidates: PythonCommand[] = preferred ? [{ executable: preferred, args: [] }] : [
     ...(process.platform === "win32" ? [{ executable: "py", args: ["-3.12"] }] : []),
     ...["python3.12", "python3", "python"].map((executable) => ({ executable, args: [] })),
   ];
-  for (const candidate of candidates) { const python = await inspectPython(candidate); if (python) { return python; } }
+  for (const candidate of candidates) {
+    if (signal?.aborted) { throw new SetupError("Python detection was cancelled.", "prerequisites", undefined, true); }
+    const python = await inspectPython(candidate, signal);
+    if (signal?.aborted) { throw new SetupError("Python detection was cancelled.", "prerequisites", undefined, true); }
+    if (python) { return python; }
+  }
   throw new Error("64-bit Python 3.12 was not found. Install Python 3.12, restart the IDE, or set TokenWise's Python Path user setting to its executable.");
 }
 
 export function runSetupProcess(command: string, args: string[], options: ProcessOptions): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (options.signal?.aborted) { reject(new Error("TokenWise setup was cancelled. Run setup again to resume.")); return; }
+    if (options.signal?.aborted) { reject(new SetupError("TokenWise setup was cancelled. Run setup again to resume.", undefined, undefined, true)); return; }
     const child = spawn(command, args, { shell: false, windowsHide: true, detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, PYTHONUTF8: "1", PYTHONUNBUFFERED: "1", ...options.env } });
     child.once("spawn", () => { if (child.pid) { options.onSpawn?.(child.pid); } });
     let tail = "", stdout = "", stderr = "", cancelled = false;
@@ -84,8 +116,8 @@ export function runSetupProcess(command: string, args: string[], options: Proces
     child.once("close", (code) => {
       options.signal?.removeEventListener("abort", cancel);
       if (tail) { deliver(tail); }
-      if (cancelled) { reject(new Error("TokenWise setup was cancelled. Run setup again to resume.")); }
-      else if (code !== 0) { reject(new Error((stderr.trim() || `Backend setup exited with code ${code}.`).slice(-2000))); }
+      if (cancelled) { reject(new SetupError("TokenWise setup was cancelled. Completed steps and partial downloads are retained.", undefined, undefined, true)); }
+      else if (code !== 0) { reject(parseSetupError(stderr) ?? new SetupError((stderr.trim() || `Backend setup exited with code ${code}.`).slice(-2000))); }
       else { resolve(stdout); }
     });
   });

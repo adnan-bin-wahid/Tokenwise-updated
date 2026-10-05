@@ -8,7 +8,7 @@ const uri = (fsPath, scheme = "file", authority = "") => ({
 });
 const folder = (name) => ({ name, uri: uri(`C:\\Repositories\\${name}`) });
 const context = { extensionUri: uri("C:\\Extensions\\tokenwise-vscode"), globalStorageUri: uri("C:\\Storage\\TokenWise") };
-let messages, calls, saved, configured, selectedFolder, approval, pickBackend, registered, backendChoice;
+let messages, calls, saved, configured, selectedFolder, approval, pickBackend, registered, backendChoice, errorChoice;
 const setupStub = {
   validateBackendInstallation: async (root) => {
     if (root === "C:\\Backend") { return root; }
@@ -20,6 +20,7 @@ const setupStub = {
 };
 const vscode = {
   env: { remoteName: undefined },
+  commands: { executeCommand: async (...args) => calls.push(["command", ...args]) },
   ConfigurationTarget: { Global: 1 }, ProgressLocation: { Notification: 15 },
   workspace: {
     isTrusted: true, workspaceFolders: [],
@@ -30,7 +31,7 @@ const vscode = {
   },
   window: {
     showWarningMessage: async (text) => { messages.push(text); },
-    showErrorMessage: async (text) => { messages.push(text); },
+    showErrorMessage: async (text) => { messages.push(text); return errorChoice; },
     showInformationMessage: async (text, options) => { messages.push(text); return options?.modal ? approval : undefined; },
     showQuickPick: async (items) => items[0].install !== undefined
       ? backendChoice === undefined ? undefined : items[backendChoice]
@@ -54,6 +55,7 @@ beforeEach(() => {
   messages = []; calls = []; configured = []; saved = ""; registered = undefined;
   approval = "Enable"; pickBackend = "C:\\Backend"; selectedFolder = undefined;
   backendChoice = undefined;
+  errorChoice = undefined;
   vscode.workspace.isTrusted = true; vscode.workspace.workspaceFolders = [folder("Python App")];
   vscode.env.remoteName = undefined;
   context.globalStorageUri = uri("C:\\Storage\\TokenWise");
@@ -120,6 +122,13 @@ windowsTest("incomplete installations fail before workspace writes", async () =>
   await run();
   assert.match(messages.at(-1), /setup failed: missing model/);
   assert.deepEqual(calls, []);
+});
+
+windowsTest("a workspace setup failure offers an explicit retry without claiming configuration success", async () => {
+  pickBackend = "C:\\Incomplete"; errorChoice = "Retry Enable";
+  await run();
+  assert.deepEqual(calls, [["command", "tokenwise.enableAutomaticContext"]]);
+  assert.equal(configured.length, 0);
 });
 
 windowsTest("multi-root setup targets the selected repository and saves a user setting", async () => {

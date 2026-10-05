@@ -28,12 +28,29 @@ supported by this first-run workflow.
 TokenWise itself does not need an API key. Your Antigravity model access and
 billing remain separate. A GPU, Ollama, and an MCP server are not required.
 
+### Install or Check Python on Windows
+
+Python 3.13/3.14 alone is not sufficient; TokenWise currently requires **3.12**.
+If it is missing, install the [official Python Install Manager](https://www.python.org/downloads/),
+open a new PowerShell terminal, and run:
+
+```powershell
+pymanager install 3.12
+py -3.12 -c "import sys,struct; print(sys.version); print(struct.calcsize('P')*8); print(sys.executable)"
+```
+
+The check should show **3.12.x**, **64**, and an executable path. Restart
+Antigravity afterward. If the manager installation/download fails, fix the
+reported issue and retry that step; do not remove your existing project Python.
+If detection still fails, set **TokenWise > Python Path** to the printed path.
+See [official Windows installation troubleshooting](https://docs.python.org/3/using/windows.html#troubleshooting).
+
 ## Quick Start
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.5.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.5.0/tokenwise-vscode-0.5.0.vsix)
-from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.5.0).
+Download [**TokenWise 0.6.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.0/tokenwise-vscode-0.6.0.vsix)
+from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.0).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
 provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
@@ -66,6 +83,11 @@ On a new computer:
    in **Output > TokenWise Setup**. First setup can take several minutes.
 4. Confirm enabling TokenWise in the selected repository.
 
+The notification shows **Step 1/7** through **Step 7/7**. If a step fails, fix
+the reported cause and click **Retry Failed Step**. Successful dependency steps
+are checked and reused; downloads are verified or resumed, not blindly trusted.
+You do not need to uninstall the extension or begin from scratch.
+
 If you already have a complete TokenWise checkout/environment, choose
 **Use Existing Backend** and select its root folder instead. Do not select your
 Python repository or the `swe-pruner` subfolder as the backend installation.
@@ -94,6 +116,50 @@ model and can take longer; keep the context command running until it finishes.
 Approve its local command if Antigravity's permission policy asks. You do not
 need to enable unrestricted terminal execution.
 
+## If a Setup Step Fails
+
+Open **View > Output**, then choose **TokenWise Setup** in its dropdown for the
+full error. The notification identifies the failed stage and its recovery advice.
+
+| Step | What happens | Fix and retry |
+| --- | --- | --- |
+| **1. Prerequisites** | Finds 64-bit Python 3.12 and verifies bundled files | Install Python 3.12, restart Antigravity, then run setup again. For a custom Python location, set **TokenWise > Python Path**. If the VSIX is damaged, download it again. |
+| **2. Backend files** | Copies verified backend files into private user storage | Check free disk space and permissions for the storage path in the log. Click **Retry Failed Step**. |
+| **3. Environment** | Creates or checks TokenWise's private Python environment | Repair your Python 3.12 installation if needed, then retry. A broken private environment is recreated; model/download caches remain. |
+| **4. Dependencies** | Installs packaging tools, CPU PyTorch, and backend dependencies | Check internet/proxy access to PyPI and `download.pytorch.org`, and available disk space. Retry reuses completed, validated substeps and cached wheels. |
+| **5. Model** | Downloads about 1.35 GB of pinned weights and checks their hash | Check access to Hugging Face and free disk space. Retry resumes partial downloads when the server permits it; corrupt weights are replaced. Hash verification can take time even at 100%. |
+| **6. Verification** | Checks imports, tokenizer, and trained carbon artifacts | Read the import error in **TokenWise Setup**, fix the reported system/dependency issue, then retry. Previously completed dependencies are checked again. |
+| **7. Registration** | Saves the verified backend and its user setting | Check storage/settings permissions and retry. The installed environment and verified weights are retained. |
+
+If you dismissed the failure notification or cancelled setup, run **TokenWise:
+Set Up Backend** again. Keep the same IDE profile so its cached progress can be
+reused. Then run **Enable Automatic Context** if the repository is not enabled.
+For a repository rule/configuration error, choose **Retry Enable** after fixing
+the named file. Existing unrelated rules and files are preserved.
+
+Do not delete the backend/cache folders as your first troubleshooting step.
+An installer lock after an IDE crash is different: ensure no TokenWise setup is
+still running, use the logged storage path, remove only `backend/install.lock`,
+and retry. Never remove another running installer's lock.
+
+## Upgrade from an Earlier Version
+
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.0 VSIX
+   through **Install from VSIX...**, then reload the editor window.
+2. For a managed backend, select **Update Backend** when prompted. If you
+   dismissed the prompt, run **TokenWise: Set Up Backend** manually.
+3. Approve **Install Backend** and wait for the numbered steps. Verified model
+   downloads are reused. The previous managed process is stopped only after
+   installation succeeds and only when its process identity can be verified.
+4. Background indexing reconnects automatically. Open **Output > TokenWise
+   Index** to confirm the Python file count, then start a new Antigravity chat.
+
+Your repository's central backend link remains valid. Do not uninstall or use
+**Remove All Local Data** just to upgrade: those actions remove reusable caches.
+If you use an existing **checkout backend** instead of a managed installation,
+update that checkout and restart its own backend process yourself; setup does
+not stop or alter checkout processes. See the developer guide for source setup.
+
 ## How to Tell It Is Working
 
 - In **Customizations > Rules**, a TokenWise workspace rule should be listed.
@@ -115,6 +181,42 @@ fallback is not guaranteed interception before the first model call: it depends
 on the agent following the rule and being permitted to run the command.
 
 ## Everyday Controls
+
+### Background Indexing
+
+Version 0.6.0 warms the repository index when you open an already
+configured, trusted local folder. It uses your registered backend; it does not
+install dependencies or download models without setup consent.
+
+- Saving, creating, deleting, or renaming Python files updates the affected
+  metadata in the background. Bursts of edits are grouped together.
+- Different prompts reuse term counts, symbol locations, signatures, and the
+  dependency graph. File token counts are cached per tokenizer and content.
+- Source-content fingerprints invalidate search/context caches after edits.
+  Complete context results require the exact query, goal, repository fingerprint,
+  active file, threshold, budget, and candidate limit, not similar wording.
+- Full reconciliation runs approximately every two minutes to catch missed
+  events, including content changes with preserved timestamps. Unchanged ASTs
+  and derived metadata are retained. Only saved files on disk are indexed.
+- A watcher heartbeat runs every 30 seconds. If no watcher remains alive for
+  90 seconds, retrieval falls back to checking the repository before each query.
+  An edit becomes available after its background update completes; missed events
+  can remain unseen until reconciliation.
+
+Open **Output > TokenWise Index** to see the indexed file count and fingerprint
+after a change. Set `enabled: false` in `.agents/tokenwise.json` to stop indexing
+and automatic retrieval. Setting `auto_start_backend: false` also prevents
+background warm-up from starting an offline backend. Unconfigured, untrusted,
+remote, and virtual folders remain idle.
+
+An older backend continues to provide context using the conservative fallback.
+Update and restart the backend to activate background indexing; reloading only
+the extension does not reload Python code. See the
+[development instructions](docs/DEVELOPMENT.md#try-the-background-index) below.
+These changes reduce repository/search overhead; neural pruning and the
+Antigravity model response can still dominate total prompt latency.
+
+### Commands
 
 | Command | Use |
 | --- | --- |
@@ -155,7 +257,7 @@ the status bar and logs without automatically opening a panel.
 | Problem | What to do |
 | --- | --- |
 | Python 3.12 is not found | Install 64-bit Python 3.12 and restart the IDE. For a nonstandard installation, set the **TokenWise > Python Path** user setting to its executable. |
-| A download/setup fails | Open **Output > TokenWise Setup**, check network/disk space, and run setup again. Verified downloads are reused; partial model downloads can resume. |
+| A download/setup fails | Use the numbered recovery table above, fix the reported cause, and click **Retry Failed Step**. Completed dependency steps and verified/partial downloads are retained. |
 | Setup was cancelled | Run setup again. The owned setup process is stopped; its private environment/cache are retained for retry. |
 | A setup lock remains after an IDE crash | First ensure no setup process is still running. The diagnostic paths identify user storage; remove only its `backend/install.lock` and retry. |
 | Backend is offline or the model is not ready | Run **TokenWise: Diagnose Setup**, then **Start Backend**. Inspect `backend.log` at the reported runtime path if startup fails. |
@@ -164,7 +266,7 @@ the status bar and logs without automatically opening a panel.
 | Workspace is rejected | Use a trusted local folder. Version 0.5.0 accepts Antigravity's local `vscode-userdata` storage; remote/virtual repositories remain unsupported. |
 | You cloned/moved a repository or changed IDE profile | Run **Enable Automatic Context** again to create a valid local backend link. |
 | Existing rules or JSON conflict | Read the reported filename. Fix invalid JSON or retain customized files under another name; setup will not discard them. |
-| Retrieval is slow | Warm the backend with **Start Backend**, keep its process running, and try a smaller budget/candidate limit. Repeated unchanged queries benefit from caching. |
+| Retrieval is slow | Check **Output > TokenWise Index**, keep the backend running, and try a smaller budget/candidate limit. An older backend must be updated to use background indexing. Neural pruning still contributes to latency. |
 
 Corporate firewalls/proxies must permit PyPI, the PyTorch wheel host, Hugging Face,
 and Hugging Face's download CDN. TokenWise does not bypass your network policies.
@@ -192,7 +294,7 @@ For an ordinary managed installation, cleanup removes:
 and wait for completion before uninstalling. This also shows any preserved-file
 warnings in **Output > TokenWise Cleanup**.
 
-If upgrading from 0.4.0, install 0.5.0 and **reload once before uninstalling** so
+If upgrading from 0.4.0, install the current release and **reload once before uninstalling** so
 it can register your storage. It discovers old repositories recorded in this
 IDE's workspace history; open older configured repositories once if they are not
 in that history. Keep their drives/folders available during removal.
@@ -248,7 +350,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.5.0/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.0/` with the VSIX, this guide,
 licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

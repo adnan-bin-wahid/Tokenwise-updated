@@ -1,9 +1,10 @@
 import logging
 import ast
-import copy
+from collections import OrderedDict
 from typing import Any, Dict, List, Tuple
 
 from ..prune_wrapper import PruneRequest, estimate_token_count
+from ..repository.python_indexer import build_interface
 
 logger = logging.getLogger(__name__)
 
@@ -18,33 +19,14 @@ class ContextBuilder:
 
     @staticmethod
     def _signatures_only(file_meta: Dict[str, Any], rel_path: str) -> str:
-        content = file_meta.get("content", "")
+        if isinstance(file_meta.get("_signature"), str):
+            return file_meta["_signature"]
+        content = "" if "_signature" in file_meta else file_meta.get("content", "")
         if content:
             try:
-                tree = ast.parse(content)
-                interface = []
-                for node in tree.body:
-                    if isinstance(node, (ast.Import, ast.ImportFrom, ast.Assign, ast.AnnAssign)):
-                        interface.append(node)
-                    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        stub = copy.copy(node)
-                        stub.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
-                        interface.append(stub)
-                    elif isinstance(node, ast.ClassDef):
-                        stub = copy.copy(node)
-                        stub.body = []
-                        for child in node.body:
-                            if isinstance(child, (ast.Assign, ast.AnnAssign)):
-                                stub.body.append(child)
-                            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                                method = copy.copy(child)
-                                method.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
-                                stub.body.append(method)
-                        if not stub.body:
-                            stub.body = [ast.Expr(value=ast.Constant(value=Ellipsis))]
-                        interface.append(stub)
-                if interface:
-                    return ast.unparse(ast.Module(body=interface, type_ignores=[]))
+                reference = build_interface(ast.parse(content))
+                if reference:
+                    return reference
             except (SyntaxError, ValueError):
                 pass
         signatures: list[str] = []
@@ -61,6 +43,20 @@ class ContextBuilder:
         if tokenizer is not None:
             return estimate_token_count(text, tokenizer)
         return len(text.split())
+
+    @classmethod
+    def _file_count(cls, metadata: dict, text: str, tokenizer: Any) -> int:
+        cache = metadata.setdefault("_token_counts", OrderedDict())
+        key = (id(tokenizer), text)
+        cached = cache.get(key)
+        if cached is not None and cached[0] is tokenizer:
+            cache.move_to_end(key)
+            return cached[1]
+        count = cls._count(text, tokenizer)
+        cache[key] = (tokenizer, count)
+        while len(cache) > 8:
+            cache.popitem(last=False)
+        return count
 
     @staticmethod
     def _truncate(text: str, token_limit: int, tokenizer: Any) -> str:
@@ -146,7 +142,8 @@ class ContextBuilder:
             if "test" in rel_path.lower():
                 relation = "related test"
 
-            original_tokens = self._count(content, tokenizer)
+            original_tokens = (prepruned[rel_path].origin_token_cnt if prepruned and rel_path in prepruned
+                               else self._file_count(file_meta, content, tokenizer))
             if prepruned and rel_path in prepruned:
                 result = prepruned[rel_path]
                 pruned_content = result.pruned_code
@@ -220,7 +217,7 @@ class ContextBuilder:
             if self._count(combined, tokenizer) > self.token_budget:
                 break
 
-            pruned_tokens = self._count(pruned_content, tokenizer)
+            pruned_tokens = self._file_count(file_meta, pruned_content, tokenizer)
             output_blocks.append(block)
             used_tokens = self._count(combined, tokenizer)
             summaries.append(

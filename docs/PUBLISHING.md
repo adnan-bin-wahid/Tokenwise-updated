@@ -11,6 +11,7 @@ versions. Keep download links, the changelog, and `docs/release-notes/vVERSION.m
 consistent with that version. Run the tests and build:
 
 ```powershell
+$env:PYTHONPATH = (Join-Path (Get-Location).Path 'swe-pruner\swe-pruner\src')
 .\.venv\Scripts\python.exe -m unittest discover -s swe-pruner/swe-pruner/tests -v
 cd vscode-extension
 npm test
@@ -32,11 +33,11 @@ Push without force and create an annotated version tag on the release commit:
 
 ```powershell
 git push origin main
-git tag -a v0.5.0 -m "TokenWise 0.5.0 - Windows Beta"
-git push origin v0.5.0
+git tag -a v0.6.0 -m "TokenWise 0.6.0 - Windows Beta"
+git push origin v0.6.0
 ```
 
-Use the new version instead of `v0.5.0` for future releases. Never move a
+Use the new version instead of `v0.6.0` for future releases. Never move a
 published tag or replace a published installer; release a new version instead.
 
 ## Publish

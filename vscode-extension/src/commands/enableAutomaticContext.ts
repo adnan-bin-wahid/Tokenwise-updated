@@ -94,7 +94,9 @@ export function createEnableAutomaticContextCommand(
       onConfigured(folder);
       await vscode.window.showInformationMessage(`TokenWise is enabled for ${folder.name}. Start a new Antigravity chat and enter your repository prompt.`);
     } catch (error) {
-      await vscode.window.showErrorMessage(`TokenWise setup failed: ${error instanceof Error ? error.message : String(error)}`);
+      const choice = await vscode.window.showErrorMessage(`TokenWise workspace setup failed: ${error instanceof Error ? error.message : String(error)}`, "Retry Enable", "Read Setup Guide");
+      if (choice === "Retry Enable") { await vscode.commands.executeCommand("tokenwise.enableAutomaticContext"); }
+      else if (choice === "Read Setup Guide") { await vscode.commands.executeCommand("tokenwise.openSetupGuide"); }
     }
   };
 }

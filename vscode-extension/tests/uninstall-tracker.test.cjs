@@ -90,6 +90,20 @@ test("confirmed cleanup cancels setup, reports progress and announces success", 
   assert.ok(f.calls.at(-1)[1].includes("local data removed"));
 });
 
+test("cleanup waits for background cancellation before preparing or removing storage", async () => {
+  const f = harness({ approval: "Remove Data" });
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const operation = f.tracker.removeAll(async () => {
+    f.cancel(); await gate; f.calls.push(["settled"]);
+  });
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(f.calls.map(call => call[0]), ["warning", "cancel"]);
+  release();
+  await operation;
+  assert.deepEqual(f.calls.map(call => call[0]), ["warning", "cancel", "settled", "progress", "plan", "cleanup", "info"]);
+});
+
 test("partial cleanup exposes the preserved-file report without a false success message", async () => {
   const result = { removed: [], preserved: ["customized-rule"], warnings: ["unavailable-drive"] };
   const f = harness({ approval: "Remove Data", result });

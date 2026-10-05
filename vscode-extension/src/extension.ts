@@ -9,6 +9,7 @@ import { AutomaticContextMonitor } from "./services/automaticContext";
 import { createEnableAutomaticContextCommand } from "./commands/enableAutomaticContext";
 import { BackendManager } from "./services/backendManager";
 import { UninstallTracker } from "./services/uninstallTracker";
+import { RepositoryIndexSync } from "./services/repositoryIndexSync";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const tracker = new UninstallTracker(context);
@@ -16,7 +17,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   catch (error) { await vscode.window.showErrorMessage(`TokenWise cannot register uninstall cleanup: ${String(error)}`); return; }
   const service = new PruneService();
   const panel = new ResultPanel();
-  const backend = new BackendManager(context, () => tracker.prepare());
+  const backend: BackendManager = new BackendManager(context, () => tracker.prepare(), () => indexSync.backendChanged());
+  const indexSync = new RepositoryIndexSync(context, (start) => backend.backgroundUrl(start));
 
   const statusItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -44,15 +46,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     statusItem,
     backend,
     automaticMonitor,
+    indexSync,
     vscode.commands.registerCommand(
       "tokenwise.enableAutomaticContext",
-      createEnableAutomaticContextCommand(context, (folder) => automaticMonitor.configured(folder), () => backend.setup()),
+      createEnableAutomaticContextCommand(context, (folder) => {
+        automaticMonitor.configured(folder);
+        indexSync.configured(folder);
+      }, () => backend.setup()),
     ),
     vscode.commands.registerCommand("tokenwise.setUpBackend", () => backend.setup()),
     vscode.commands.registerCommand("tokenwise.startBackend", () => backend.start()),
     vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
-    vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(() => backend.cancelSetup())),
+    vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(async () => {
+      indexSync.pause(); await backend.cancelSetup();
+    })),
     vscode.commands.registerCommand(
       "tokenwise.pruneSelected",
       createPruneSelectedCommand(

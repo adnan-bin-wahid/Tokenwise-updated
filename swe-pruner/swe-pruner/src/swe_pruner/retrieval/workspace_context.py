@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import threading
 from typing import Any
 from ..prune_wrapper import PruneRequest
 
@@ -13,6 +14,24 @@ from .lexical_retriever import LexicalRetriever
 class WorkspaceContextBuilder:
     def __init__(self):
         self.cache: OrderedDict[tuple, dict] = OrderedDict()
+        self.prepared: OrderedDict[str, tuple] = OrderedDict()
+        self.prepare_lock = threading.RLock()
+
+    def prepare(self, index: RepositoryIndex) -> tuple[LexicalRetriever, DependencyGraph, bool]:
+        key = str(index.workspace_root)
+        with self.prepare_lock:
+            cached = self.prepared.get(key)
+            if cached and cached[0] == index.fingerprint:
+                self.prepared.move_to_end(key)
+                return cached[1], cached[2], True
+            lexical = LexicalRetriever(index)
+            graph = DependencyGraph(index)
+            graph.build_graph()
+            self.prepared[key] = (index.fingerprint, lexical, graph)
+            self.prepared.move_to_end(key)
+            while len(self.prepared) > 8:
+                self.prepared.popitem(last=False)
+            return lexical, graph, False
 
     def build(
         self, index: RepositoryIndex, goal: Any, model: Any, active_file: str | None,
@@ -25,15 +44,13 @@ class WorkspaceContextBuilder:
         if cache_key in self.cache:
             result = self.cache.pop(cache_key)
             self.cache[cache_key] = result
-            return {**result, "context_cache_hit": True}
+            return {**result, "context_cache_hit": True, "retrieval_cache_hit": True}
 
-        lexical = LexicalRetriever(index)
+        lexical, graph, retrieval_cache_hit = self.prepare(index)
         matches = lexical.search_query(query, limit=max_candidates)
         lexical_scores = dict(matches)
         automatic = active_file is None
         anchor = active_file or (matches[0][0] if matches else self._entrypoint(index))
-        graph = DependencyGraph(index)
-        graph.build_graph()
         retriever = GraphRetriever(graph)
         seeds = {anchor} | lexical.search_identifiers(goal.identifiers)
         seeds.update(path for path, _ in matches[:3])
@@ -94,6 +111,7 @@ class WorkspaceContextBuilder:
             "files": files, "selected_file": anchor,
             "repository_fingerprint": index.fingerprint,
             "context_cache_hit": False,
+            "retrieval_cache_hit": retrieval_cache_hit,
         }
         self.cache[cache_key] = result
         while len(self.cache) > 16:

@@ -22,11 +22,15 @@ class DependencyGraph:
         self.dependencies.clear()
         self.dependents.clear()
         self.symbol_definitions.clear()
+        modules: Dict[str, Set[str]] = {}
 
         # Initialize collections
         for rel_path in self.repo_index.index:
             self.dependencies[rel_path] = set()
             self.dependents[rel_path] = set()
+            parts = rel_path.replace('.py', '').split('/')
+            for offset in range(len(parts)):
+                modules.setdefault('.'.join(parts[offset:]), set()).add(rel_path)
             
             # Map symbol definitions
             file_meta = self.repo_index.index[rel_path]
@@ -41,13 +45,8 @@ class DependencyGraph:
             for imp in file_meta.get("imports", []):
                 # Try matching import name to repository files
                 # e.g., if import is 'auth.service', matching path might be 'auth/service.py'
-                imp_parts = imp.split('.')
-                for target_path in self.repo_index.index:
-                    target_parts = target_path.replace('.py', '').split('/')
-                    # Match suffix, e.g., target 'src/auth/service.py' -> ['src', 'auth', 'service']
-                    if len(imp_parts) <= len(target_parts):
-                        if target_parts[-len(imp_parts):] == imp_parts:
-                            self._add_edge(rel_path, target_path)
+                for target_path in modules.get(imp, ()):
+                    self._add_edge(rel_path, target_path)
 
             # 2. Resolve calls to global/class symbols defined elsewhere in the repo
             for call_symbol in file_meta.get("calls", []):
