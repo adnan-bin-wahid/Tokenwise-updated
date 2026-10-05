@@ -4,6 +4,7 @@ from typing import List, Optional, Set
 from .goal_models import StructuredGoal
 from .goal_generator_client import LocalGoalGeneratorClient
 from .conversation_context import is_follow_up
+from .query_focus import query_focus
 
 logger = logging.getLogger(__name__)
 
@@ -134,9 +135,9 @@ CRITICAL SAFEGUARDS:
 
         # Post-process validation: Filter out hallucinated identifiers not in our workspace context
         # We build a vocabulary of valid words in context
-        valid_words = set(re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', query))
-        if context_hint:
-            valid_words.update(re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', context_hint))
+        focus = query_focus(query + ("\n" + context_hint if context_hint else ""))
+        goal.excluded_topics = list(focus.excluded_topics)
+        valid_words = set(re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', focus.positive_query))
         if current_symbol:
             valid_words.add(current_symbol)
         if selected_code:
@@ -148,9 +149,11 @@ CRITICAL SAFEGUARDS:
         return goal
 
     def deterministic_fallback(self, query: str, current_symbol: Optional[str], diagnostics: List[str]) -> StructuredGoal:
+        focus = query_focus(query)
         if is_repository_overview(query):
             return StructuredGoal(
                 task_type="repository_overview",
+                excluded_topics=list(focus.excluded_topics),
                 objective=("Explain the repository's purpose, entry points, core modules, data flow, "
                            "configuration, dependencies, and tests. Use project documentation and "
                            "representative source evidence; distinguish implemented behavior from "
@@ -181,9 +184,9 @@ CRITICAL SAFEGUARDS:
             "understand", "the", "to", "in", "on", "for", "code", "and", "or", "with", 
             "a", "an", "is", "are", "issue", "validate", "credentials",
             "give", "explain", "full", "overview", "project", "repository", "codebase",
-            "please", "me", "my", "this", "whole", "entire", "complete"
+            "please", "me", "my", "this", "whole", "entire", "complete", "not"
         }
-        for word in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', query):
+        for word in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', focus.positive_query):
             if word.lower() not in stop_words and len(word) > 2:
                 potential_idents.append(word)
         if current_symbol:
@@ -193,6 +196,7 @@ CRITICAL SAFEGUARDS:
             task_type=task_type,
             objective=objective,
             identifiers=list(dict.fromkeys(potential_idents)),
+            excluded_topics=list(focus.excluded_topics),
             observed_errors=diagnostics,
             required_context=[],
             retrieval_questions=[f"Where is '{ident}' used or defined?" for ident in potential_idents[:3]],

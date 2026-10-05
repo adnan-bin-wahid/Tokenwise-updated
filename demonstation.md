@@ -120,6 +120,11 @@ not explain why code was retained or omitted.
 
 ## 5. Scenario A: No File Is Selected
 
+For the exclusions and CO2-setting fixes below, install the locally built
+**0.6.4 VSIX**, reload, run **Set Up Backend**, and re-enable the workspace.
+The previously published 0.6.3 installer does not contain these fixes. See the
+README's **Local 0.6.4 Update** section for the artifact and retry steps.
+
 Open `demonstration/04_pruning_inputs`. You may close editor tabs. The teaching
 command sends no active-file, symbol, selection, or diagnostic hint, even if a
 file remains open.
@@ -131,6 +136,13 @@ file remains open.
 5. Show repository mode, scope, indexed count, and the inference objective.
 6. Show included files, their relations, methods, applied thresholds, and excerpts.
 7. Export the run and record its actual omissions and counts.
+
+With 0.6.4, show **Excluded topics: invoice pricing**. The goal identifiers must
+not promote `invoice` or `pricing`. In this mixed demo, inspect the final packet
+for session expiry/revocation and their tests, and verify that the independent
+`invoice_total`, invoice tests, and invoice display call are omitted. This is a
+query-specific reference view, not a change to the demonstration files. Then
+ask `Explain invoice pricing.` separately: invoice code must still be retrievable.
 
 ### What Happens Internally
 
@@ -150,6 +162,7 @@ Per-file methods make the different branches visible:
 | Method | Meaning |
 | --- | --- |
 | `neural_lines` | Neural relevance and thresholds applied to source |
+| `scope_filter+...` | Independent explicitly excluded units omitted before the indicated packing/pruning method |
 | `short_source_retained` | Small task-matched body retained without another model pass |
 | `signature_interface` | Interfaces, signatures, or relevant constants |
 | `overview_excerpt` | Structural overview coverage; no neural line pruning |
@@ -158,6 +171,12 @@ Per-file methods make the different branches visible:
 Neural anchors use `max(0.10, requested_threshold - 0.15)`; other neural
 candidates use `min(0.85, requested_threshold + 0.15)`. Show the applied value
 rather than claiming every file used the same threshold.
+
+The explicit topic filter is a separate AST-based stage, not an extra neural
+score or a claim that the model perfectly understood negation. Shared helpers
+needed by the positive task can remain with a warning. Ordinary conditions such
+as `not session.revoked` must remain eligible. Selected-source commands do not
+apply this repository filter, and broad overview mode remains structural.
 
 ### What to Say
 

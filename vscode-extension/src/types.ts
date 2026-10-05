@@ -148,6 +148,7 @@ export interface WorkspaceFilePruneResult {
   score: number;
   pruning_method?: string;
   effective_threshold?: number | null;
+  excluded_symbols?: string[];
 }
 
 export interface WorkspacePruneResponse extends CarbonImpactViewModel {
@@ -170,6 +171,7 @@ export interface WorkspacePruneResponse extends CarbonImpactViewModel {
     task_type?: string;
     objective?: string;
     identifiers?: string[];
+    excluded_topics?: string[];
     observed_errors?: string[];
     clarification_required?: boolean;
   };

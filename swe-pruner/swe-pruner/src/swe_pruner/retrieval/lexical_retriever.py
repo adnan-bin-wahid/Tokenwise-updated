@@ -3,6 +3,7 @@ import math
 import re
 from collections import Counter
 from typing import List, Set, TYPE_CHECKING
+from ..query_focus import query_focus
 if TYPE_CHECKING:
     from ..repository.repository_index import RepositoryIndex
 
@@ -60,7 +61,7 @@ class LexicalRetriever:
             "fix", "add", "change", "understand", "show", "code", "project", "logic",
             "its", "their", "we", "you", "your", "test", "tests", "testing",
         }
-        terms = set(self._terms(query)) - stop_words
+        terms = set(self._terms(query_focus(query).positive_query)) - stop_words
         if not terms:
             return []
         scores: dict[str, float] = {}

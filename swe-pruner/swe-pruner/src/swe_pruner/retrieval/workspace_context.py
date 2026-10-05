@@ -4,6 +4,7 @@ import threading
 from typing import Any
 from ..prune_wrapper import PruneRequest
 from ..goal_compiler import is_repository_overview
+from ..query_focus import query_focus
 
 from ..repository.dependency_graph import DependencyGraph
 from ..repository.repository_index import RepositoryIndex
@@ -11,6 +12,7 @@ from .candidate_ranker import CandidateRanker
 from .context_builder import ContextBuilder
 from .graph_retriever import GraphRetriever
 from .lexical_retriever import LexicalRetriever
+from .source_focus import focus_sources
 from .repository_overview import (file_role, load_project_documents, overview_metadata,
                                   repository_map, select_overview_files)
 
@@ -81,6 +83,12 @@ class WorkspaceContextBuilder:
                                 and Path(dependency).name != "__init__.py"})
         priority = paths[:min(3, max_candidates)]
         paths = list(dict.fromkeys(priority + configuration[:2] + paths))[:max_candidates]
+        focus = query_focus(query + ("\n" + context_hint if context_hint else ""))
+        source_views, scope_warnings = focus_sources({path: index.index[path] for path in paths}, focus)
+        paths = [path for path in paths if path in source_views]
+        if anchor not in source_views:
+            anchor = paths[0] if paths else None
+            anchor_distances = retriever.get_neighbors({anchor}, max_hops=2) if anchor else {}
         # Bound neural work independently of the repository size, especially on CPU.
         ranked_paths = [path for path in paths if path == anchor or path in lexical_scores][:4]
         if automatic and not matches:
@@ -91,14 +99,14 @@ class WorkspaceContextBuilder:
             # for ranking and packing instead of running the neural model twice per file.
             for path in ranked_paths[:3]:
                 prepruned[path] = model.prune(PruneRequest(
-                    query=goal.objective, code=index.index[path]["content"],
+                    query=goal.objective, code=source_views[path]["content"],
                     threshold=max(0.10, threshold - 0.15) if path == anchor else min(0.85, threshold + 0.15),
                     always_keep_first_frags=True,
                 ))
             scores = {path: max(0.0, min(1.0, result.score)) for path, result in prepruned.items()}
         else:
             scores = dict(CandidateRanker(model).rank_candidates(
-                goal.objective, [(path, index.index[path]["content"]) for path in ranked_paths],
+                goal.objective, [(path, source_views[path]["content"]) for path in ranked_paths],
             ))
         best_lexical = max(lexical_scores.values(), default=1.0)
         ranked = sorted(
@@ -118,16 +126,25 @@ class WorkspaceContextBuilder:
             )
             if goal.clarification_required:
                 preamble += "\nThe task needs clarification: ask which component the user means; do not infer a topic from another chat."
+        if focus.excluded_topics:
+            preamble += ("\n" if preamble else "") + "Explicitly excluded topics: " + "; ".join(focus.excluded_topics) + "."
         packed, files, count = ContextBuilder(token_budget).pack_context(
-            goal.objective, index.index, anchor_distances, ranked, model,
+            goal.objective, source_views, anchor_distances, ranked, model,
             threshold, anchor, preamble=preamble,
             prepruned=prepruned, prune_uncached=not automatic,
             anchor_relation="prompt-selected file" if automatic else None,
             preserve_source={path for path, _ in matches[:6] if path in paths
-                             and ContextBuilder._file_count(index.index[path], index.index[path]["content"],
+                             and ContextBuilder._file_count(source_views[path], source_views[path]["content"],
                                                             getattr(model, "tokenizer", None)) <= 512}
                             if automatic else None,
         )
+        for file in files:
+            path = file["file_path"]
+            if removed := source_views[path].get("_scope_removed"):
+                file["original_tokens"] = ContextBuilder._file_count(index.index[path], index.index[path]["content"],
+                                                                      getattr(model, "tokenizer", None))
+                file["excluded_symbols"] = removed
+                file["pruning_method"] = "scope_filter+" + file["pruning_method"]
         result = {
             "structured_goal": goal.model_dump(), "unified_prompt": packed,
             "pruned_tokens": count,
@@ -138,8 +155,9 @@ class WorkspaceContextBuilder:
             "retrieval_cache_hit": retrieval_cache_hit,
             "context_mode": "focused", "indexed_files": len(index.index),
             "context_hint_used": bool(context_hint),
-            "warnings": (["Task needs clarification; no current-chat topic or editor evidence resolved the request."]
-                         if goal.clarification_required else []),
+            "warnings": scope_warnings + (["Task needs clarification; no current-chat topic or editor evidence resolved the request."]
+                         if goal.clarification_required else [])
+                        + (["Explicit topic exclusions left no source evidence; narrow or clarify the request."] if not paths else []),
             **self._token_metrics(index.index, files, count, preamble, model),
         }
         self._remember(cache_key, result)

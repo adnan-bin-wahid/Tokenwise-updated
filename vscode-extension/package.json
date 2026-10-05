@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -144,12 +144,12 @@
         },
         "tokenWise.targetModelSizeB": {
           "type": "number",
-          "minimum": 0.1,
-          "description": "Optional model-size assumption in billions. Leave unset to use the backend registry/default assumption."
+          "minimum": 0,
+          "description": "Optional model-size assumption in billions. Zero or unset uses the backend registry/default assumption."
         },
         "tokenWise.targetGpuType": {
           "type": "string",
-          "description": "Optional GPU assumption (e.g. nvidia-a100-80gb). Leave unset to use the backend registry/default assumption."
+          "description": "Optional GPU assumption (e.g. nvidia-a100-80gb). Blank or unset uses the backend registry/default assumption."
         },
         "tokenWise.targetMmluProScore": {
           "type": "number",
@@ -171,13 +171,13 @@
         },
         "tokenWise.latencyPerInputTokenMs": {
           "type": "number",
-          "minimum": 0.001,
-          "description": "Optional prefill latency per input token in milliseconds."
+          "minimum": 0,
+          "description": "Optional prefill latency per input token in milliseconds. Zero or unset uses the backend registry/default assumption."
         },
         "tokenWise.latencyPerOutputTokenMs": {
           "type": "number",
-          "minimum": 0.001,
-          "description": "Optional decode latency per output token in milliseconds."
+          "minimum": 0,
+          "description": "Optional decode latency per output token in milliseconds. Zero or unset uses the backend registry/default assumption."
         },
         "tokenWise.carbonIntensityGPerKwh": {
           "type": "number",

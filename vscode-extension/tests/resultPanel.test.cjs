@@ -101,6 +101,16 @@ test("overview coverage warnings are escaped and priorities are not labeled neur
   assert.match(html, /Only initializers &lt;found&gt;/);
 });
 
+test("explicit exclusions and scope-filter methods are visible and escaped", () => {
+  const html = new ResultPanel().getWorkspaceHtml({ ...reportedResult,
+    structured_goal: { ...reportedResult.structured_goal, excluded_topics: ["invoice <pricing>"] },
+    files: [{ ...reportedResult.files[0], pruning_method: "scope_filter+neural_lines" }] });
+  assert.match(html, /Excluded topics/);
+  assert.match(html, /invoice &lt;pricing&gt;/);
+  assert.match(html, /scope_filter\+neural_lines/);
+  assert.doesNotMatch(html, /<pricing>/);
+});
+
 test("background carbon refresh does not overwrite another automatic or manual result", () => {
   const panel = new ResultPanel();
   const first = { ...reportedResult, automatic_context: { event_id: "first", query: "Overview", timestamp: "now", elapsed_ms: 100 } };

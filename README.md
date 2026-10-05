@@ -7,6 +7,28 @@ retrieves relevant code and tests without asking you to select files manually.
 **For normal users: install the VSIX. You do not need to clone this repository,
 install Node.js, compile the extension, press F5, or manually start a server.**
 
+## Local 0.6.4 Update
+
+This checkout builds **0.6.4**, with fixes for zero-valued CO2 settings and explicit
+topic exclusions such as `Explain session expiry, not invoice pricing.` The
+published GitHub links below still refer to **0.6.3**; building locally does not
+publish a GitHub release or change an older installer.
+
+To use or share the corrected build:
+
+1. In Antigravity, use **Extensions > ... > Install from VSIX...** and select
+   `releases/TokenWise-0.6.4/tokenwise-vscode-0.6.4.vsix` from this checkout.
+2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
+   as well as the extension: an already-running 0.6.3 backend does not have the
+   new retrieval filter. Existing validated model downloads can be reused.
+3. Open the Python folder, run **TokenWise: Enable Automatic Context**, and start
+   a new chat. Repeat the task and check the fresh result, not an old panel.
+
+Friends can install the same VSIX without cloning or compiling. Their first
+backend setup still requires Python 3.12 and dependency/model download access.
+On a failed setup step choose **Retry Failed Step**; there is no need to uninstall
+or erase validated downloads to retry.
+
 ## Before You Start
 
 For a teacher presentation, start with [the demonstration guide](demonstation.md)
@@ -294,6 +316,33 @@ be updated. With automatic panels disabled, **Show Automatic Context** opens the
 latest result with its estimate. Estimates live in the extension view and are
 not written back into `.tokenwise/latest.json` or injected as agent instructions.
 
+In 0.6.4, **Target Model Size B**, **Latency Per Input Token Ms**, and **Latency
+Per Output Token Ms** may be zero or unset to use the backend's registered
+features. A blank GPU setting is also automatic. Positive overrides remain
+explicit assumptions; MMLU-Pro/BBH scores of zero remain valid explicit scores.
+The backend still requires positive physical feature values when provided.
+For a `422` error mentioning zero model size or latency, install the corrected
+VSIX, reload, and repeat the task. For other invalid settings, repair the named
+setting and reopen **Show Automatic Context** to retry the estimate.
+
+### Explicit Topic Exclusions
+
+Focused repository retrieval recognizes contrasts such as `, not invoice
+pricing`, `but not invoice pricing`, `excluding invoice pricing`, and `rather
+than invoice pricing`. These words are excluded from positive lexical search
+and goal identifiers. Before neural pruning, AST-based reference views omit
+independent excluded declarations and methods; the original files are not edited.
+
+Required helpers are kept even when their names match the excluded topic, with
+a warning. The filter does not strip `not` conditions, assignments, or arbitrary
+side-effect calls. It is not a general natural-language parser, a replacement for
+reviewing excerpts, or a guarantee that every irrelevant line will disappear.
+Direct selected-source commands still prune the exact captured source with the
+neural model; broad overview mode still describes the repository structure.
+The panel reports **Excluded topics** and `scope_filter+...` methods. Exported
+repository runs include omitted-unit names, and reduction counts still compare
+the original included source against retained source plus separate overhead.
+
 ### Commands
 
 | Command | Use |
@@ -440,7 +489,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.3/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.4/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

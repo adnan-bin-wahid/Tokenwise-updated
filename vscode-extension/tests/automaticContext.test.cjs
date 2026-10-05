@@ -77,6 +77,17 @@ test("accepts a complete hook activity record", () => {
   assert.equal(parseAutomaticActivity(ready).result.files[0].file_path, "services/payment_service.py");
 });
 
+test("explicit exclusion metadata is optional but must contain string arrays", () => {
+  const record = topics => ({ ...ready, result: { ...ready.result, structured_goal: { excluded_topics: topics } } });
+  assert.ok(parseAutomaticActivity(record(["invoice pricing"])));
+  assert.equal(parseAutomaticActivity(record("invoice pricing")), undefined);
+  assert.equal(parseAutomaticActivity(record([42])), undefined);
+  const withSymbols = symbols => ({ ...ready, result: { ...ready.result,
+    files: [{ ...ready.result.files[0], excluded_symbols: symbols }] } });
+  assert.ok(parseAutomaticActivity(withSymbols(["invoice_total"])));
+  assert.equal(parseAutomaticActivity(withSymbols("invoice_total")), undefined);
+});
+
 test("validates input provenance and thresholds without rejecting older records", () => {
   const trace = { mode: "conversation", current_query: "Which tests cover that behavior?", effective_query: "Account lockout tests",
     scope: "Repository discovery without editor hints", history_text: "Explain account lockout", history_source: "native_scoped_user_turns",

@@ -47,7 +47,7 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
     const goal = result.structured_goal;
     if ((goal.objective !== undefined && typeof goal.objective !== "string")
       || (goal.task_type !== undefined && typeof goal.task_type !== "string")
-      || [goal.identifiers, goal.observed_errors].some(list => list !== undefined
+      || [goal.identifiers, goal.observed_errors, goal.excluded_topics].some(list => list !== undefined
         && (!Array.isArray(list) || list.some(item => typeof item !== "string")))) { return undefined; }
     if (result.context_mode !== undefined && !["focused", "repository_overview"].includes(result.context_mode)) {
       return undefined;
@@ -62,6 +62,8 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
       || (trace.indexed_files !== undefined && (!Number.isInteger(trace.indexed_files) || trace.indexed_files < 0))
       || (trace.first_line !== undefined && (!Number.isInteger(trace.first_line) || trace.first_line < 1)))) { return undefined; }
     if (result.files.some(file => (file.pruning_method !== undefined && typeof file.pruning_method !== "string")
+      || (file.excluded_symbols !== undefined && (!Array.isArray(file.excluded_symbols)
+        || file.excluded_symbols.some(symbol => typeof symbol !== "string")))
       || (file.effective_threshold != null && (!Number.isFinite(file.effective_threshold)
         || file.effective_threshold < 0 || file.effective_threshold > 1)))) { return undefined; }
     for (const name of ["raw_context_tokens", "retained_source_tokens", "context_overhead_tokens", "indexed_files"] as const) {

@@ -7,6 +7,8 @@ async function main() {
   const cfg = {
     apiUrl: input.base, timeoutMs: 10000, enableCarbonEstimation: true,
     expectedOutputTokens: 256, targetModelName: "meta-llama-3-8b-instruct", carbonIntensityGPerKwh: 475,
+    ...(input.zero_overrides ? { targetModelSizeB: 0, latencyPerInputTokenMs: 0,
+      latencyPerOutputTokenMs: 0, targetGpuType: "" } : {}),
   };
   const client = new TokenWiseApiClient(cfg);
   const result = Array.isArray(input.inputs)

@@ -258,6 +258,7 @@ export class ResultPanel {
           <span>Task type</span><strong>${escapeHtml(taskType)}</strong>
           <span>Objective</span><strong>${escapeHtml(objective)}</strong>
           <span>Identifiers</span><strong>${escapeHtml(identifiers.join(", ") || "none")}</strong>
+          <span>Excluded topics</span><strong>${escapeHtml(result.structured_goal.excluded_topics?.join("; ") || "none")}</strong>
           <span>Diagnostics</span><strong>${escapeHtml(observedErrors.join(" | ") || "none")}</strong>
           <span>Conversation topic</span><strong>${result.context_hint_used ? "Current-chat user topic included" : "Latest task only"}</strong>
         </div>

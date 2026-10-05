@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.6.4 - Unreleased
+
+### Fixed
+
+- Optional zero model-size and latency overrides now mean automatic registry
+  features, rather than invalid carbon API requests. Blank GPU overrides are
+  omitted; positive overrides and valid zero benchmark scores are preserved.
+- Invalid carbon scenario settings report the setting to repair, without
+  discarding prepared context or inventing an estimate.
+- Explicit topic contrasts such as "session expiry, not invoice pricing" no
+  longer promote excluded words as positive identifiers or lexical targets.
+- Focused repository retrieval omits independently excluded Python declarations,
+  methods, unused excluded imports, and separate display statements before
+  neural pruning. Required helpers are retained with warnings; ordinary code
+  negation is not a line-removal rule. Original files and the index source remain
+  unchanged, and original source counts remain the reduction baseline.
+- Result panels show excluded topics and scope-filtered pruning methods.
+- The real-model verifier has a bounded, configurable startup timeout for slower
+  cold starts and tests zero carbon overrides against the actual HTTP endpoint.
+
+Install the matching 0.6.4 backend with **Set Up Backend** after upgrading the
+VSIX. Local packaging does not publish or replace any existing GitHub release.
+
 ## 0.6.3 - 2026-10-06
 
 ### Added

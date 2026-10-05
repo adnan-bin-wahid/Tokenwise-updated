@@ -5,7 +5,9 @@ const load = Module._load;
 Module._load = function (name, ...args) {
   if (name === "vscode") { return { workspace: { isTrusted: true }, env: {}, window: { showWarningMessage: value => process.stderr.write(`${value}\n`) } }; }
   if (name === "./config") { return { getTokenWiseConfig: () => ({ apiUrl: "http://127.0.0.1:9", timeoutMs: 120000,
-    enableCarbonEstimation: true, expectedOutputTokens: 256, targetModelName: "meta-llama-3-8b-instruct", carbonIntensityGPerKwh: 475 }) }; }
+    enableCarbonEstimation: true, expectedOutputTokens: 256, targetModelName: "meta-llama-3-8b-instruct", carbonIntensityGPerKwh: 475,
+    ...(input.zero_overrides ? { targetModelSizeB: 0, latencyPerInputTokenMs: 0,
+      latencyPerOutputTokenMs: 0, targetGpuType: "" } : {}) }) }; }
   return load.call(this, name, ...args);
 };
 const { PruneService } = require("../vscode-extension/dist/services/pruneService.js");

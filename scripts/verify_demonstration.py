@@ -24,11 +24,25 @@ def verify_pruning_inputs(base, storage, demo):
     repository = request(base, "/prune-workspace", {"workspace_root": str(directory), "query": query,
                          "token_budget": 4096, "max_candidates": 8})
     assert repository["input_trace"]["mode"] == "repository"
+    assert repository["structured_goal"]["excluded_topics"] == ["invoice pricing"]
+    assert "invoice" not in repository["structured_goal"]["identifiers"]
+    assert "def invoice_total" not in repository["unified_prompt"]
+    assert "def test_invoice_total" not in repository["unified_prompt"]
+    assert "invoice_total(" not in repository["unified_prompt"]
+    for name in ("session_is_valid", "revoke_session", "test_session_expiry_boundary", "test_revocation"):
+        assert name in repository["unified_prompt"], name
+    carbon = subprocess.run(["node", str(ROOT / "scripts/verify-carbon-client.cjs")], cwd=ROOT,
+        input=json.dumps({"base": base, "before": repository["raw_context_tokens"],
+                          "after": repository["pruned_tokens"], "zero_overrides": True}),
+        capture_output=True, text=True, encoding="utf-8", timeout=30, check=True)
+    repository.update(json.loads(carbon.stdout))
+    assert repository["carbonStatus"] == "ready"
+    assert "request_overrides" not in repository["carbonAfter"]["featuresSource"]
 
     def manual(code, mode, first_line, threshold=.45):
         result = subprocess.run(["node", str(ROOT / "scripts/verify-pruning-client.cjs")], cwd=ROOT,
             input=json.dumps({"base": base, "query": query, "code": code, "file_path": str(filename),
-                              "threshold": threshold, "mode": mode, "first_line": first_line}),
+                              "threshold": threshold, "mode": mode, "first_line": first_line, "zero_overrides": True}),
             capture_output=True, text=True, encoding="utf-8", timeout=120, check=True)
         mapped = json.loads(result.stdout)
         assert mapped["originalCode"] == code and mapped["lineScores"]
@@ -78,7 +92,11 @@ def verify_pruning_inputs(base, storage, demo):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inputs-only", action="store_true", help="Retry just the real pruning-input paths, without regenerating packet comparisons.")
+    parser.add_argument("--startup-timeout", type=int, default=180,
+                        help="Seconds allowed for local model startup (30-600, default: 180).")
     arguments = parser.parse_args()
+    if not 30 <= arguments.startup_timeout <= 600:
+        parser.error("--startup-timeout must be between 30 and 600 seconds")
     spec = importlib.util.spec_from_file_location("demo_checks", ROOT / "demonstration/run_checks.py")
     demo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(demo)
@@ -100,7 +118,7 @@ def main() -> None:
                                        stdout=log, stderr=subprocess.STDOUT,
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             try:
-                deadline = time.monotonic() + 90
+                deadline = time.monotonic() + arguments.startup_timeout
                 health = {}
                 while time.monotonic() < deadline and process.poll() is None:
                     try:

@@ -60,6 +60,60 @@ test("backend failure remains a failure, not a fabricated estimate", async () =>
     config, 100, 50), /503 missing models/);
 });
 
+test("zero positive overrides and blank GPU use registry features in every scenario", async () => {
+  const calls = [];
+  const result = await estimateCarbonComparison({ estimateCarbon: async request => {
+    calls.push(JSON.parse(JSON.stringify(request))); return response(request.input_tokens);
+  } }, { ...config, targetModelSizeB: 0, latencyPerInputTokenMs: 0,
+    latencyPerOutputTokenMs: 0, targetGpuType: "  " }, 701, 300);
+  assert.equal(result.carbonStatus, "ready");
+  for (const request of calls) {
+    for (const key of ["model_size_b", "latency_per_input_token_ms", "latency_per_output_token_ms", "gpu_type"]) {
+      assert.equal(Object.hasOwn(request, key), false);
+    }
+  }
+});
+
+test("positive overrides are preserved, including valid zero benchmark scores", async () => {
+  const calls = [];
+  await estimateCarbonForInputs({ estimateCarbon: async request => {
+    calls.push(JSON.parse(JSON.stringify(request))); return response(request.input_tokens);
+  } }, { ...config, targetModelSizeB: 8, latencyPerInputTokenMs: .8,
+    latencyPerOutputTokenMs: 2.2, targetGpuType: " A100 ", targetMmluProScore: 0, targetBbhScore: 0 }, [100, 50, 70]);
+  for (const request of calls) {
+    assert.equal(request.model_size_b, 8);
+    assert.equal(request.latency_per_input_token_ms, .8);
+    assert.equal(request.latency_per_output_token_ms, 2.2);
+    assert.equal(request.gpu_type, "A100");
+    assert.equal(request.mmlu_pro_score, 0);
+    assert.equal(request.bbh_score, 0);
+  }
+});
+
+test("invalid feature overrides fail with the setting name before making requests", async () => {
+  for (const key of ["targetModelSizeB", "latencyPerInputTokenMs", "latencyPerOutputTokenMs"]) {
+    for (const value of [-1, NaN, Infinity]) {
+      await assert.rejects(estimateCarbonForInputs({ estimateCarbon: async () => assert.fail("Unexpected request") },
+        { ...config, [key]: value }, [100, 50]), new RegExp(`tokenWise\\.${key}`));
+    }
+  }
+  for (const key of ["targetMmluProScore", "targetBbhScore"]) {
+    for (const value of [-1, 1.1, NaN, Infinity]) {
+      await assert.rejects(estimateCarbonForInputs({ estimateCarbon: async () => assert.fail("Unexpected request") },
+        { ...config, [key]: value }, [100, 50]), new RegExp(`tokenWise\\.${key}`));
+    }
+  }
+});
+
+test("invalid required scenario settings produce actionable errors", async () => {
+  for (const [key, values] of [["expectedOutputTokens", [0, -1, 1.5, NaN]], ["carbonIntensityGPerKwh", [0, -1, Infinity]]]) {
+    for (const value of values) {
+      await assert.rejects(estimateCarbonComparison({ estimateCarbon: async () => assert.fail("Unexpected request") },
+        { ...config, [key]: value }, 100, 50), new RegExp(`tokenWise\\.${key}`));
+    }
+  }
+});
+
 test("all three strategies use identical carbon assumptions and preserve input ordering", async () => {
   const calls = [];
   const estimates = await estimateCarbonForInputs({ estimateCarbon: async request => {
