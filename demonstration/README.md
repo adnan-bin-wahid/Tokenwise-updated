@@ -14,11 +14,12 @@ Open one leaf folder at a time in Antigravity:
 
 Run `py -3.12 demonstration/run_checks.py` from the checkout root to check all
 projects without installing application dependencies: four apps and 28 tests.
-Start with `04_pruning_inputs` and the local **0.6.3** build's **TokenWise:
+Start with `04_pruning_inputs` and **0.6.3**'s **TokenWise:
 Demonstrate Pruning Inputs** to inspect repository discovery, exact selected-source
 neural pruning, and a clearly labeled user-history replay. Install its matching
-backend too. The published 0.6.2 release is unchanged and lacks this new command.
-Its **Compare Context Strategies** command remains an optional packet comparison,
+backend too. Download the installer and complete demo ZIP from the
+[0.6.3 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
+**Compare Context Strategies** remains an optional packet comparison,
 not the primary demonstration of how pruning decisions are made.
 Use [the results worksheet](results-template.md) for actual observations.
 See [the verification record](VERIFICATION.md) for dated checks and their limits.

@@ -4,13 +4,13 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
-The local **0.6.3** build adds **TokenWise: Demonstrate Pruning Inputs**: repository
+**0.6.3** adds **TokenWise: Demonstrate Pruning Inputs**: repository
 discovery without editor hints, neural pruning of an exact file/excerpt, and an
 explicitly labeled earlier-user replay. Results expose the effective objective,
 scope, history source, thresholds, selected-source line scores, and JSON export.
-Use the matching updated backend. This local change does not replace the public
-0.6.2 release linked below. The checkout's teacher guide now includes four runnable
-projects; the older public 0.6.2 ZIP contains three.
+Use the matching updated backend. The release ZIP includes four runnable
+projects, the teacher guide, and the results worksheet. Older published assets
+remain unchanged.
 
 **0.6.2** adds **TokenWise: Compare Context Strategies**. Open a saved Python
 file for the manual baseline, enter one common task, then compare all indexed
@@ -20,10 +20,10 @@ matching updated backend; it does not grade agent answers. The source checkout's
 `demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
-Download the [TokenWise 0.6.2 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/tokenwise-vscode-0.6.2.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.2).
-For the teacher guide and three example repositories, download
-[TokenWise-0.6.2.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/TokenWise-0.6.2.zip).
+Download the [TokenWise 0.6.3 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/tokenwise-vscode-0.6.3.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
+For the teacher guide and four example repositories, download
+[TokenWise-0.6.3.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/TokenWise-0.6.3.zip).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
@@ -58,7 +58,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.2 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.3 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified

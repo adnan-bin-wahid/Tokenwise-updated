@@ -8,7 +8,7 @@ authentication or financial software.
 
 Run `py -3.12 -m unittest discover -s tests -v` and `py -3.12 app.py`.
 
-Use **TokenWise: Demonstrate Pruning Inputs** from the local 0.6.3 build:
+Use **TokenWise: Demonstrate Pruning Inputs** from the 0.6.3 release:
 
 - Repository mode: no file selection or active-file hint is sent.
 - Selected mode: open `workflows.py`, clear the selection for the entire file,

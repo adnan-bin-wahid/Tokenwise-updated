@@ -53,14 +53,21 @@ Push-Location $Root
 try {
     $DemoSource = Get-GitOutput -Arguments @('ls-files', '--', 'demonstration')
     if (-not $DemoSource) { throw 'Tracked demonstration source is missing.' }
+    $ExcludedDemoPaths = 0
     foreach ($Relative in ($DemoSource -split "`n")) {
         $Parts = $Relative -split '/'
+        if (@($Parts | Where-Object { $_ -in @('results', '__pycache__', '.agents', '.tokenwise') }).Count -or
+            $Parts[-1] -in @('.gitignore', '.gitattributes')) {
+            $ExcludedDemoPaths++
+            continue
+        }
         if ($Relative -notmatch '^demonstration/[A-Za-z0-9_./-]+\.(py|json|md)$' -or
-            @($Parts | Where-Object { $_ -in @('..', 'results', '__pycache__', '.agents', '.tokenwise') }).Count) {
+            '..' -in $Parts) {
             throw "Unexpected tracked demonstration path: $Relative"
         }
         $ExpectedFiles += $Relative
     }
+    if ($ExcludedDemoPaths) { Write-Host "Excluded $ExcludedDemoPaths tracked runtime/metadata paths; checkout files are unchanged." }
 } finally { Pop-Location }
 $Checksums = @{}
 foreach ($Line in Get-Content -LiteralPath (Get-ReleaseFile 'SHA256SUMS.txt')) {
@@ -95,7 +102,11 @@ $Credential = @{}
 $CredentialLines = $null
 Push-Location $Root
 try {
-    if (Get-GitOutput -Arguments @('status', '--porcelain')) { throw 'Commit/review all changes before publishing. The worktree must be clean.' }
+    $ReleaseStatus = Get-GitOutput -Arguments @('status', '--porcelain', '--', '.',
+        ':(glob,exclude)demonstration/**/.agents/**', ':(glob,exclude)demonstration/**/.tokenwise/**',
+        ':(glob,exclude)demonstration/**/__pycache__/**', ':(glob,exclude)demonstration/**/results/**',
+        ':(glob,exclude)demonstration/**/.gitignore', ':(glob,exclude)demonstration/**/.gitattributes')
+    if ($ReleaseStatus) { throw 'Commit/review all release source and documentation changes before publishing.' }
     if ((Get-GitOutput -Arguments @('branch', '--show-current')) -ne 'main') { throw 'Publish from the main branch.' }
     if ((Get-GitOutput -Arguments @('remote', 'get-url', 'origin')) -ne $Package.repository.url) { throw 'Git origin and package repository disagree.' }
     $Head = Get-GitOutput -Arguments @('rev-parse', 'HEAD')

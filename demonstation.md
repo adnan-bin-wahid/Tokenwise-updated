@@ -26,13 +26,15 @@ explain that this is not implemented and would need explicit consent and scope.
 ## 2. Version and Installation
 
 The new input trace, line decisions, and **TokenWise: Demonstrate Pruning Inputs**
-command require the **local 0.6.3 extension and matching backend**. The published
-0.6.2 assets are unchanged. A local build is not a published GitHub release.
+command require **0.6.3 and its matching backend**. Download them from the
+[0.6.3 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
+Older releases remain unchanged.
 
-### Install the Local VSIX
+### Install the Release VSIX
 
 1. In Antigravity, open **Extensions > ... > Install from VSIX...**.
-2. Select `releases/TokenWise-0.6.3/tokenwise-vscode-0.6.3.vsix`.
+2. Select the downloaded `tokenwise-vscode-0.6.3.vsix`. For a local source build,
+   the same file is under `releases/TokenWise-0.6.3/`.
 3. Reload the editor window.
 4. Run **TokenWise: Set Up Backend** and approve installing the matching backend.
 5. Open a demo leaf folder, trust it, and run **Enable Automatic Context**.
@@ -60,7 +62,8 @@ Use `npm run package` to create the local VSIX and shareable release folder.
 
 ## 3. Demonstration Repositories
 
-Open one leaf folder at a time, not the `demonstration` parent.
+Download `TokenWise-0.6.3.zip` from the release assets and extract it for these
+examples. Open one leaf folder at a time, not the `demonstration` parent.
 
 | Folder | Behavior | Tests | Purpose |
 | --- | --- | --- | --- |
@@ -491,7 +494,7 @@ Four small fixtures do not prove universal superiority.
 
 | Symptom | Check / retry |
 | --- | --- |
-| New command missing | Install local 0.6.3, reload the correct window/profile |
+| New command missing | Install 0.6.3, reload the correct window/profile |
 | Input trace unavailable | Update/restart the matching Python backend |
 | Slow first run | Warm backend; separate cold loading from warm preparation |
 | Replay uses no history | Explicit tasks intentionally ignore hints; use a recognized follow-up |

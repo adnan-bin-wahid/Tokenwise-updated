@@ -71,7 +71,8 @@ rehearse the actual agent interaction before presenting it as a live result.
 
 Separately checked on 2026-10-05 in the same Windows/Python 3.12 CPU environment.
 The earlier 0.6.2 measurements above are historical, not rewritten as new runs.
-These 0.6.3 changes have not been published merely by building a local VSIX.
+These are local checks, not proof of publication. Obtain the installer and demo
+bundle separately from the versioned v0.6.3 GitHub release and verify its checksums.
 
 - 155 extension tests passed, including scope capture, managed URL resolution,
   native token counts, input-trace validation, line decisions, and export.

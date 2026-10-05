@@ -13,9 +13,9 @@ For a teacher presentation, start with [the demonstration guide](demonstation.md
 and the four independent [Python demo repositories](demonstration/README.md).
 The updated guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
-command requires the **local 0.6.3 build and matching backend**; the published
-0.6.2 download below is unchanged. The optional packet-comparison command is
-available in 0.6.2. See the guide for installation, exact steps, line decisions,
+command requires **0.6.3 and its matching backend**. Download the installer or
+complete demonstration bundle below. The optional packet-comparison command is
+also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
 
 | Requirement | Details |
@@ -58,10 +58,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.2 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/tokenwise-vscode-0.6.2.vsix)
-from the [0.6.2 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.2).
+Download [**TokenWise 0.6.3 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/tokenwise-vscode-0.6.3.vsix)
+from the [0.6.3 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.3).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/TokenWise-0.6.2.zip)
+provides an [installer, four demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.3/TokenWise-0.6.3.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -163,7 +163,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.2 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.3 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -303,7 +303,7 @@ not written back into `.tokenwise/latest.json` or injected as agent instructions
 | **Start Backend** | Warm the model before a prompt; updates the manual API URL to its actual port |
 | **Diagnose Setup** | Check the registered installation, actual backend health, and workspace links |
 | **Show Automatic Context** | Reopen the latest supplied context |
-| **Demonstrate Pruning Inputs** (local 0.6.3) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
+| **Demonstrate Pruning Inputs** (0.6.3+) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
 | **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
 | **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
@@ -312,7 +312,7 @@ All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
 **Prune Current File**, and **Build Repository Context** commands remain available
 in VS Code as well; automatic chat retrieval needs Antigravity's agent integration.
 
-In local 0.6.3, recognized native follow-ups can use at most three earlier user
+In 0.6.3, recognized native follow-ups can use at most three earlier user
 turns from the current topic, with a combined 2,000-character bound. Explicit
 tasks reset the topic; missing conversation IDs and new chats do not inherit it.
 Stable-build fallback resolves user intent into a self-contained query rather
@@ -440,7 +440,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.2/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.3/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

@@ -202,7 +202,7 @@ compiled service, and checks multi-turn native-hook state/new-chat isolation wit
 a generated USER transcript. It stops only its own process. Results are ignored under
 `demonstration/results/`; source markers are not semantic agent-answer scores.
 See `demonstation.md` for the three primary input scenarios and the optional
-fresh-chat answer-quality protocol. The replay command is local 0.6.3; update the
+fresh-chat answer-quality protocol. The replay command requires 0.6.3; update the
 backend as well. No automated verifier here calls Antigravity's cloud model.
 
 The panel browser verifier also accepts a demonstration `comparison.json` as its

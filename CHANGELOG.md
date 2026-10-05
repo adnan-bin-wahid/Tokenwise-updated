@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.3 - Local Development
+## 0.6.3 - 2026-10-06
 
 ### Added
 
@@ -21,8 +21,8 @@
 - Selected-source carbon uses backend-native token counts; invalid/empty counts
   fail visibly rather than fabricating a positive token baseline.
 
-This local build requires its matching backend. It does not modify the public
-0.6.2 release, add cross-chat memory, or certify live cloud-agent answer quality.
+This Windows-tested beta requires its matching backend. It does not modify
+older releases, add cross-chat memory, or certify live cloud-agent answer quality.
 
 ## 0.6.2 - 2026-10-05
 
