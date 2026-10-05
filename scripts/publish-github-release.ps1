@@ -16,7 +16,7 @@ $ArchiveName = "TokenWise-$Version.zip"
 $ArchivePath = Join-Path $Artifacts $ArchiveName
 $PublicChecksums = Join-Path $Artifacts "SHA256SUMS-$Version.txt"
 $ExpectedFiles = @($ArtifactName, 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CHANGELOG.md', 'RELEASE-NOTES.md',
-    'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
+    'demonstation.md', 'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
 
 function Get-ReleaseFile([string]$Relative) {
     $Full = [System.IO.Path]::GetFullPath((Join-Path $Release $Relative))
@@ -49,6 +49,19 @@ function Invoke-GitHub([string]$Method, [string]$Uri, $Body = $null) {
 }
 
 # Archive only verified, explicitly allowlisted artifacts, never an entire worktree.
+Push-Location $Root
+try {
+    $DemoSource = Get-GitOutput -Arguments @('ls-files', '--', 'demonstration')
+    if (-not $DemoSource) { throw 'Tracked demonstration source is missing.' }
+    foreach ($Relative in ($DemoSource -split "`n")) {
+        $Parts = $Relative -split '/'
+        if ($Relative -notmatch '^demonstration/[A-Za-z0-9_./-]+\.(py|json|md)$' -or
+            @($Parts | Where-Object { $_ -in @('..', 'results', '__pycache__', '.agents', '.tokenwise') }).Count) {
+            throw "Unexpected tracked demonstration path: $Relative"
+        }
+        $ExpectedFiles += $Relative
+    }
+} finally { Pop-Location }
 $Checksums = @{}
 foreach ($Line in Get-Content -LiteralPath (Get-ReleaseFile 'SHA256SUMS.txt')) {
     if ($Line -notmatch '^([a-f0-9]{64})  (.+)$') { throw 'Malformed release checksums. Re-run npm run package.' }
@@ -128,7 +141,7 @@ try {
     Write-Host "Uploading verified assets to draft $($Draft.id) in $Repository."
     $Assets = @(
         @{ Name = $ArtifactName; Path = (Get-ReleaseFile $ArtifactName); Hash = $Checksums[$ArtifactName]; Type = 'application/octet-stream'; Label = 'Install in Antigravity (recommended)' },
-        @{ Name = $ArchiveName; Path = $ArchivePath; Hash = $ArchiveHash; Type = 'application/zip'; Label = 'Installer, documentation, and licenses' },
+        @{ Name = $ArchiveName; Path = $ArchivePath; Hash = $ArchiveHash; Type = 'application/zip'; Label = 'Installer, demo projects, presentation guide, and licenses' },
         @{ Name = 'SHA256SUMS.txt'; Path = $PublicChecksums; Hash = (Get-Sha256 $PublicChecksums); Type = 'text/plain'; Label = 'SHA-256 download checksums' }
     )
     foreach ($File in $Assets) {

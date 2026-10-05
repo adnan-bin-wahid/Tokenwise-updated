@@ -12,7 +12,7 @@ Open one leaf folder at a time in Antigravity:
 | [baseline_lab](baseline_lab/README.md) | Source-empty fresh-chat comparison | None |
 
 Run `py -3.12 demonstration/run_checks.py` from the checkout root to check all
-projects without installing application dependencies. The local 0.6.2 extension
+projects without installing application dependencies. The 0.6.2 extension
 adds **TokenWise: Compare Context Strategies**; it needs the matching backend.
 Use [the results worksheet](results-template.md) for actual observations.
 See [the local verification record](VERIFICATION.md) for measured packet sizes

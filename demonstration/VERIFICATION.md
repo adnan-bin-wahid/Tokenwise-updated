@@ -62,6 +62,7 @@ evidence; cost alone is not the quality criterion.
 - The verifier stopped its own backend and did not edit demo application source.
 - **Antigravity's cloud model was not called or graded by these checks.**
 
-The local 0.6.2 VSIX is a packaged build, not a newly published GitHub release.
-Install it, update the matching backend, and follow `../demonstation.md` to
+This record describes pre-publication local verification. The 0.6.2 installer
+and demonstration bundle are distributed through the versioned GitHub release.
+Install the VSIX, update the matching backend, and follow `../demonstation.md` to
 rehearse the actual agent interaction before presenting it as a live result.

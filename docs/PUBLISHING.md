@@ -22,7 +22,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-github-r
 
 Preparation verifies the allowlisted release files and their checksums and
 creates `releases/TokenWise-VERSION.zip`. The ZIP contains the installer and
-guides, not model weights, virtual environments, private runtime records, or
+guides and tracked demonstration projects, not model weights, virtual environments, private runtime records, or
 research data. The publishing script also generates checksums for the VSIX/ZIP.
 
 ## Commit, Tag, and Push
@@ -33,11 +33,11 @@ Push without force and create an annotated version tag on the release commit:
 
 ```powershell
 git push origin main
-git tag -a v0.6.1 -m "TokenWise 0.6.1 - Windows Beta"
-git push origin v0.6.1
+git tag -a v0.6.2 -m "TokenWise 0.6.2 - Windows Beta"
+git push origin v0.6.2
 ```
 
-Use the new version instead of `v0.6.1` for future releases. Never move a
+Use the new version instead of `v0.6.2` for future releases. Never move a
 published tag or replace a published installer; release a new version instead.
 
 ## Publish
@@ -52,11 +52,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-github-r
 ```
 
 The helper requires a clean `main` branch with its exact commit and annotated
-tag already pushed. It creates a draft, uploads the VSIX, installer-and-docs ZIP,
+tag already pushed. It creates a draft, uploads the VSIX, installer/demo/docs ZIP,
 and `SHA256SUMS.txt`, checks the GitHub asset sizes/digests, and then publishes a
 pre-release. It refuses to replace an existing published release or alter an
 unrelated draft. If an upload was interrupted, inspect the draft and re-run with
 `-ResumeDraft` to resume this version's matching draft.
+
+Demo archive paths are derived from Git's tracked `demonstration/` inventory,
+restricted to Python/JSON/Markdown without private runtime/results folders, and
+must match the package-generated checksum manifest. Unexpected release files,
+missing demo files, and symbolic links are rejected before any upload.
 
 After publication, download the public assets and verify their SHA-256 hashes.
 Share the tag's release URL, not `/releases/latest`: GitHub pre-releases are not

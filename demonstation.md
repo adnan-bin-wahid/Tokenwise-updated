@@ -42,9 +42,10 @@ input. I evaluate both packet size and answer correctness."
 - Rule instructions to resolve fallback-command follow-ups within the same chat.
 - An empty-source baseline workspace and repeatable test/result-export scripts.
 
-These comparison features require the **local 0.6.2 build and updated backend**.
-Do not install the public 0.6.1 download and expect the new command to exist.
-This guide does not claim that 0.6.2 has been published to GitHub.
+These comparison features require **0.6.2 and its updated backend**.
+Use the [0.6.2 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.2)
+for the VSIX and installer/demo ZIP. Older 0.6.1 installations do not have the
+comparison command; install the newer VSIX and update its backend.
 
 ## 3. Folder Map
 
@@ -71,7 +72,10 @@ provider. No external database, web server, or API key is needed to run them.
 ### Normal Installation
 
 1. In Antigravity, use **Extensions > ... > Install from VSIX...**.
-2. Select `releases/TokenWise-0.6.2/tokenwise-vscode-0.6.2.vsix` from this checkout.
+2. Select the downloaded `tokenwise-vscode-0.6.2.vsix` (or the local copy under
+   `releases/TokenWise-0.6.2/` in a checkout). If you downloaded
+   `TokenWise-0.6.2.zip`, extract it once; its `demonstration/` folder contains the
+   projects below, and its root contains the VSIX and this guide.
 3. Reload the editor. Verify TokenWise's installed version is 0.6.2.
 4. Open `demonstration/01_account_security` with **File > Open Folder**.
 5. Trust this repository only after reviewing it.
@@ -576,7 +580,7 @@ can limit retrieval. No demonstration justifies claiming universal perfection.
 
 | Problem | What to check | How to retry |
 | --- | --- | --- |
-| Comparison command missing | Installed extension version/development host | Install the local 0.6.2 VSIX and reload |
+| Comparison command missing | Installed extension version/development host | Install the 0.6.2 VSIX and reload |
 | Compare endpoint 404 | Old Python backend | Run Set Up Backend for the updated bundle, then retry |
 | No indexed Python files | Opened `baseline_lab` or wrong folder | Open the appropriate leaf project |
 | File changed/selection rejected | Unsaved edits or outdated excerpt | Save, select current source, rerun comparison |

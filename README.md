@@ -11,8 +11,8 @@ install Node.js, compile the extension, press F5, or manually start a server.**
 
 For a teacher presentation, start with [the demonstration guide](demonstation.md)
 and the three independent [Python demo repositories](demonstration/README.md).
-The controlled comparison command requires the **local 0.6.2 build and updated
-backend**; the public 0.6.1 download below does not include it. See the guide for
+The controlled comparison command requires **0.6.2 and its updated backend**.
+Download the release below. See the guide for
 installation, exact prompts, answer checklists, and conversation-isolation tests.
 
 | Requirement | Details |
@@ -55,10 +55,11 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.1 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.1/tokenwise-vscode-0.6.1.vsix)
-from the [0.6.1 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.1).
+Download [**TokenWise 0.6.2 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/tokenwise-vscode-0.6.2.vsix)
+from the [0.6.2 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.2).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
+provides an [installer, demonstration projects, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.2/TokenWise-0.6.2.zip)
+and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
 **The overview/token-accounting/automatic-carbon fixes require 0.6.1 or later,
@@ -159,7 +160,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.1 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.2 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -168,6 +169,8 @@ and retry. Never remove another running installer's lock.
    installation succeeds and only when its process identity can be verified.
 4. Background indexing reconnects automatically. Open **Output > TokenWise
    Index** to confirm the Python file count, then start a new Antigravity chat.
+5. Run **TokenWise: Enable Automatic Context** again in existing workspaces to
+   refresh generated follow-up rules. Existing unrelated rules are preserved.
 
 Your repository's central backend link remains valid. Do not uninstall or use
 **Remove All Local Data** just to upgrade: those actions remove reusable caches.
@@ -424,8 +427,8 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.1/` with the VSIX, this guide,
-licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
+environment, and creates `releases/TokenWise-0.6.2/` with the VSIX, this guide,
+demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate
 step requiring a publisher account; creating this package does not publish it.
