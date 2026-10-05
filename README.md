@@ -49,15 +49,16 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download the VSIX from the [latest published GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/latest).
+Download [**TokenWise 0.6.1 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.1/tokenwise-vscode-0.6.1.vsix)
+from the [0.6.1 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.1).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
 provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
 **The overview/token-accounting/automatic-carbon fixes require 0.6.1 or later,
-including its updated backend.** For a locally built 0.6.1, the installer is
-`releases/TokenWise-0.6.1/tokenwise-vscode-0.6.1.vsix`. Building the installer does
-not publish it; check the version on the release page before downloading.
+including its updated backend.** Install the VSIX, reload, and update the managed
+backend through **TokenWise: Set Up Backend**. Use the versioned release link
+above: GitHub's `/releases/latest` does not select beta pre-releases.
 
 In Antigravity:
 

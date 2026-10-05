@@ -4,12 +4,14 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
-Download the VSIX from the [latest published Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/latest).
+Download the [TokenWise 0.6.1 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.1/tokenwise-vscode-0.6.1.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.1).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
-**0.6.1 or later, including its updated backend**. A locally built installer is
-under `releases/TokenWise-0.6.1/`; building it does not publish a GitHub release.
+**0.6.1 or later, including its updated backend**. After installing and reloading,
+run **TokenWise: Set Up Backend** to update the managed backend. Use the versioned
+release link above; GitHub's `/releases/latest` does not select beta pre-releases.
 
 1. Install the TokenWise VSIX through **Extensions > ... > Install from VSIX**.
 2. Install **64-bit Python 3.12** if it is not already available, then restart the IDE.
