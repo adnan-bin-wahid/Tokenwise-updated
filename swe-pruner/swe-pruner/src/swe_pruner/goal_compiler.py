@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional, Set
 from .goal_models import StructuredGoal
 from .goal_generator_client import LocalGoalGeneratorClient
+from .conversation_context import is_follow_up
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +95,14 @@ CRITICAL SAFEGUARDS:
         selected_code: Optional[str], 
         diagnostics: List[str],
         local_llm_url: Optional[str] = None,
-        local_llm_model: Optional[str] = None
+        local_llm_model: Optional[str] = None,
+        context_hint: Optional[str] = None,
     ) -> StructuredGoal:
         if is_repository_overview(query):
             return self.deterministic_fallback(query, current_symbol, diagnostics)
         # Check if query is extremely vague and no context evidence is present
-        is_vague = not query or query.lower().strip() in {"fix bug", "fix", "bug", "help", "debug", "test", "run"}
-        has_evidence = bool(current_symbol or selected_code or diagnostics)
+        is_vague = not query or is_follow_up(query) or query.lower().strip() in {"fix bug", "fix", "bug", "help", "debug", "test", "run"}
+        has_evidence = bool(current_symbol or selected_code or diagnostics or context_hint)
         
         if is_vague and not has_evidence:
             return StructuredGoal(
@@ -117,7 +119,8 @@ CRITICAL SAFEGUARDS:
         # Local goal synthesis is opt-in; otherwise use the deterministic compiler immediately.
         if self.generator and local_llm_url:
             goal = await self.generator.generate_goal(
-                prompt=self.build_prompt(query, active_file, current_symbol, selected_code, diagnostics),
+                prompt=self.build_prompt(query, active_file, current_symbol, selected_code, diagnostics)
+                + (f"\nEarlier user topic in this conversation (reference): {context_hint}" if context_hint else ""),
                 endpoint_url=local_llm_url,
                 model=local_llm_model
             )
@@ -126,10 +129,14 @@ CRITICAL SAFEGUARDS:
         if not goal:
             logger.info("Local goal generation failed or client was disabled. Using deterministic fallback templates.")
             goal = self.deterministic_fallback(query, current_symbol, diagnostics)
+        if context_hint:
+            goal.objective += f"\nEarlier user topic in this conversation (reference): {context_hint}"
 
         # Post-process validation: Filter out hallucinated identifiers not in our workspace context
         # We build a vocabulary of valid words in context
         valid_words = set(re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', query))
+        if context_hint:
+            valid_words.update(re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', context_hint))
         if current_symbol:
             valid_words.add(current_symbol)
         if selected_code:

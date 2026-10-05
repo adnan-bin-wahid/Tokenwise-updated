@@ -104,6 +104,7 @@ class ContextBuilder:
         prune_uncached: bool = True,
         overview: bool = False,
         anchor_relation: str | None = None,
+        preserve_source: set[str] | None = None,
     ) -> Tuple[str, List[Dict[str, Any]], int]:
         """
         Build the final repository context within ``self.token_budget``.
@@ -146,7 +147,10 @@ class ContextBuilder:
                 tier = 3
                 relation = "transitive reference"
 
-            if not prune_uncached and rel_path not in (prepruned or {}):
+            if preserve_source and rel_path in preserve_source and rel_path not in (prepruned or {}):
+                tier = 2
+                relation = "small task-matched source"
+            elif not prune_uncached and rel_path not in (prepruned or {}):
                 tier = 3
                 relation = "dependency interface"
 
@@ -163,6 +167,8 @@ class ContextBuilder:
                 result = prepruned[rel_path]
                 pruned_content = result.pruned_code
                 original_tokens = result.origin_token_cnt
+            elif preserve_source and rel_path in preserve_source:
+                pruned_content = content
             elif tier == 1:
                 try:
                     result = pruner_model.prune(

@@ -4,6 +4,14 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
+Local **0.6.2** adds **TokenWise: Compare Context Strategies**. Open a saved Python
+file for the manual baseline, enter one common task, then compare all indexed
+Python code, the selection, and automatic context. Copy or export the actual
+packets and evaluate answers in independent chats. The command requires the
+matching updated backend; it does not grade agent answers. The source checkout's
+`demonstation.md` includes three runnable example repositories and a teacher guide.
+The public 0.6.1 download below does not include this command.
+
 Download the [TokenWise 0.6.1 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.1/tokenwise-vscode-0.6.1.vsix)
 from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.1).
 Do not download the source-code ZIP for normal installation.

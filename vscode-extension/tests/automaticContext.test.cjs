@@ -309,6 +309,8 @@ test("malformed optional token metrics and warnings are rejected", () => {
     assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, raw_context_tokens: value } }), undefined);
   }
   assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, warnings: [42] } }), undefined);
+  assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, context_hint_used: "true" } }), undefined);
+  assert.ok(parseAutomaticActivity({ ...ready, result: { ...ready.result, context_hint_used: true } }));
   assert.equal(parseAutomaticActivity({ ...ready, backend_url: 42 }), undefined);
   assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, original_tokens: -17 } }), undefined);
   assert.equal(parseAutomaticActivity({ ...ready, result: { ...ready.result, structured_goal: { identifiers: "GIVE" } } }), undefined);

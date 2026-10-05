@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { estimateCarbonComparison } = require("../dist/services/carbonComparison.js");
+const { estimateCarbonComparison, estimateCarbonForInputs } = require("../dist/services/carbonComparison.js");
 
 const config = {
   enableCarbonEstimation: true, expectedOutputTokens: 256, targetModelName: "meta-llama-3-8b-instruct",
@@ -58,4 +58,13 @@ test("nonfinite, negative, and unsupported remote estimate values are rejected",
 test("backend failure remains a failure, not a fabricated estimate", async () => {
   await assert.rejects(estimateCarbonComparison({ estimateCarbon: async () => { throw new Error("503 missing models"); } },
     config, 100, 50), /503 missing models/);
+});
+
+test("all three strategies use identical carbon assumptions and preserve input ordering", async () => {
+  const calls = [];
+  const estimates = await estimateCarbonForInputs({ estimateCarbon: async request => {
+    calls.push(request); return response(request.input_tokens);
+  } }, config, [700, 100, 300]);
+  assert.deepEqual(estimates.map(item => item.co2Grams), [.7, .1, .3]);
+  assert.deepEqual(calls.map(({ input_tokens, ...scenario }) => scenario), [calls[0], calls[0], calls[0]].map(({ input_tokens, ...scenario }) => scenario));
 });

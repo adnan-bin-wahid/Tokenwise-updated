@@ -100,6 +100,28 @@ export interface WorkspacePruneRequest {
   local_llm_url?: string;
   local_llm_model?: string;
   token_budget?: number;
+  context_hint?: string;
+  max_candidates?: number;
+}
+
+export interface ContextStrategy {
+  id: "all_python" | "selected" | "tokenwise";
+  title: string;
+  input_tokens: number;
+  source_tokens: number;
+  files: string[];
+  context: string;
+  carbon?: CarbonEstimateViewModel;
+}
+
+export interface ContextComparison {
+  query: string;
+  repository_fingerprint: string;
+  selection_scope: string;
+  methods: ContextStrategy[];
+  notes: string[];
+  carbonStatus?: "ready" | "disabled" | "unavailable";
+  carbonError?: string;
 }
 
 export interface WorkspaceFilePruneResult {
@@ -122,6 +144,8 @@ export interface WorkspacePruneResponse extends CarbonImpactViewModel {
   retained_source_tokens?: number;
   context_overhead_tokens?: number;
   context_mode?: "focused" | "repository_overview";
+  context_hint_used?: boolean;
+  comparison?: ContextComparison | null;
   indexed_files?: number;
   warnings?: string[];
   structured_goal: {

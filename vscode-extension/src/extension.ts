@@ -10,6 +10,7 @@ import { createEnableAutomaticContextCommand } from "./commands/enableAutomaticC
 import { BackendManager } from "./services/backendManager";
 import { UninstallTracker } from "./services/uninstallTracker";
 import { RepositoryIndexSync } from "./services/repositoryIndexSync";
+import { createCompareContextStrategiesCommand } from "./commands/compareContextStrategies";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const tracker = new UninstallTracker(context);
@@ -58,6 +59,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("tokenwise.startBackend", () => backend.start()),
     vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
+    vscode.commands.registerCommand("tokenwise.compareContextStrategies",
+      createCompareContextStrategiesCommand(panel, context.extensionUri, () => backend.backgroundUrl(true))),
     vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(async () => {
       indexSync.pause(); await backend.cancelSetup();
     })),

@@ -3,6 +3,11 @@ trigger: always_on
 description: Retrieve bounded TokenWise context for each Python repository request.
 ---
 
+For a follow-up such as "Which tests cover that?", make the retrieval query
+self-contained using earlier USER intent in this chat only. Never infer a topic
+from another chat, `.tokenwise/latest.json`, or an old bundle. If there is no
+referent, ask for clarification. Retrieve fresh source for each new user turn.
+
 For each new user request involving this Python repository, retrieve TokenWise
 context before inspecting code or answering. No manual file selection is needed.
 If `[TokenWise automatic context]` was already injected after the latest user

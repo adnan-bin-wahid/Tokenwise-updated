@@ -69,6 +69,38 @@ class AntigravityTests(unittest.TestCase):
         self.write_prompt("Explain payment retries \u2713", 10)
         self.assertTrue(latest_prompt(self.payload)[0].endswith("\u2713"))
 
+    def test_explicitly_other_chat_records_are_ignored(self):
+        with self.transcript.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps({"role": "user", "conversationId": "other-chat", "content": "Other chat topic"}) + "\n")
+        self.assertEqual(latest_prompt(self.payload)[0], "Explain payment retries")
+
+    def test_followup_hint_is_same_chat_only_and_explicit_topic_resets_it(self):
+        result = {"unified_prompt": MARKER + "\nUseful code", "files": [{"file_path": "payment.py"}], "pruned_tokens": 100}
+        with patch("swe_pruner.antigravity_hook.ensure_backend", return_value="http://127.0.0.1:8000"), \
+                patch("swe_pruner.antigravity_hook.request_json", return_value=result) as request:
+            run_hook(self.payload, self.workspace, self.workspace)
+            self.write_prompt("Which tests cover that behavior?", 2)
+            run_hook(self.payload, self.workspace, self.workspace)
+            self.assertEqual(request.call_args.args[1]["context_hint"], "Explain payment retries")
+            run_hook({**self.payload, "conversationId": "fresh-chat"}, self.workspace, self.workspace)
+            self.assertNotIn("context_hint", request.call_args.args[1])
+            self.write_prompt("Explain session expiry", 3)
+            run_hook(self.payload, self.workspace, self.workspace)
+            self.assertNotIn("context_hint", request.call_args.args[1])
+            self.write_prompt("What about its tests?", 4)
+            run_hook(self.payload, self.workspace, self.workspace)
+            self.assertEqual(request.call_args.args[1]["context_hint"], "Explain session expiry")
+
+    def test_missing_conversation_id_disables_hint_reuse(self):
+        payload = {key: value for key, value in self.payload.items() if key != "conversationId"}
+        result = {"unified_prompt": MARKER, "files": [{"file_path": "payment.py"}], "pruned_tokens": 100}
+        with patch("swe_pruner.antigravity_hook.ensure_backend", return_value="http://127.0.0.1:8000"), \
+                patch("swe_pruner.antigravity_hook.request_json", return_value=result) as request:
+            run_hook(payload, self.workspace, self.workspace)
+            self.write_prompt("Which tests cover that behavior?", 2)
+            run_hook(payload, self.workspace, self.workspace)
+            self.assertNotIn("context_hint", request.call_args.args[1])
+
     def test_one_injection_per_user_turn_but_repeated_prompt_is_new_turn(self):
         result = {"unified_prompt": MARKER + "\nUseful code", "files": [{"file_path": "payment.py"}], "pruned_tokens": 100}
         with patch("swe_pruner.antigravity_hook.ensure_backend", return_value="http://127.0.0.1:8000"), \

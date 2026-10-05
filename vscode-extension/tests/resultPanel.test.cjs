@@ -3,13 +3,26 @@ const { test } = require("node:test");
 const Module = require("node:module");
 const load = Module._load;
 const panels = [];
+const copied = [];
+const written = [];
+const warnings = [];
+let saveDestination;
+let writeFails = false;
 Module._load = function (name, ...args) {
   if (name === "vscode") {
     return {
       ViewColumn: { Beside: 2 },
+      env: { clipboard: { writeText: async value => copied.push(value) } },
+      workspace: { fs: { writeFile: async (uri, data) => {
+        if (writeFails) { throw new Error("permission denied"); }
+        written.push({ uri, result: JSON.parse(data.toString()) });
+      } } },
       window: {
+        showSaveDialog: async () => saveDestination,
+        showInformationMessage() {},
+        showWarningMessage: async value => warnings.push(value),
         createWebviewPanel: () => {
-          const panel = { webview: { html: "", onDidReceiveMessage() {} }, onDidDispose() {}, reveal() {} };
+          const panel = { webview: { html: "", onDidReceiveMessage(callback) { panel.receive = callback; } }, onDidDispose() {}, reveal() {} };
           panels.push(panel); return panel;
         },
       },
@@ -99,4 +112,40 @@ test("background carbon refresh does not overwrite another automatic or manual r
   assert.equal(panels.at(-1).webview.html, secondHtml);
   panel.showWorkspaceResult(reportedResult, "extension");
   assert.equal(panel.updateWorkspaceResult(first), false);
+});
+
+const comparison = { query: "Explain <lockout>", selection_scope: "entire selected file", notes: ["Not measured <emissions>"],
+  methods: ["all_python", "selected", "tokenwise"].map((id, index) => ({ id, title: id,
+    input_tokens: [100, 20, 120][index], source_tokens: [80, 10, 60][index], files: ["auth.py"], context: `${id} exact packet` })) };
+
+test("comparison rendering escapes data and labels expansion honestly", () => {
+  const html = new ResultPanel().getWorkspaceHtml({ ...reportedResult, comparison });
+  assert.match(html, /Explain &lt;lockout&gt;/);
+  assert.match(html, /Not measured &lt;emissions&gt;/);
+  assert.match(html, /20\.00% increase/);
+  assert.match(html, /Copy Selected Code/);
+  assert.match(html, /Export Comparison/);
+});
+
+test("copy controls use exact matching packets; export cancellation and failure are handled", async () => {
+  const panel = new ResultPanel(); panel.showWorkspaceResult({ ...reportedResult, comparison }, "extension");
+  const webview = panels.at(-1);
+  for (const method of comparison.methods) {
+    await webview.receive({ command: "copyComparison", method: method.id });
+    assert.equal(copied.at(-1), method.context);
+  }
+  const count = copied.length;
+  await webview.receive({ command: "copyComparison", method: "unknown" });
+  assert.equal(copied.length, count);
+  const writes = written.length;
+  saveDestination = undefined;
+  await webview.receive({ command: "exportComparison" });
+  assert.equal(written.length, writes);
+  saveDestination = "chosen.json";
+  await webview.receive({ command: "exportComparison" });
+  assert.deepEqual(written.at(-1).result.comparison, comparison);
+  writeFails = true;
+  await webview.receive({ command: "exportComparison" });
+  assert.match(warnings.at(-1), /export failed.*permission denied/);
+  writeFails = false;
 });

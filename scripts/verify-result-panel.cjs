@@ -23,7 +23,8 @@ async function main() {
   const browser = await playwright.chromium.launch({ headless: true });
   const checks = [];
   try {
-    for (const [name, result] of Object.entries({ overview: results.overview, scaffold: results.scaffold })) {
+    const views = results.comparison ? { comparison: results } : { overview: results.overview, scaffold: results.scaffold };
+    for (const [name, result] of Object.entries(views)) {
       for (const [layout, width, height] of [["desktop", 1280, 1000], ["narrow", 390, 844]]) {
         const page = await browser.newPage({ viewport: { width, height } });
         const errors = [];
@@ -33,10 +34,10 @@ async function main() {
           window.acquireVsCodeApi = () => ({ postMessage: message => window.messages.push(message) });
         });
         await page.setContent(panel.getWorkspaceHtml({
-          ...result, automatic_context: {
+          ...result, ...(name === "comparison" ? {} : { automatic_context: {
             event_id: name, query: "GIVE ME THE FULL OVERVIEW OF MY PROJECT",
             timestamp: "verification", elapsed_ms: 5720,
-          },
+          } }),
         }));
         await page.addStyleTag({ content: `:root {
           --vscode-editor-background: #1e1e1e; --vscode-editor-foreground: #d4d4d4;
@@ -45,9 +46,14 @@ async function main() {
           --vscode-button-hoverBackground: #1687cf; --vscode-testing-iconPassedColor: #73c991;
           --vscode-textCodeBlock-background: #181818; --vscode-font-family: Arial, sans-serif;
         }` });
-        await page.getByText("CO2 before", { exact: true }).waitFor();
-        await page.getByText("CO2 after", { exact: true }).waitFor();
-        assert.equal(await page.getByText("Identifiers", { exact: true }).locator("+ strong").innerText(), "none");
+        if (name === "comparison") {
+          await page.getByRole("columnheader", { name: "Estimated CO2", exact: true }).waitFor();
+          assert.equal(await page.locator("section tbody tr").count(), 3);
+        } else {
+          await page.getByText("CO2 before", { exact: true }).waitFor();
+          await page.getByText("CO2 after", { exact: true }).waitFor();
+          assert.equal(await page.getByText("Identifiers", { exact: true }).locator("+ strong").innerText(), "none");
+        }
         if (name === "scaffold") {
           assert.equal(await page.getByText("Source reduction", { exact: true }).locator("+ div").innerText(), "0.00%");
           await page.getByText(/Only Python package initializers/).waitFor();
@@ -65,6 +71,14 @@ async function main() {
         assert.deepEqual(bounds, { horizontalOverflow: false, overflowingStats: 0, overlappingStats: false });
         await page.getByRole("button", { name: "Copy Unified Context" }).click();
         assert.deepEqual(await page.evaluate(() => window.messages), [{ command: "copyWorkspace" }]);
+        if (name === "comparison") {
+          for (const [label, method] of [["Copy All Python Code", "all_python"], ["Copy Selected Code", "selected"], ["Copy TokenWise Context", "tokenwise"]]) {
+            await page.getByRole("button", { name: label, exact: true }).click();
+            assert.deepEqual(await page.evaluate(() => window.messages.at(-1)), { command: "copyComparison", method });
+          }
+          await page.getByRole("button", { name: "Export Comparison", exact: true }).click();
+          assert.deepEqual(await page.evaluate(() => window.messages.at(-1)), { command: "exportComparison" });
+        }
         assert.deepEqual(errors, []);
         await page.screenshot({ path: path.join(directory, `${name}-${layout}.png`), fullPage: true });
         checks.push({ name, layout, width, height, ...bounds, copyButton: true, pageErrors: 0 });

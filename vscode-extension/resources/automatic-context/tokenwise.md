@@ -15,6 +15,13 @@ Otherwise, use your command tool to run this in PowerShell from the workspace
 folder containing this rule. Replace QUERY with the latest repository task,
 preserving its intent, identifiers, and error details:
 
+For a follow-up such as "Which tests cover that?", make QUERY self-contained
+using only earlier user intent in THIS chat (for example, "Which tests cover
+account lockout expiry?"). Never recover a topic from another chat, a saved
+`.tokenwise/latest.json`, or an old context bundle. If this chat provides no
+referent, ask the user which component they mean before retrieving. A new topic
+must not inherit the previous task. Retrieve fresh source on every new user turn.
+
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-context.ps1 -QueryBase64 ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('QUERY')))
 ```

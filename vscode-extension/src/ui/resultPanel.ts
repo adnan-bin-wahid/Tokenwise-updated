@@ -25,7 +25,23 @@ export class ResultPanel {
       this.latestWorkspaceResult = undefined;
     });
 
-    this.panel.webview.onDidReceiveMessage(async (message: { command?: string }) => {
+    this.panel.webview.onDidReceiveMessage(async (message: { command?: string; method?: string }) => {
+      if (message.command === "exportComparison" && this.latestWorkspaceResult?.comparison) {
+        const result = this.latestWorkspaceResult;
+        try {
+          const destination = await vscode.window.showSaveDialog({ saveLabel: "Export Comparison", filters: { JSON: ["json"] } });
+          if (destination) { await vscode.workspace.fs.writeFile(destination, Buffer.from(JSON.stringify(result, null, 2), "utf8")); }
+        } catch (error) { await vscode.window.showWarningMessage(`TokenWise: comparison export failed: ${String(error)}`); }
+        return;
+      }
+      if (message.command === "copyComparison") {
+        const packet = this.latestWorkspaceResult?.comparison?.methods.find(item => item.id === message.method);
+        if (packet) {
+          await vscode.env.clipboard.writeText(packet.context);
+          void vscode.window.showInformationMessage("TokenWise: comparison context copied.");
+        }
+        return;
+      }
       if (message.command === "copyPruned" && this.latestResult) {
         await vscode.env.clipboard.writeText(this.latestResult.prunedCode);
         void vscode.window.showInformationMessage("TokenWise: pruned context copied.");
@@ -181,6 +197,7 @@ export class ResultPanel {
       ${result.automatic_context ? `<div class="subtle"><strong>Antigravity automatic context</strong><br>Task: ${escapeHtml(result.automatic_context.query)}<br>Prepared in ${(result.automatic_context.elapsed_ms / 1000).toFixed(2)}s</div>` : ""}
       ${overview ? `<div class="subtle"><strong>Repository overview</strong> | ${result.indexed_files ?? 0} indexed Python files</div>` : ""}
       ${(result.warnings ?? []).map(warning => `<div class="notice">${escapeHtml(warning)}</div>`).join("")}
+      ${this.renderComparison(result)}
       <div class="card">
         <div class="card-title">Synthesized goal</div>
         <div class="meta-grid">
@@ -188,6 +205,7 @@ export class ResultPanel {
           <span>Objective</span><strong>${escapeHtml(objective)}</strong>
           <span>Identifiers</span><strong>${escapeHtml(identifiers.join(", ") || "none")}</strong>
           <span>Diagnostics</span><strong>${escapeHtml(observedErrors.join(" | ") || "none")}</strong>
+          <span>Conversation topic</span><strong>${result.context_hint_used ? "Current-chat user topic included" : "Latest task only"}</strong>
         </div>
       </div>
       <div class="stats">
@@ -212,6 +230,34 @@ export class ResultPanel {
       <div class="card"><div class="card-title">Unified context</div><pre>${escapeHtml(result.unified_prompt)}</pre></div>
       `,
     );
+  }
+
+  private renderComparison(result: WorkspacePruneResponse): string {
+    const comparison = result.comparison;
+    if (!comparison) { return ""; }
+    const whole = comparison.methods.find(item => item.id === "all_python")?.input_tokens ?? 0;
+    return `<section>
+      <h2>Context strategy comparison</h2>
+      <div class="subtle">Task: ${escapeHtml(comparison.query)}<br>Manual baseline: ${escapeHtml(comparison.selection_scope)}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Strategy</th><th>Files</th><th>Source tokens</th><th>Input tokens</th><th>Change vs all code</th><th>Estimated energy</th><th>Estimated CO2</th></tr></thead>
+        <tbody>${comparison.methods.map(item => {
+          const delta = whole > 0 ? (whole - item.input_tokens) / whole * 100 : 0;
+          return `<tr><td>${escapeHtml(item.title)}</td><td class="num">${item.files.length}</td>
+            <td class="num">${item.source_tokens}</td><td class="num">${item.input_tokens}</td>
+            <td>${Math.abs(delta).toFixed(2)}% ${delta < 0 ? "increase" : "reduction"}</td>
+            <td>${item.carbon ? `${item.carbon.totalJoules.toFixed(4)} J` : "unavailable"}</td>
+            <td>${item.carbon ? formatCarbon(item.carbon.co2Grams) : escapeHtml(comparison.carbonStatus ?? "unavailable")}</td></tr>`;
+        }).join("")}</tbody></table></div>
+      ${comparison.carbonError ? `<div class="notice">Carbon estimate unavailable: ${escapeHtml(comparison.carbonError)}</div>` : ""}
+      ${comparison.notes.map(note => `<div class="notice">${escapeHtml(note)}</div>`).join("")}
+      <div class="actions">
+        <button onclick="send('copyComparison', 'all_python')">Copy All Python Code</button>
+        <button onclick="send('copyComparison', 'selected')">Copy Selected Code</button>
+        <button onclick="send('copyComparison', 'tokenwise')">Copy TokenWise Context</button>
+        <button onclick="send('exportComparison')">Export Comparison</button>
+      </div>
+    </section>`;
   }
 
   private shell(title: string, body: string): string {
@@ -252,7 +298,7 @@ export class ResultPanel {
     pre { white-space: pre-wrap; word-break: break-word; background: var(--code); padding: 12px; border-radius: 5px; overflow: auto; max-height: 620px; }
     button { border: 0; border-radius: 3px; padding: 7px 12px; background: var(--button); color: var(--buttonFg); cursor: pointer; }
     button:hover { background: var(--buttonHover); }
-    .actions { margin: 14px 0; }
+    .actions { margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; }
@@ -267,7 +313,7 @@ export class ResultPanel {
   ${body}
   <script>
     const vscode = acquireVsCodeApi();
-    function send(command) { vscode.postMessage({ command }); }
+    function send(command, method) { vscode.postMessage(method ? { command, method } : { command }); }
   </script>
 </body>
 </html>`;

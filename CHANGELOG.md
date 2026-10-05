@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.2 - 2026-10-05
+
+### Added
+
+- Controlled all-Python/manual-selection/automatic-context comparison command,
+  exact packet counts, copy controls, JSON export, and optional matched-scenario
+  carbon estimates. The manual selection does not bias automatic retrieval.
+- Three independent demonstration repositories with 22 executable tests,
+  a teacher guide, a blank scoring worksheet, and real-backend verification.
+- Bounded same-chat user-topic hints for recognized native follow-ups; explicit
+  topic switches and new chats do not inherit unrelated prior topics.
+- Fallback-rule instructions for same-chat references and clarification when
+  their subject is missing; this is not a cross-chat memory feature.
+- Short task-matched source bodies are retained without extra neural passes,
+  and configuration dependencies get reserved candidate slots so graph callers
+  cannot crowd out constants needed to interpret an implementation.
+
+### Safety and Evaluation
+
+- Baseline exports reject oversized repositories, invalid selections, and
+  changed snapshots rather than silently presenting incomplete all-code.
+- Carbon predictions and source markers are not cloud-agent answer grading.
+- Install/update the matching backend and re-enable workspaces after upgrading.
+
 ## 0.6.1 - 2026-10-05
 
 ### Fixed

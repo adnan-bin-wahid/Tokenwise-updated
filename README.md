@@ -9,6 +9,12 @@ install Node.js, compile the extension, press F5, or manually start a server.**
 
 ## Before You Start
 
+For a teacher presentation, start with [the demonstration guide](demonstation.md)
+and the three independent [Python demo repositories](demonstration/README.md).
+The controlled comparison command requires the **local 0.6.2 build and updated
+backend**; the public 0.6.1 download below does not include it. See the guide for
+installation, exact prompts, answer checklists, and conversation-isolation tests.
+
 | Requirement | Details |
 | --- | --- |
 | Editor | Antigravity IDE with workspace rules and a command tool |

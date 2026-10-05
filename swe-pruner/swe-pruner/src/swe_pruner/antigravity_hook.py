@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
+from .conversation_context import conversation_hint, HINT_LIMIT
 
 
 MARKER = "[TokenWise automatic context]"
@@ -86,6 +87,9 @@ def latest_prompt(payload: dict) -> tuple[str, str] | None:
         except ValueError:
             continue  # Antigravity may still be writing the trailing record.
         if not isinstance(record, dict):
+            continue
+        if record.get("conversationId") is not None and payload.get("conversationId") is not None \
+                and record["conversationId"] != payload["conversationId"]:
             continue
         # Explicit Antigravity user records, plus standard role-based transcripts.
         explicit = record.get("type") == "USER_INPUT" and record.get("source") == "USER_EXPLICIT"
@@ -280,12 +284,13 @@ def load_settings(workspace: Path) -> dict:
     return settings
 
 
-def retrieve_context(project_root: Path, workspace: Path, query: str, settings: dict) -> tuple[str, dict]:
+def retrieve_context(project_root: Path, workspace: Path, query: str, settings: dict, context_hint: str = "") -> tuple[str, dict]:
     base_url = ensure_backend(project_root, settings)
     result = request_json(f"{base_url}/prune-workspace", {
         "query": query, "workspace_root": str(workspace),
         "token_budget": settings["token_budget"], "threshold": settings["threshold"],
         "max_candidates": settings["max_candidates"],
+        **({"context_hint": context_hint} if context_hint else {}),
     }, timeout=float(settings["request_timeout_seconds"]))
     if not result.get("files") or not result.get("unified_prompt", "").startswith(MARKER):
         raise RuntimeError("TokenWise returned no usable automatic repository context.")
@@ -328,13 +333,16 @@ def run_hook(payload: dict, project_root: Path, workspace: Path) -> dict:
             if previous.get("prompt_id") == prompt_id:
                 return {}
             write_json(runtime / "latest.json", event)
-            base_url, result = retrieve_context(project_root, workspace, query, settings)
+            scoped = isinstance(payload.get("conversationId"), str) and bool(payload["conversationId"].strip())
+            hint = conversation_hint(query, previous, scoped)
+            base_url, result = retrieve_context(project_root, workspace, query, settings, hint)
             event.update({
                 "status": "ready", "result": result, "backend_url": base_url,
                 "elapsed_ms": round((time.monotonic() - started) * 1000),
             })
             write_json(runtime / "latest.json", event)
-            write_json(state_path, {"prompt_id": prompt_id, "event_id": event["event_id"]})
+            write_json(state_path, {"prompt_id": prompt_id, "event_id": event["event_id"],
+                                    "topic_query": (hint or query[:HINT_LIMIT]) if scoped else ""})
             # userMessage keeps repository text at user priority and persists it for later tool steps.
             return {"injectSteps": [{"userMessage": result["unified_prompt"]}]}
     except Exception as exc:

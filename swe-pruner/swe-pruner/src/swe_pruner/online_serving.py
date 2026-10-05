@@ -26,6 +26,8 @@ from .goal_generator_client import LocalGoalGeneratorClient
 from .prune_wrapper import PruneRequest, PruneResponse, SwePrunerForCodePruning
 from .repository.repository_index import RepositoryIndexCache
 from .retrieval.workspace_context import WorkspaceContextBuilder
+from .retrieval.context_comparison import build_comparison, ComparisonTooLarge, validate_selection
+from .conversation_context import is_follow_up
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -79,6 +81,12 @@ class WorkspacePruneRequest(BaseModel):
     local_llm_model: Optional[str] = None
     token_budget: int = Field(default=8192, ge=256, le=32768)
     max_candidates: int = Field(default=8, ge=1, le=32)
+    context_hint: Optional[str] = Field(default=None, max_length=2000)
+
+
+class WorkspaceComparisonRequest(WorkspacePruneRequest):
+    selection_file: str = Field(min_length=1)
+    selection_text: Optional[str] = Field(default=None, max_length=65536)
 
 
 class WorkspacePruneResponse(BaseModel):
@@ -98,6 +106,8 @@ class WorkspacePruneResponse(BaseModel):
     retained_source_tokens: int = 0
     context_overhead_tokens: int = 0
     warnings: List[str] = Field(default_factory=list)
+    context_hint_used: bool = False
+    comparison: Optional[dict] = None
 
 
 def resolve_model_path() -> Path:
@@ -244,6 +254,7 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
     if active_rel_path and active_rel_path not in repo_index.index:
         raise HTTPException(status_code=400, detail="Active file is not an indexed Python file")
 
+    context_hint = (request.context_hint or "").strip() if is_follow_up(request.query) else ""
     goal = await goal_compiler.compile(
         query=request.query.strip(),
         active_file=active_rel_path or "(automatic repository discovery)",
@@ -252,17 +263,50 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
         diagnostics=request.diagnostics,
         local_llm_url=request.local_llm_url,
         local_llm_model=request.local_llm_model,
+        context_hint=context_hint,
     )
 
     def build() -> dict:
         with inference_lock:
             return workspace_builder.build(
                 repo_index, goal, model, active_rel_path, request.query.strip(),
-                request.threshold, request.token_budget, request.max_candidates,
+                request.threshold, request.token_budget, request.max_candidates, context_hint,
             )
 
     result = await asyncio.to_thread(build)
     return WorkspacePruneResponse(**result, index_cache_hit=cache_hit)
+
+
+@app.post("/compare-workspace", response_model=WorkspacePruneResponse)
+async def compare_workspace(request: WorkspaceComparisonRequest) -> WorkspacePruneResponse:
+    root = Path(request.workspace_root).expanduser().resolve()
+    if not root.is_dir():
+        raise HTTPException(status_code=400, detail="Workspace root does not exist")
+    index, _ = await asyncio.to_thread(repository_cache.get, str(root))
+    try:
+        validate_selection(index, request.selection_file, request.selection_text)
+    except ComparisonTooLarge as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    automatic = await prune_workspace(request.model_copy(update={
+        "active_file": None, "current_symbol": None, "selected_code": None, "diagnostics": [], "context_hint": None,
+    }))
+    index, _ = await asyncio.to_thread(repository_cache.get, str(root))
+
+    def compare():
+        with inference_lock:
+            try:
+                result = automatic.model_dump()
+                result["comparison_query"] = request.query.strip()
+                return build_comparison(index, model, result, request.selection_file, request.selection_text)
+            except ComparisonTooLarge as exc:
+                raise HTTPException(status_code=413, detail=str(exc)) from exc
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    automatic.comparison = await asyncio.to_thread(compare)
+    return automatic
 
 
 @app.post("/estimate-carbon", response_model=CarbonEstimateResponse)

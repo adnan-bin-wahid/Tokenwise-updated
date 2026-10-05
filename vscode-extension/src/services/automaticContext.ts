@@ -52,6 +52,7 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
     if (result.context_mode !== undefined && !["focused", "repository_overview"].includes(result.context_mode)) {
       return undefined;
     }
+    if (result.context_hint_used !== undefined && typeof result.context_hint_used !== "boolean") { return undefined; }
     for (const name of ["raw_context_tokens", "retained_source_tokens", "context_overhead_tokens", "indexed_files"] as const) {
       const count = result[name];
       if (count !== undefined && (!Number.isInteger(count) || count < 0)) { return undefined; }

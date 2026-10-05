@@ -19,6 +19,8 @@ swe-pruner/swe-pruner/model/model.safetensors
 swe-pruner/swe-pruner/model/.cache/
 vscode-extension/resources/backend-bundle/
 vscode-extension/resources/user-guide.md
+vscode-extension/resources/demonstation.md
+vscode-extension/resources/demonstration/
 vscode-extension/resources/docs/
 vscode-extension/resources/THIRD-PARTY-NOTICES.md
 releases/
@@ -38,6 +40,7 @@ Thumbs.db
 tmp/
 temp/
 .tokenwise/
+demonstration/results/
 
 # Local environment secrets
 .env

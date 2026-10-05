@@ -43,6 +43,15 @@ async function main() {
   }
   await fs.writeFile(path.join(target, "backend-manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   await fs.copyFile(path.join(root, "README.md"), path.join(resourceRoot, "user-guide.md"));
+  await fs.copyFile(path.join(root, "demonstation.md"), path.join(resourceRoot, "demonstation.md"));
+  await fs.cp(path.join(root, "demonstration"), path.join(resourceRoot, "demonstration"), {
+    recursive: true,
+    filter: async source => {
+      if (["results", "__pycache__", ".agents", ".tokenwise"].includes(path.basename(source))) { return false; }
+      const entry = await fs.lstat(source);
+      return entry.isDirectory() || (entry.isFile() && /\.(py|json|md)$/.test(source));
+    },
+  });
   await fs.copyFile(path.join(root, "docs/THIRD-PARTY-NOTICES.md"), path.join(resourceRoot, "THIRD-PARTY-NOTICES.md"));
   await fs.mkdir(path.join(resourceRoot, "docs"), { recursive: true });
   for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md"]) {

@@ -108,4 +108,17 @@ export class TokenWiseApiClient {
 
     return (await response.json()) as WorkspacePruneResponse;
   }
+
+  public async compareWorkspace(request: WorkspacePruneRequest & {
+    selection_file: string; selection_text?: string;
+  }): Promise<WorkspacePruneResponse> {
+    const response = await fetchWithTimeout(`${this.config.apiUrl}/compare-workspace`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request),
+    }, this.config.timeoutMs);
+    if (response.status === 404) {
+      throw new Error("Update the backend through TokenWise: Set Up Backend to use context comparison.");
+    }
+    if (!response.ok) { throw new Error(`Context comparison failed (${response.status}): ${await response.text()}`); }
+    return await response.json() as WorkspacePruneResponse;
+  }
 }
