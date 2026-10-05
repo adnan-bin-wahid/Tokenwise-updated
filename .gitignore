@@ -22,6 +22,7 @@ vscode-extension/resources/user-guide.md
 vscode-extension/resources/docs/
 vscode-extension/resources/THIRD-PARTY-NOTICES.md
 releases/
+.tokenwise-cleanup/
 
 # IDE / OS
 .idea/

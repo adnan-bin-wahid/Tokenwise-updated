@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.5.0 - 2026-10-05
+
+### Added
+
+- Automatic editor uninstall hook and a self-contained cleanup worker that
+  survives extension deletion and the editor's short lifecycle timeout.
+- Tracked workspace/profile inventory, including discovery of older configured
+  repositories in local IDE workspace history.
+- Removal of managed environments/model/pip caches, owned backend/setup
+  processes, generated integration files, context records, and TokenWise settings.
+- **TokenWise: Remove All Local Data** for immediate cleanup and visible warnings.
+- Comment-preserving JSONC settings edits, path/junction guards, PID identity
+  checks, exact ignore restoration, and preservation of unrelated/customized data.
+- Native Windows isolated Antigravity uninstall verification.
+
+### Changed
+
+- New managed installs keep pip downloads in private TokenWise storage, not the
+  shared user pip cache.
+- Setup retains ownership history across platform/rule changes so old generated
+  launchers can be removed later.
+
+### Limits
+
+- Complete editor removal may require a full restart; clicking Uninstall is not
+  a guaranteed immediate cleanup event.
+- Customized/unavailable files, existing backend checkouts, Python itself,
+  editor-owned history, and old shared caches are not indiscriminately deleted.
+- Users upgrading from 0.4.0 should reload 0.5.0 once before uninstalling and open
+  old configured repositories not present in the editor's workspace history.
+
 ## 0.4.0 - 2026-10-04
 
 First public Windows-tested beta for Antigravity users.

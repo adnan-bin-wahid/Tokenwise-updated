@@ -46,6 +46,20 @@ Only explicitly selected backend files are bundled; weights, virtual
 environments, `.tokenwise` data, developer tests, and research PDFs are excluded.
 Generated bundle/release outputs are ignored by Git.
 
+For uninstall changes, build first and run the native Windows smoke check:
+
+```powershell
+node scripts/verify-uninstall.cjs
+```
+
+It uses a separate temporary Antigravity user-data/extension directory and a
+harmless private Python process. It never uninstalls your real TokenWise extension
+or touches real repository activity. The uninstall hook has no VS Code API
+dependency and starts a self-contained worker before the editor deletes its files.
+The verifier launches isolated IDE instances and closes only those processes.
+CLI removal can defer marking an extension obsolete until the next IDE startup;
+the verifier exercises that startup followed by a complete restart as needed.
+
 Public registry publishing and native macOS/Linux verification are separate
 release gates. This repository does not claim that a local package build publishes
 to Open VSX or the Visual Studio Marketplace.

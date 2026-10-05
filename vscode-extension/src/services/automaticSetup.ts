@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { rememberWorkspace } from "./cleanupRegistry";
 
 export interface BackendRegistration {
   schema_version: 1;
@@ -257,7 +258,7 @@ export async function configureAutomaticContext(
   const manifestPath = ".agents/tokenwise/setup.json";
   const manifest = parseObject(await read(manifestPath), manifestPath);
   const owned = manifest.schema_version === 1 && object(manifest.files) ? manifest.files : {};
-  const newOwned: JsonObject = {};
+  const newOwned: JsonObject = { ...owned };
   for (const filename of launchers) {
     const relative = `.agents/tokenwise/${filename}`;
     const content = await fs.readFile(path.join(templatesRoot, filename));
@@ -294,14 +295,20 @@ export async function configureAutomaticContext(
   const ignorePath = ".gitignore";
   const ignore = await read(ignorePath);
   const ignoreText = ignore?.toString("utf8") ?? "";
+  const cleanup = object(manifest.cleanup) ? { ...manifest.cleanup } : {};
   if (!ignoreText.split(/\r?\n/).some((line) => [".tokenwise/", "/.tokenwise/"].includes(line.trim()))) {
     const newline = ignoreText.includes("\r\n") ? "\r\n" : "\n";
-    await plan(ignorePath, Buffer.from(`${ignoreText}${ignoreText && !ignoreText.endsWith("\n") ? newline : ""}# TokenWise local context and backend link${newline}/.tokenwise/${newline}`));
+    const content = Buffer.from(`${ignoreText}${ignoreText && !ignoreText.endsWith("\n") ? newline : ""}# TokenWise local context and backend link${newline}/.tokenwise/${newline}`);
+    cleanup.ignore = { previous: ignore?.toString("base64") ?? null, written_hash: digest(content) };
+    await plan(ignorePath, content);
   }
+  cleanup.hooks_created ??= !(await read(hooksPath));
+  cleanup.hooks_hash = digest(jsonContent(hooks));
   await plan(settingsPath, jsonContent(settings));
   await plan(hooksPath, jsonContent(hooks));
   await plan(".tokenwise/backend-link.json", jsonContent({ schema_version: 1, registration_path: backend.registrationPath }));
-  await plan(manifestPath, jsonContent({ schema_version: 1, rule_path: rulePath, files: newOwned }));
+  await plan(manifestPath, jsonContent({ schema_version: 1, rule_path: rulePath, files: newOwned, cleanup }));
+  await rememberWorkspace(path.dirname(path.dirname(backend.registrationPath)), root);
   const changedFiles = await applyWrites(writes);
   return { workspaceRoot: root, rulePath, changedFiles };
 }

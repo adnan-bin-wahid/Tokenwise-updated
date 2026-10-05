@@ -24,6 +24,10 @@ distributions and retain their respective licenses. Their distribution license
 files remain in the managed virtual environment. gpt-tokenizer is distributed
 under MIT and its license remains in the extension's node_modules.
 
+jsonc-parser 3.3.1, copyright Microsoft, is MIT licensed. TokenWise uses it to
+preserve unrelated JSONC settings and comments during cleanup. Its upstream
+license remains at node_modules/jsonc-parser/LICENSE.md in the extension.
+
 ## Research Material
 
 The included papers are reference material subject to their authors' and

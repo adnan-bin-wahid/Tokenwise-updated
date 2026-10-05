@@ -156,12 +156,14 @@ def install(bundle: Path, storage: Path, version: str, local_model: Path | None 
             progress("environment", "Creating a private Python environment")
             execute([sys.executable, "-m", "venv", str(installation / ".venv")])
         progress("dependencies", "Installing CPU dependencies; first setup may take several minutes")
-        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", "--upgrade", "pip", "setuptools", "wheel"])
+        package_environment = os.environ.copy()
+        package_environment["PIP_CACHE_DIR"] = str(safe_path(storage, "backend/pip-cache"))
+        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", "--upgrade", "pip", "setuptools", "wheel"], env=package_environment)
         torch_args = [str(python), "-m", "pip", "install", "--disable-pip-version-check", f"torch=={TORCH_VERSION}"]
         if sys.platform != "darwin":
             torch_args += ["--index-url", "https://download.pytorch.org/whl/cpu"]
-        execute(torch_args)
-        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", *CORE_PINS, str(installation / BACKEND)])
+        execute(torch_args, env=package_environment)
+        execute([str(python), "-m", "pip", "install", "--disable-pip-version-check", *CORE_PINS, str(installation / BACKEND)], env=package_environment)
         model = download_model(manifest["model"], safe_path(storage, "backend/downloads"), local_model)
         target = safe_path(installation, f"{BACKEND.as_posix()}/model/model.safetensors")
         if target.exists() and (target.stat().st_size != manifest["model"]["size"] or checksum(target) != manifest["model"]["sha256"]):

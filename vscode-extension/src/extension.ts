@@ -8,11 +8,15 @@ import { createBuildRepositoryContextCommand } from "./commands/buildRepositoryC
 import { AutomaticContextMonitor } from "./services/automaticContext";
 import { createEnableAutomaticContextCommand } from "./commands/enableAutomaticContext";
 import { BackendManager } from "./services/backendManager";
+import { UninstallTracker } from "./services/uninstallTracker";
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  const tracker = new UninstallTracker(context);
+  try { await tracker.prepare(); }
+  catch (error) { await vscode.window.showErrorMessage(`TokenWise cannot register uninstall cleanup: ${String(error)}`); return; }
   const service = new PruneService();
   const panel = new ResultPanel();
-  const backend = new BackendManager(context);
+  const backend = new BackendManager(context, () => tracker.prepare());
 
   const statusItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -48,6 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("tokenwise.startBackend", () => backend.start()),
     vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
+    vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(() => backend.cancelSetup())),
     vscode.commands.registerCommand(
       "tokenwise.pruneSelected",
       createPruneSelectedCommand(

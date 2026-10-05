@@ -32,8 +32,8 @@ billing remain separate. A GPU, Ollama, and an MCP server are not required.
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.4.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.4.0/tokenwise-vscode-0.4.0.vsix)
-from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.4.0).
+Download [**TokenWise 0.5.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.5.0/tokenwise-vscode-0.5.0.vsix)
+from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.5.0).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
 provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
@@ -124,6 +124,7 @@ on the agent following the rule and being permitted to run the command.
 | **Diagnose Setup** | Check the registered installation, actual backend health, and workspace links |
 | **Show Automatic Context** | Reopen the latest supplied context |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
+| **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
 
 All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
 **Prune Current File**, and **Build Repository Context** commands remain available
@@ -160,7 +161,7 @@ the status bar and logs without automatically opening a panel.
 | Backend is offline or the model is not ready | Run **TokenWise: Diagnose Setup**, then **Start Backend**. Inspect `backend.log` at the reported runtime path if startup fails. |
 | No context appears in chat | Start a new chat, confirm the workspace rule is loaded, and check command approval. An unchanged `latest.json` means no new retrieval ran. |
 | An old result is displayed | Check the timestamp/query and current tool output. A previous result is not evidence about your new prompt. |
-| Workspace is rejected | Use a trusted local folder. Version 0.4.0 accepts Antigravity's local `vscode-userdata` storage; remote/virtual repositories remain unsupported. |
+| Workspace is rejected | Use a trusted local folder. Version 0.5.0 accepts Antigravity's local `vscode-userdata` storage; remote/virtual repositories remain unsupported. |
 | You cloned/moved a repository or changed IDE profile | Run **Enable Automatic Context** again to create a valid local backend link. |
 | Existing rules or JSON conflict | Read the reported filename. Fix invalid JSON or retain customized files under another name; setup will not discard them. |
 | Retrieval is slow | Warm the backend with **Start Backend**, keep its process running, and try a smaller budget/candidate limit. Repeated unchanged queries benefit from caching. |
@@ -168,6 +169,46 @@ the status bar and logs without automatically opening a panel.
 Corporate firewalls/proxies must permit PyPI, the PyTorch wheel host, Hugging Face,
 and Hugging Face's download CDN. TokenWise does not bypass your network policies.
 On Linux, missing system libraries such as OpenMP must be supplied by your OS.
+
+## Uninstall and Remove Local Data
+
+**Version 0.5.0 adds automatic uninstall cleanup.** Finish active agent/setup
+commands, click **Uninstall** in the Extensions view, then **fully restart the
+IDE** when required. The editor invokes TokenWise's Node uninstall hook when
+removal completes; a background worker finishes large environment deletions.
+Uninstall cleanup is not guaranteed to run at the instant you click the button.
+
+For an ordinary managed installation, cleanup removes:
+
+- Managed Python environments, model downloads, partial downloads, private pip
+  cache, backend registration/logs, and verified owned backend/setup processes.
+- Unchanged generated repository rules/launchers, TokenWise hook handlers,
+  `.agents/tokenwise.json`, backend links, context records, and conversation state.
+- TokenWise's added `.gitignore` block and editor/workspace TokenWise preferences,
+  retaining unrelated settings, comments, hook handlers, and application files.
+- Its own tracking registry and temporary worker when cleanup succeeds.
+
+**For cleanup immediately**, run **TokenWise: Remove All Local Data**, confirm,
+and wait for completion before uninstalling. This also shows any preserved-file
+warnings in **Output > TokenWise Cleanup**.
+
+If upgrading from 0.4.0, install 0.5.0 and **reload once before uninstalling** so
+it can register your storage. It discovers old repositories recorded in this
+IDE's workspace history; open older configured repositories once if they are not
+in that history. Keep their drives/folders available during removal.
+
+Cleanup deliberately preserves customized rules/launchers, unrecognized files,
+malformed configuration, pre-existing backend checkouts, Python itself, and shared
+caches used by other software. A failed/partial cleanup retains a small registry
+and report for diagnosis rather than silently deleting user data. Uninstall-hook
+logs identify the report under the OS temporary directory; use the immediate
+cleanup command before uninstalling to see issues directly.
+
+No extension can promise zero traces in editor-managed databases/history/logs,
+OS backups, source-control history, downloaded VSIX files, or shared pip caches
+created by older versions. These are not wiped by TokenWise. macOS/Linux cleanup
+is included but still needs native validation. The editor lifecycle timing is
+documented in [the uninstall-hook reference](https://code.visualstudio.com/api/references/extension-manifest#extension-uninstall-hook).
 
 ## Privacy, Storage, and Limits
 
@@ -207,7 +248,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.4.0/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.5.0/` with the VSIX, this guide,
 licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

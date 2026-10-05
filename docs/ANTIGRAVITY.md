@@ -22,7 +22,7 @@ development/insider mode. The fallback does not require that UI or an MCP server
 
 ## Enable Any Python Repository
 
-1. Install `vscode-extension/tokenwise-vscode-0.4.0.vsix` in Antigravity IDE and
+1. Install `vscode-extension/tokenwise-vscode-0.5.0.vsix` in Antigravity IDE and
    reload its window. For development, compile the extension and press F5 instead.
 2. Open your Python repository. It can be anywhere on your machine; it does not
    need to be inside the TokenWise checkout. Trust the workspace before setup.

@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -31,6 +31,7 @@
       { "command": "tokenwise.startBackend", "title": "TokenWise: Start Backend" },
       { "command": "tokenwise.showDiagnostics", "title": "TokenWise: Diagnose Setup" },
       { "command": "tokenwise.openSetupGuide", "title": "TokenWise: Open Setup Guide" },
+      { "command": "tokenwise.removeAllLocalData", "title": "TokenWise: Remove All Local Data" },
       {
         "command": "tokenwise.enableAutomaticContext",
         "title": "TokenWise: Enable Automatic Context"
@@ -193,6 +194,7 @@
     }
   },
   "scripts": {
+    "vscode:uninstall": "node ./dist/uninstall.js",
     "prepare-backend": "node ../scripts/prepare-extension.cjs",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
@@ -207,6 +209,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "gpt-tokenizer": "^3.4.0"
+    "gpt-tokenizer": "^3.4.0",
+    "jsonc-parser": "3.3.1"
   }
 }

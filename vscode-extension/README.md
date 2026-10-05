@@ -4,8 +4,8 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
-Download the [TokenWise 0.4.0 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.4.0/tokenwise-vscode-0.4.0.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.4.0).
+Download the [TokenWise 0.5.0 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.5.0/tokenwise-vscode-0.5.0.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.5.0).
 Do not download the source-code ZIP for normal installation.
 
 1. Install the TokenWise VSIX through **Extensions > ... > Install from VSIX**.
@@ -42,6 +42,19 @@ through tool output. It is not guaranteed native prompt interception. Retrieved
 code enters your selected Antigravity model's normal request and privacy policy.
 
 Full instructions: [project README](https://github.com/adnan-bin-wahid/Tokenwise-updated#readme).
+
+## Uninstall
+
+Click **Uninstall** and fully restart the IDE when required. Version 0.5.0 runs
+automatic cleanup for tracked workspace integration, managed backend/model/cache
+data, owned processes, and TokenWise preferences. Large deletions continue in a
+self-contained background worker.
+
+Use **TokenWise: Remove All Local Data** for immediate cleanup with visible
+warnings. After upgrading from 0.4.0, reload 0.5.0 once before uninstalling.
+Customized/unrecognized files, unrelated settings, existing backend checkouts,
+Python itself, and editor-managed history are preserved; zero traces cannot be
+guaranteed for unavailable folders or shared caches from older versions.
 
 ## Development
 

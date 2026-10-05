@@ -10,7 +10,7 @@ export class BackendManager implements vscode.Disposable {
   private installing = false;
   private activeSetup: AbortController | undefined;
 
-  public constructor(private readonly context: vscode.ExtensionContext) {}
+  public constructor(private readonly context: vscode.ExtensionContext, private readonly prepareCleanup?: () => Promise<void>) {}
 
   public async installation(): Promise<string | undefined> {
     const configured = vscode.workspace.getConfiguration("tokenWise").get<string>("backendInstallationPath", "").trim();
@@ -30,6 +30,7 @@ export class BackendManager implements vscode.Disposable {
     if (approval !== "Install Backend") { return undefined; }
     this.installing = true;
     try {
+      await this.prepareCleanup?.();
       const storage = localStoragePath(this.context);
       this.output.appendLine(`TokenWise user storage: ${storage}`);
       const preferred = vscode.workspace.getConfiguration("tokenWise").get<string>("pythonPath", "").trim();
@@ -64,6 +65,7 @@ export class BackendManager implements vscode.Disposable {
   }
 
   private async registration(): Promise<RegisteredBackend> {
+    await this.prepareCleanup?.();
     const installation = await this.installation();
     if (!installation) { throw new Error("No complete backend is registered. Run TokenWise: Set Up Backend first."); }
     return registerBackend(installation, localStoragePath(this.context));
@@ -128,5 +130,6 @@ export class BackendManager implements vscode.Disposable {
     if (choice === "Read Setup Guide") { await this.guide(); }
   }
 
-  public dispose(): void { this.activeSetup?.abort(); this.output.dispose(); }
+  public cancelSetup(): void { this.activeSetup?.abort(); }
+  public dispose(): void { this.cancelSetup(); this.output.dispose(); }
 }
