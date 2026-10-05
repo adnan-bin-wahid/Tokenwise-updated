@@ -1,6 +1,9 @@
 import * as vscode from "vscode";
 import { WorkspacePruneResponse } from "../types";
 import { ResultPanel } from "../ui/resultPanel";
+import { TokenWiseApiClient } from "./apiClient";
+import { getTokenWiseConfig } from "./config";
+import { estimateCarbonComparison } from "./carbonComparison";
 
 interface AutomaticActivity {
   event_id: string;
@@ -12,6 +15,7 @@ interface AutomaticActivity {
   elapsed_ms?: number;
   error?: string;
   result?: WorkspacePruneResponse;
+  backend_url?: string;
 }
 
 export function parseAutomaticActivity(value: unknown): AutomaticActivity | undefined {
@@ -25,18 +29,35 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
     || (item.transport !== undefined && typeof item.transport !== "string")
     || (item.verification !== undefined && typeof item.verification !== "boolean")
     || (item.error !== undefined && typeof item.error !== "string")
+    || (item.backend_url !== undefined && typeof item.backend_url !== "string")
     || (item.elapsed_ms !== undefined && !Number.isFinite(item.elapsed_ms))) {
     return undefined;
   }
   if (item.status === "ready") {
     const result = item.result;
     if (!result || typeof result.unified_prompt !== "string" || !result.structured_goal
-      || !Number.isFinite(result.pruned_tokens) || !Number.isFinite(result.original_tokens)
-      || !Array.isArray(result.files) || result.files.some((file) =>
+      || typeof result.structured_goal !== "object" || Array.isArray(result.structured_goal)
+      || ![result.pruned_tokens, result.original_tokens].every(count => Number.isInteger(count) && count >= 0)
+      || !Array.isArray(result.files) || !result.files.length || result.files.some((file) =>
         !file || typeof file.file_path !== "string" || typeof file.relation !== "string"
-        || ![file.tier, file.score, file.original_tokens, file.pruned_tokens].every(Number.isFinite))) {
+        || ![1, 2, 3].includes(file.tier) || !Number.isFinite(file.score) || file.score < 0 || file.score > 1
+        || ![file.original_tokens, file.pruned_tokens].every(count => Number.isInteger(count) && count >= 0))) {
       return undefined;
     }
+    const goal = result.structured_goal;
+    if ((goal.objective !== undefined && typeof goal.objective !== "string")
+      || (goal.task_type !== undefined && typeof goal.task_type !== "string")
+      || [goal.identifiers, goal.observed_errors].some(list => list !== undefined
+        && (!Array.isArray(list) || list.some(item => typeof item !== "string")))) { return undefined; }
+    if (result.context_mode !== undefined && !["focused", "repository_overview"].includes(result.context_mode)) {
+      return undefined;
+    }
+    for (const name of ["raw_context_tokens", "retained_source_tokens", "context_overhead_tokens", "indexed_files"] as const) {
+      const count = result[name];
+      if (count !== undefined && (!Number.isInteger(count) || count < 0)) { return undefined; }
+    }
+    if (result.warnings !== undefined && (!Array.isArray(result.warnings)
+      || result.warnings.some(warning => typeof warning !== "string"))) { return undefined; }
   }
   return item as AutomaticActivity;
 }
@@ -47,6 +68,8 @@ export class AutomaticContextMonitor implements vscode.Disposable {
   private readonly seen = new Map<string, string>();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private latest: AutomaticActivity | undefined;
+  private latestFolder: vscode.WorkspaceFolder | undefined;
+  private disposed = false;
   private readonly foldersListener: vscode.Disposable;
   private readonly command: vscode.Disposable;
 
@@ -58,6 +81,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     this.command = vscode.commands.registerCommand("tokenwise.showAutomaticContext", () => {
       if (this.latest?.status === "ready" && this.latest.result) {
         this.showResult(this.latest, false);
+        if (this.latestFolder) { void this.enrichCarbon(this.latest, this.latestFolder); }
       } else {
         this.output.show(true);
       }
@@ -77,6 +101,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
 
   public configured(folder: vscode.WorkspaceFolder): void {
     this.latest = undefined;
+    this.latestFolder = undefined;
     this.seen.delete(folder.uri.toString());
     this.status.text = "$(filter) TokenWise Auto: awaiting prompt";
     this.status.tooltip = `Automatic context is configured for ${folder.name}. Start a new Antigravity chat.`;
@@ -128,6 +153,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
       }
       this.seen.set(key, revision);
       this.latest = activity;
+      this.latestFolder = folder;
       this.status.command = "tokenwise.showAutomaticContext";
       const prefix = activity.verification ? "Verification" : openPanel ? "Activity" : "Previous activity";
       if (activity.status === "retrieving") {
@@ -150,6 +176,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
           `[${activity.timestamp}] ${prefix}: prepared ${result.files.length} files, ${result.pruned_tokens} tokens via ${transport} in ${activity.elapsed_ms ?? 0}ms`,
         );
         this.output.appendLine(result.files.map((file) => file.file_path).join(", "));
+        if (openPanel && !activity.verification) { void this.enrichCarbon(activity, folder); }
         if (openPanel && !activity.verification
           && vscode.workspace.getConfiguration("tokenWise").get("autoOpenAutomaticContext", true)) {
           this.showResult(activity, true);
@@ -162,12 +189,52 @@ export class AutomaticContextMonitor implements vscode.Disposable {
 
   private showResult(activity: AutomaticActivity, preserveFocus: boolean): void {
     if (activity.result) {
-      this.panel.showWorkspaceResult({
-        ...activity.result,
-        automatic_context: {
-          query: activity.query ?? "", timestamp: activity.timestamp, elapsed_ms: activity.elapsed_ms ?? 0,
-        },
-      }, this.extensionUri, preserveFocus);
+      this.panel.showWorkspaceResult(this.viewResult(activity), this.extensionUri, preserveFocus);
+    }
+  }
+
+  private viewResult(activity: AutomaticActivity): WorkspacePruneResponse {
+    return {
+      ...activity.result!,
+      automatic_context: {
+        query: activity.query ?? "", timestamp: activity.timestamp, elapsed_ms: activity.elapsed_ms ?? 0,
+        event_id: activity.event_id,
+      },
+    };
+  }
+
+  private async enrichCarbon(activity: AutomaticActivity, folder: vscode.WorkspaceFolder): Promise<void> {
+    const result = activity.result;
+    if (!result || activity.verification || this.disposed || this.latest !== activity
+      || ["pending", "ready", "disabled", "unavailable"].includes(result.carbonStatus ?? "")) { return; }
+    const cfg = getTokenWiseConfig(folder.uri);
+    if (!cfg.enableCarbonEstimation) {
+      result.carbonStatus = "disabled";
+    } else {
+      result.carbonStatus = "pending";
+      try {
+        if (!result.raw_context_tokens) {
+          throw new Error("Update the TokenWise backend and run a new prompt to obtain a matched context baseline.");
+        }
+        const url = new URL(activity.backend_url ?? cfg.apiUrl);
+        if (url.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+          || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+          throw new Error("Automatic carbon estimates require the local TokenWise backend.");
+        }
+        const client = new TokenWiseApiClient({ ...cfg, apiUrl: url.origin, timeoutMs: Math.min(cfg.timeoutMs, 10000) });
+        const comparison = await estimateCarbonComparison(client, cfg, result.raw_context_tokens,
+          result.pruned_tokens, "formatted-context");
+        if (this.disposed || this.latest !== activity) { return; }
+        Object.assign(result, comparison);
+      } catch (error) {
+        if (this.disposed || this.latest !== activity) { return; }
+        result.carbonStatus = "unavailable";
+        result.carbonError = error instanceof Error ? error.message : String(error);
+        this.output.appendLine(`Carbon estimate unavailable: ${result.carbonError}`);
+      }
+    }
+    if (!this.disposed && this.latest === activity) {
+      this.panel.updateWorkspaceResult(this.viewResult(activity));
     }
   }
 
@@ -178,6 +245,10 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     }
     this.watchers.delete(key);
     this.seen.delete(key);
+    if (this.latestFolder?.uri.toString() === key) {
+      this.latest = undefined;
+      this.latestFolder = undefined;
+    }
     const timer = this.timers.get(key);
     if (timer) {
       clearTimeout(timer);
@@ -186,6 +257,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
   }
 
   public dispose(): void {
+    this.disposed = true;
     for (const items of this.watchers.values()) {
       for (const item of items) {
         item.dispose();

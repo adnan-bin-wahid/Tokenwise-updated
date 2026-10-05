@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -133,7 +133,7 @@
         "tokenWise.enableCarbonEstimation": {
           "type": "boolean",
           "default": true,
-          "description": "Estimate before/after carbon impact for each prune result."
+          "description": "Show approximate before/after carbon impact in manual and automatic context results. Automatic estimates load separately without delaying context retrieval."
         },
         "tokenWise.targetModelName": {
           "type": "string",

@@ -67,7 +67,16 @@ export interface CarbonSavingsViewModel {
   co2GramsSaved: number;
 }
 
-export interface PruneResultViewModel {
+export interface CarbonImpactViewModel {
+  carbonBefore?: CarbonEstimateViewModel;
+  carbonAfter?: CarbonEstimateViewModel;
+  carbonSavings?: CarbonSavingsViewModel;
+  carbonStatus?: "pending" | "ready" | "disabled" | "unavailable";
+  carbonError?: string;
+  carbonBaseline?: "formatted-context" | "source-only";
+}
+
+export interface PruneResultViewModel extends CarbonImpactViewModel {
   query: string;
   score: number;
   originalCode: string;
@@ -77,9 +86,6 @@ export interface PruneResultViewModel {
   modelInputTokenCount: number;
   reductionPercent: number;
   keptFrags: number[];
-  carbonBefore?: CarbonEstimateViewModel;
-  carbonAfter?: CarbonEstimateViewModel;
-  carbonSavings?: CarbonSavingsViewModel;
 }
 
 export interface WorkspacePruneRequest {
@@ -105,15 +111,19 @@ export interface WorkspaceFilePruneResult {
   score: number;
 }
 
-export interface WorkspacePruneResponse {
+export interface WorkspacePruneResponse extends CarbonImpactViewModel {
   automatic_context?: {
     query: string;
     timestamp: string;
     elapsed_ms: number;
+    event_id?: string;
   };
-  carbonBefore?: CarbonEstimateViewModel;
-  carbonAfter?: CarbonEstimateViewModel;
-  carbonSavings?: CarbonSavingsViewModel;
+  raw_context_tokens?: number;
+  retained_source_tokens?: number;
+  context_overhead_tokens?: number;
+  context_mode?: "focused" | "repository_overview";
+  indexed_files?: number;
+  warnings?: string[];
   structured_goal: {
     task_type?: string;
     objective?: string;

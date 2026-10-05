@@ -4,9 +4,12 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
-Download the [TokenWise 0.6.0 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.0/tokenwise-vscode-0.6.0.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.0).
+Download the VSIX from the [latest published Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/latest).
 Do not download the source-code ZIP for normal installation.
+
+The project-overview, token-accounting, and automatic-carbon fixes require
+**0.6.1 or later, including its updated backend**. A locally built installer is
+under `releases/TokenWise-0.6.1/`; building it does not publish a GitHub release.
 
 1. Install the TokenWise VSIX through **Extensions > ... > Install from VSIX**.
 2. Install **64-bit Python 3.12** if it is not already available, then restart the IDE.
@@ -35,7 +38,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.0 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.1 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified
@@ -70,6 +73,32 @@ through tool output. It is not guaranteed native prompt interception. Retrieved
 code enters your selected Antigravity model's normal request and privacy policy.
 
 Full instructions: [project README](https://github.com/adnan-bin-wahid/Tokenwise-updated#readme).
+
+## Overview and Carbon Results
+
+Ask `Give me the full overview of my project. Do not modify any files.` to
+retrieve a representative overview across entry points, implementation, models,
+tests, and bounded root README/package information. This mode preserves
+architectural coverage without neural line pruning. The file limit and complete
+token budget still apply; coverage warnings identify omitted Python files.
+
+Source reduction compares source with retained excerpts. Packed tokens include
+the wrapper, headings, and fences; formatting overhead is shown separately.
+Keeping 17 source tokens in a 117-token bundle means **0% source reduction and
+100 tokens of overhead**, not negative reduction. Actual increases are labeled
+as increases. A package containing only version metadata cannot provide evidence
+of application behavior; the panel warns about sparse scaffolds or a wrong root.
+
+New automatic panels also show estimated CO2 before/after and signed energy/CO2
+changes. Estimates load after context retrieval, use the actual local backend,
+and compare the same selected files and formatting with and without pruning.
+Disable **TokenWise > Enable Carbon Estimation** to turn this off. Pending,
+disabled, and failed estimates remain visible; failures do not discard context.
+
+These are approximate configured-model/hardware/intensity scenarios, not measured
+Antigravity emissions or net carbon benefits. The cloud model is not detected
+automatically. Update both the extension and backend, then issue a new prompt;
+an older saved report may not contain the matched baseline needed for comparison.
 
 ## Uninstall
 

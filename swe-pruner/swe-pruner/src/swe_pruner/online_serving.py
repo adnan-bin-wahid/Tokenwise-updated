@@ -92,6 +92,12 @@ class WorkspacePruneResponse(BaseModel):
     index_cache_hit: bool = False
     context_cache_hit: bool = False
     retrieval_cache_hit: bool = False
+    context_mode: str = "focused"
+    indexed_files: int = 0
+    raw_context_tokens: int = 0
+    retained_source_tokens: int = 0
+    context_overhead_tokens: int = 0
+    warnings: List[str] = Field(default_factory=list)
 
 
 def resolve_model_path() -> Path:

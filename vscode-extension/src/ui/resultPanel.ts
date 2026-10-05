@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { PruneResultViewModel, WorkspacePruneResponse } from "../types";
+import { CarbonImpactViewModel, PruneResultViewModel, WorkspacePruneResponse } from "../types";
 
 export class ResultPanel {
   private static readonly viewType = "tokenwise.resultPanel";
@@ -66,6 +66,16 @@ export class ResultPanel {
     panel.reveal(vscode.ViewColumn.Beside, preserveFocus);
   }
 
+  public updateWorkspaceResult(result: WorkspacePruneResponse): boolean {
+    const eventId = result.automatic_context?.event_id;
+    if (!this.panel || !eventId || this.latestWorkspaceResult?.automatic_context?.event_id !== eventId) {
+      return false;
+    }
+    this.latestWorkspaceResult = result;
+    this.panel.webview.html = this.getWorkspaceHtml(result);
+    return true;
+  }
+
   private getHtml(result: PruneResultViewModel): string {
     const carbon = this.renderCarbonSection(result);
     const kept = result.keptFrags.length > 0 ? result.keptFrags.join(", ") : "none";
@@ -78,7 +88,7 @@ export class ResultPanel {
         ${stat("Relevance", result.score.toFixed(4))}
         ${stat("Original", `${result.originTokenCount} tokens`)}
         ${stat("Pruned", `${result.prunedTokenCount} tokens`)}
-        ${stat("Reduction", `${result.reductionPercent.toFixed(2)}%`, true)}
+        ${stat(result.reductionPercent < 0 ? "Source increase" : "Reduction", `${Math.abs(result.reductionPercent).toFixed(2)}%`, result.reductionPercent > 0)}
       </div>
       ${carbon}
       <div class="card">
@@ -98,27 +108,43 @@ export class ResultPanel {
     );
   }
 
-  private renderCarbonSection(result: Pick<PruneResultViewModel, "carbonBefore" | "carbonAfter" | "carbonSavings">): string {
+  private renderCarbonSection(result: CarbonImpactViewModel): string {
     if (!result.carbonBefore || !result.carbonAfter || !result.carbonSavings) {
-      return "";
+      const message = result.carbonStatus === "pending" ? "Estimating carbon impact..."
+        : result.carbonStatus === "disabled" ? "Carbon estimation is disabled."
+        : result.carbonStatus === "unavailable" ? `Carbon estimate unavailable: ${result.carbonError ?? "Backend artifacts are unavailable."}`
+        : "";
+      return message ? `<div class="notice">${escapeHtml(message)}</div>` : "";
     }
+
+    const energy = result.carbonSavings.totalJoulesSaved;
+    const carbon = result.carbonSavings.co2GramsSaved;
 
     return `
       <div class="card">
         <div class="card-title">Carbon impact — trained SEAL-derived estimator</div>
         <div class="stats">
-          ${stat("Prefill saved", `${result.carbonSavings.prefillJoulesSaved.toFixed(4)} J`, true)}
-          ${stat("Decode saved", `${result.carbonSavings.decodeJoulesSaved.toFixed(4)} J`, true)}
-          ${stat("Total saved", `${result.carbonSavings.totalJoulesSaved.toFixed(4)} J`, true)}
-          ${stat("CO₂ avoided", `${result.carbonSavings.co2GramsSaved.toFixed(6)} g`, true)}
+          ${stat("CO2 before", formatCarbon(result.carbonBefore.co2Grams))}
+          ${stat("CO2 after", formatCarbon(result.carbonAfter.co2Grams))}
+          ${stat(energy < 0 ? "Energy increase" : "Energy saved", `${Math.abs(energy).toFixed(4)} J`, energy > 0)}
+          ${stat(carbon < 0 ? "CO2 increase" : "CO2 saved", formatCarbon(Math.abs(carbon)), carbon > 0)}
         </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Estimated energy</th><th>Before</th><th>After</th></tr></thead>
+          <tbody>
+            <tr><td>Prefill</td><td>${result.carbonBefore.prefillJoules.toFixed(4)} J</td><td>${result.carbonAfter.prefillJoules.toFixed(4)} J</td></tr>
+            <tr><td>Decode</td><td>${result.carbonBefore.decodeJoules.toFixed(4)} J</td><td>${result.carbonAfter.decodeJoules.toFixed(4)} J</td></tr>
+            <tr><td>Total</td><td>${result.carbonBefore.totalJoules.toFixed(4)} J</td><td>${result.carbonAfter.totalJoules.toFixed(4)} J</td></tr>
+          </tbody></table></div>
         <div class="meta-grid">
           <span>Model</span><strong>${escapeHtml(result.carbonAfter.modelFamily)}</strong>
           <span>Prefill route</span><strong>${escapeHtml(result.carbonAfter.prefillRoute)}</strong>
           <span>Decode route</span><strong>${escapeHtml(result.carbonAfter.decodeRoute)}</strong>
           <span>Feature source</span><strong>${escapeHtml(result.carbonAfter.featuresSource)}</strong>
           <span>Carbon intensity</span><strong>${result.carbonAfter.carbonIntensityGPerKwh.toFixed(2)} gCO₂/kWh</strong>
+          <span>Baseline</span><strong>${result.carbonBaseline === "formatted-context" ? "Same files and formatting, without pruning" : "Source text only"}</strong>
         </div>
+        <div class="notice">Approximate inference estimates under the configured model and hardware assumptions, not measured emissions.</div>
       </div>`;
   }
 
@@ -127,9 +153,13 @@ export class ResultPanel {
     const taskType = result.structured_goal.task_type ?? "generic_task";
     const identifiers = result.structured_goal.identifiers ?? [];
     const observedErrors = result.structured_goal.observed_errors ?? [];
+    const retained = result.retained_source_tokens ?? result.files.reduce((sum, file) => sum + file.pruned_tokens, 0);
+    const sourceDelta = result.original_tokens - retained;
     const reduction = result.original_tokens > 0
-      ? ((result.original_tokens - result.pruned_tokens) / result.original_tokens) * 100
+      ? Math.abs(sourceDelta / result.original_tokens) * 100
       : 0;
+    const overhead = result.context_overhead_tokens ?? Math.max(0, result.pruned_tokens - retained);
+    const overview = result.context_mode === "repository_overview";
 
     const rows = result.files
       .map(
@@ -149,6 +179,8 @@ export class ResultPanel {
       "TokenWise — Repository Context",
       `
       ${result.automatic_context ? `<div class="subtle"><strong>Antigravity automatic context</strong><br>Task: ${escapeHtml(result.automatic_context.query)}<br>Prepared in ${(result.automatic_context.elapsed_ms / 1000).toFixed(2)}s</div>` : ""}
+      ${overview ? `<div class="subtle"><strong>Repository overview</strong> | ${result.indexed_files ?? 0} indexed Python files</div>` : ""}
+      ${(result.warnings ?? []).map(warning => `<div class="notice">${escapeHtml(warning)}</div>`).join("")}
       <div class="card">
         <div class="card-title">Synthesized goal</div>
         <div class="meta-grid">
@@ -160,8 +192,10 @@ export class ResultPanel {
       </div>
       <div class="stats">
         ${stat("Source tokens", String(result.original_tokens))}
+        ${stat("Retained source", String(retained))}
         ${stat("Packed tokens", String(result.pruned_tokens))}
-        ${stat("Reduction", `${reduction.toFixed(2)}%`, true)}
+        ${stat(sourceDelta < 0 ? "Source increase" : "Source reduction", `${reduction.toFixed(2)}%`, sourceDelta > 0)}
+        ${stat("Formatting overhead", `${overhead} tokens`)}
         ${stat("Files included", String(result.files.length))}
       </div>
       ${this.renderCarbonSection(result)}
@@ -169,7 +203,7 @@ export class ResultPanel {
         <div class="card-title">Included files</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>File</th><th>Relation</th><th>Tier</th><th>Original</th><th>Packed</th><th>Score</th></tr></thead>
+            <thead><tr><th>File</th><th>Relation</th><th>Tier</th><th>Source</th><th>Retained</th><th>${overview ? "Priority" : "Score"}</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
@@ -205,14 +239,15 @@ export class ResultPanel {
     .subtle, .notice { color: var(--muted); margin-bottom: 16px; }
     .notice { border-left: 3px solid var(--border); padding-left: 10px; }
     .card { border: 1px solid var(--border); border-radius: 7px; padding: 14px; margin: 14px 0; }
-    .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 10px; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0; color: var(--muted); margin-bottom: 10px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 14px 0; }
     .stat { border: 1px solid var(--border); border-radius: 7px; padding: 10px; }
     .stat-label { color: var(--muted); font-size: 10px; text-transform: uppercase; }
     .stat-value { font-size: 16px; font-weight: 700; margin-top: 3px; }
     .ok { color: var(--ok); }
     .meta-grid { display: grid; grid-template-columns: minmax(120px, .45fr) 1fr; gap: 7px 14px; }
     .meta-grid span { color: var(--muted); }
+    .meta-grid strong { min-width: 0; overflow-wrap: anywhere; }
     .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     pre { white-space: pre-wrap; word-break: break-word; background: var(--code); padding: 12px; border-radius: 5px; overflow: auto; max-height: 620px; }
     button { border: 0; border-radius: 3px; padding: 7px 12px; background: var(--button); color: var(--buttonFg); cursor: pointer; }
@@ -250,4 +285,8 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function formatCarbon(value: number): string {
+  return `${value !== 0 && Math.abs(value) < 0.000001 ? value.toExponential(3) : value.toFixed(6)} g`;
 }

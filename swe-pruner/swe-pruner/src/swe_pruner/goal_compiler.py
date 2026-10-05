@@ -31,6 +31,20 @@ DEFAULT_TEMPLATE = (
     "error handling related to: '{query}'"
 )
 
+
+def is_repository_overview(query: str) -> bool:
+    target = r"(?:project|repository|repo|codebase|application)\b"
+    qualifiers = r"(?:(?:the|this|my|our|entire|whole|full|complete)\s+)*"
+    patterns = (
+        rf"\b(?:overview|architecture|structure|tour)\s+(?:of\s+)?{qualifiers}{target}",
+        rf"\b{target}\s+(?:overview|architecture|structure)\b",
+        rf"\b(?:explain|summari[sz]e|describe|understand)\s+{qualifiers}{target}"
+        rf"(?=\s*(?:[.!?]|$|\bin\s+detail\b|\bto\s+me\b))",
+        rf"\bhow\s+(?:does|do)\s+{qualifiers}{target}\s+(?:work|run)\b",
+    )
+    return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
+
+
 class GoalCompiler:
     def __init__(self, generator_client: LocalGoalGeneratorClient):
         self.generator = generator_client
@@ -58,7 +72,7 @@ Developer Query: "{query}"
 
 Respond with ONLY a JSON object fitting this schema:
 {{
-    "task_type": "bug_fix | refactor | feature_addition | test_generation | generic_task",
+    "task_type": "bug_fix | refactor | feature_addition | test_generation | repository_overview | generic_task",
     "objective": "A precise objective describing what part of the code needs to be inspected or edited, referencing files/symbols strictly from the context.",
     "identifiers": ["list", "of", "exact", "class", "or", "function", "names", "mentioned", "in", "the", "query", "selected_code", "or", "diagnostics"],
     "observed_errors": ["list", "of", "errors", "verbatim", "from", "diagnostics"],
@@ -82,6 +96,8 @@ CRITICAL SAFEGUARDS:
         local_llm_url: Optional[str] = None,
         local_llm_model: Optional[str] = None
     ) -> StructuredGoal:
+        if is_repository_overview(query):
+            return self.deterministic_fallback(query, current_symbol, diagnostics)
         # Check if query is extremely vague and no context evidence is present
         is_vague = not query or query.lower().strip() in {"fix bug", "fix", "bug", "help", "debug", "test", "run"}
         has_evidence = bool(current_symbol or selected_code or diagnostics)
@@ -125,6 +141,18 @@ CRITICAL SAFEGUARDS:
         return goal
 
     def deterministic_fallback(self, query: str, current_symbol: Optional[str], diagnostics: List[str]) -> StructuredGoal:
+        if is_repository_overview(query):
+            return StructuredGoal(
+                task_type="repository_overview",
+                objective=("Explain the repository's purpose, entry points, core modules, data flow, "
+                           "configuration, dependencies, and tests. Use project documentation and "
+                           "representative source evidence; distinguish implemented behavior from "
+                           f"package scaffolding. Developer request: '{query}'"),
+                observed_errors=diagnostics,
+                required_context=["project documentation", "entry points", "core modules", "tests"],
+                retrieval_questions=["How is the application started?", "What are its main components?",
+                                     "Which tests describe the implemented behavior?"],
+            )
         query_lower = query.lower().strip()
         objective = DEFAULT_TEMPLATE.format(query=query)
         task_type = "generic_task"
@@ -144,7 +172,9 @@ CRITICAL SAFEGUARDS:
         stop_words = {
             "fix", "bug", "optimize", "add", "remove", "refactor", "test", "debug", 
             "understand", "the", "to", "in", "on", "for", "code", "and", "or", "with", 
-            "a", "an", "is", "are", "issue", "validate", "credentials"
+            "a", "an", "is", "are", "issue", "validate", "credentials",
+            "give", "explain", "full", "overview", "project", "repository", "codebase",
+            "please", "me", "my", "this", "whole", "entire", "complete"
         }
         for word in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', query):
             if word.lower() not in stop_words and len(word) > 2:
@@ -155,7 +185,7 @@ CRITICAL SAFEGUARDS:
         return StructuredGoal(
             task_type=task_type,
             objective=objective,
-            identifiers=list(set(potential_idents)),
+            identifiers=list(dict.fromkeys(potential_idents)),
             observed_errors=diagnostics,
             required_context=[],
             retrieval_questions=[f"Where is '{ident}' used or defined?" for ident in potential_idents[:3]],

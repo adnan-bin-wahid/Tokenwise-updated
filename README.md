@@ -49,11 +49,15 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.0 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.0/tokenwise-vscode-0.6.0.vsix)
-from the [GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.0).
+Download the VSIX from the [latest published GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/latest).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
 provides an installer-and-docs ZIP and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
+
+**The overview/token-accounting/automatic-carbon fixes require 0.6.1 or later,
+including its updated backend.** For a locally built 0.6.1, the installer is
+`releases/TokenWise-0.6.1/tokenwise-vscode-0.6.1.vsix`. Building the installer does
+not publish it; check the version on the release page before downloading.
 
 In Antigravity:
 
@@ -110,6 +114,10 @@ Or:
 
 > Find why invoice retries fail and identify the relevant service and tests.
 
+For a project tour:
+
+> Give me the full overview of my project. Do not modify any files.
+
 You do not need to select an editor file, run a pruning command, or paste code.
 The backend starts automatically when needed. The first request also loads the
 model and can take longer; keep the context command running until it finishes.
@@ -144,7 +152,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.0 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.1 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -216,6 +224,63 @@ the extension does not reload Python code. See the
 These changes reduce repository/search overhead; neural pruning and the
 Antigravity model response can still dominate total prompt latency.
 
+### Project Overviews and Honest Metrics
+
+An overview prompt uses a different retrieval mode from a focused bug or symbol
+question. It selects representative entry points, implementation modules, data
+models, and tests, plus bounded root README/package information when present.
+This mode does not use neural line pruning: preserving architectural coverage
+is more useful than narrowly selecting lines about a generic word such as
+`PROJECT`. Large modules use structural excerpts; small modules are kept intact.
+The same total token budget and file-candidate limit still apply.
+
+The panel reports how many Python files were indexed, which files were included,
+and any coverage warnings. A six-file bounded overview is not a promise to send
+every file in a large repository. Increase `max_candidates` (up to 32) and the
+budget if useful; the agent can read originals to fill gaps. If the project only
+contains `__init__.py` with a version string, TokenWise says so. Check that you
+opened the actual application root, not an empty scaffold or unrelated folder.
+
+Token statistics separate three quantities:
+
+- **Source tokens / Retained source:** before/after excerpt content from the
+  included files, excluding the context wrapper. Source reduction compares these
+  values. It is not a percentage of the entire repository or conversation.
+- **Packed tokens:** the complete supplied context, including paths, fences,
+  headings, repository map, and safety text. This is the bounded quantity.
+- **Formatting overhead:** the difference between the packed count and retained
+  source count. Tokenization across block boundaries is not exactly additive.
+
+For the reported case of 17 source tokens kept in a 117-token bundle, source
+reduction is **0%**, with **100 tokens of overhead**, not -588.24%. No savings are
+claimed when nothing was removed. Any real expansion is labeled as an increase.
+
+### Automatic Carbon Results
+
+With **TokenWise > Enable Carbon Estimation** enabled (the default), new automatic
+results display context immediately, then request carbon predictions separately.
+The panel shows CO2 before/after, estimated CO2 savings or increase, phase energy,
+the model scenario, and carbon intensity. Tiny values retain enough precision
+to remain visible. This does not add an Antigravity model call or delay the context command.
+
+Both predictions use the same selected files, formatting, output-token assumption,
+target model/hardware, and intensity. Only the input-context token count changes.
+The baseline is the same bundle with unpruned source, not the whole repository.
+An initializer-only bundle therefore has zero estimated savings, even though
+the wrapper is larger than its source. Increases are never hidden as savings.
+
+Carbon estimates are **approximate, SEAL-derived configured-scenario estimates**,
+not measurements of your Antigravity provider, local pruning energy, the whole
+conversation, or net environmental benefit. You can change the target scenario
+in TokenWise settings; it is not automatically detected from your agent model.
+
+Pending, disabled, and unavailable states are visible in the panel. If estimating
+fails, your prepared context remains usable; read the displayed error and check
+**TokenWise: Diagnose Setup**. An older backend without a matched baseline must
+be updated. With automatic panels disabled, **Show Automatic Context** opens the
+latest result with its estimate. Estimates live in the extension view and are
+not written back into `.tokenwise/latest.json` or injected as agent instructions.
+
 ### Commands
 
 | Command | Use |
@@ -267,6 +332,8 @@ the status bar and logs without automatically opening a panel.
 | You cloned/moved a repository or changed IDE profile | Run **Enable Automatic Context** again to create a valid local backend link. |
 | Existing rules or JSON conflict | Read the reported filename. Fix invalid JSON or retain customized files under another name; setup will not discard them. |
 | Retrieval is slow | Check **Output > TokenWise Index**, keep the backend running, and try a smaller budget/candidate limit. An older backend must be updated to use background indexing. Neural pruning still contributes to latency. |
+| Overview includes only a package initializer | Update both extension and backend to 0.6.1 or later. Confirm the application root contains real implementation. Check the panel's indexed-file count and coverage warnings. |
+| CO2 is missing or unavailable | Enable carbon estimation, run **Diagnose Setup**, update the backend through **Set Up Backend**, and issue a new prompt. The panel explains disabled, pending, and failed estimates; old saved reports may lack the matched baseline. |
 
 Corporate firewalls/proxies must permit PyPI, the PyTorch wheel host, Hugging Face,
 and Hugging Face's download CDN. TokenWise does not bypass your network policies.
@@ -333,7 +400,7 @@ and very large files may not be represented. Context is a bounded selection,
 not a complete repository dump. The agent should read original files before
 editing. TokenWise never writes pruned excerpts into application source files.
 
-Carbon values in manual result views are **approximate, SEAL-derived estimates**,
+Carbon values in manual and automatic result views are **approximate, SEAL-derived estimates**,
 not measurements of your Antigravity cloud-model consumption. See
 [evaluation notes](docs/PROJECT-EVALUATION.md) and
 [the detailed integration guide](docs/ANTIGRAVITY.md).
@@ -350,7 +417,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.0/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.1/` with the VSIX, this guide,
 licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

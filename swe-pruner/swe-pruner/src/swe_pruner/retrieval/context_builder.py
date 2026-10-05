@@ -1,5 +1,6 @@
 import logging
 import ast
+import re
 from collections import OrderedDict
 from typing import Any, Dict, List, Tuple
 
@@ -81,6 +82,14 @@ class ContextBuilder:
         keep = max(0, token_limit - len(marker_ids))
         return tokenizer.decode(ids[:keep], skip_special_tokens=False) + marker
 
+    @staticmethod
+    def block_parts(rel_path: str, metadata: dict, relation: str, tier: int) -> tuple[str, str]:
+        runs = re.findall(r"`{3,}", metadata.get("content", ""))
+        fence = "`" * max(3, max((len(run) + 1 for run in runs), default=3))
+        language = metadata.get("_language", "python")
+        return (f"### {rel_path}\n# Relation: {relation}\n# Tier: {tier}\n{fence}{language}\n",
+                f"\n{fence}")
+
     def pack_context(
         self,
         query: str,
@@ -93,6 +102,8 @@ class ContextBuilder:
         preamble: str = "",
         prepruned: Dict[str, Any] | None = None,
         prune_uncached: bool = True,
+        overview: bool = False,
+        anchor_relation: str | None = None,
     ) -> Tuple[str, List[Dict[str, Any]], int]:
         """
         Build the final repository context within ``self.token_budget``.
@@ -117,7 +128,7 @@ class ContextBuilder:
         summaries: list[dict[str, Any]] = []
         used_tokens = self._count(preamble, tokenizer)
 
-        for rel_path in ordered_paths:
+        for position, rel_path in enumerate(ordered_paths):
             file_meta = files_metadata[rel_path]
             content = file_meta.get("content", "")
             if not content:
@@ -127,7 +138,7 @@ class ContextBuilder:
             distance = graph_distances.get(rel_path)
             if rel_path == active_file:
                 tier = 1
-                relation = "active file"
+                relation = anchor_relation or "active file"
             elif (prepruned and rel_path in prepruned) or distance == 1 or score >= 0.35:
                 tier = 2
                 relation = "direct/relevant dependency"
@@ -141,10 +152,14 @@ class ContextBuilder:
 
             if "test" in rel_path.lower():
                 relation = "related test"
+            if overview:
+                relation = file_meta.get("_overview_relation", "project module")
 
             original_tokens = (prepruned[rel_path].origin_token_cnt if prepruned and rel_path in prepruned
                                else self._file_count(file_meta, content, tokenizer))
-            if prepruned and rel_path in prepruned:
+            if overview:
+                pruned_content = file_meta.get("_overview_content") or self._signatures_only(file_meta, rel_path)
+            elif prepruned and rel_path in prepruned:
                 result = prepruned[rel_path]
                 pruned_content = result.pruned_code
                 original_tokens = result.origin_token_cnt
@@ -181,13 +196,7 @@ class ContextBuilder:
             else:
                 pruned_content = self._signatures_only(file_meta, rel_path)
 
-            header = (
-                f"### {rel_path}\n"
-                f"# Relation: {relation}\n"
-                f"# Tier: {tier}\n"
-                "```python\n"
-            )
-            footer = "\n```"
+            header, footer = self.block_parts(rel_path, file_meta, relation, tier)
             prefix = "\n\n".join(([preamble] if preamble else []) + output_blocks)
             remaining = self.token_budget - self._count(prefix + ("\n\n" if prefix else ""), tokenizer)
             if remaining <= 0:
@@ -198,6 +207,10 @@ class ContextBuilder:
                 break
 
             content_budget = remaining - overhead
+            if overview:
+                # Reserve a fair share for later components rather than filling the budget with README.
+                remaining_files = len(ordered_paths) - position
+                content_budget = min(content_budget, max(1, remaining // remaining_files - overhead))
             pruned_content = self._truncate(pruned_content, content_budget, tokenizer)
             block = f"{header}{pruned_content}{footer}"
             block_tokens = self._count(block, tokenizer)

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { TokenWiseApiClient } from "../services/apiClient";
 import { getTokenWiseConfig } from "../services/config";
 import { ResultPanel } from "../ui/resultPanel";
+import { estimateCarbonComparison } from "../services/carbonComparison";
 
 export function createBuildRepositoryContextCommand(
   panel: ResultPanel,
@@ -79,47 +80,20 @@ export function createBuildRepositoryContextCommand(
             token_budget: cfg.repositoryTokenBudget,
           });
 
-          if (cfg.enableCarbonEstimation && response.original_tokens > 0 && response.pruned_tokens > 0) {
-            const common = {
-              output_tokens: cfg.expectedOutputTokens,
-              model_name: cfg.targetModelName,
-              model_size_b: cfg.targetModelSizeB,
-              gpu_type: cfg.targetGpuType,
-              latency_per_input_token_ms: cfg.latencyPerInputTokenMs,
-              latency_per_output_token_ms: cfg.latencyPerOutputTokenMs,
-              mmlu_pro_score: cfg.targetMmluProScore,
-              bbh_score: cfg.targetBbhScore,
-              carbon_intensity_g_per_kwh: cfg.carbonIntensityGPerKwh,
-            };
+          if (cfg.enableCarbonEstimation) {
             try {
-              const [before, after] = await Promise.all([
-                client.estimateCarbon({ ...common, input_tokens: response.original_tokens }),
-                client.estimateCarbon({ ...common, input_tokens: response.pruned_tokens }),
-              ]);
-              const mapEstimate = (item: typeof before) => ({
-                prefillJoules: item.prefill_joules,
-                decodeJoules: item.decode_joules,
-                totalJoules: item.total_joules,
-                co2Grams: item.co2_grams,
-                carbonIntensityGPerKwh: item.carbon_intensity_g_per_kwh,
-                modelFamily: item.model_name,
-                prefillRoute: item.prefill_route,
-                decodeRoute: item.decode_route,
-                featuresSource: item.features_source,
-              });
-              response.carbonBefore = mapEstimate(before);
-              response.carbonAfter = mapEstimate(after);
-              response.carbonSavings = {
-                prefillJoulesSaved: Math.max(0, before.prefill_joules - after.prefill_joules),
-                decodeJoulesSaved: Math.max(0, before.decode_joules - after.decode_joules),
-                totalJoulesSaved: Math.max(0, before.total_joules - after.total_joules),
-                co2GramsSaved: Math.max(0, before.co2_grams - after.co2_grams),
-              };
+              Object.assign(response, await estimateCarbonComparison(client, cfg,
+                response.raw_context_tokens ?? response.original_tokens, response.pruned_tokens,
+                response.raw_context_tokens ? "formatted-context" : "source-only"));
             } catch (carbonError) {
+              response.carbonStatus = "unavailable";
+              response.carbonError = String(carbonError);
               void vscode.window.showWarningMessage(
                 `TokenWise: repository context built, but carbon estimation was unavailable (${String(carbonError)}).`,
               );
             }
+          } else {
+            response.carbonStatus = "disabled";
           }
 
           panel.showWorkspaceResult(response, extensionUri);

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.6.1 - 2026-10-05
+
+### Fixed
+
+- Broad project overview prompts now use a dedicated, deterministic retrieval
+  mode instead of treating words such as `FULL` and `PROJECT` as identifiers.
+- Overviews include bounded root documentation/package information and
+  representative entry points, core modules, data models, and tests, including
+  components not connected to the selected file. Package initializers have
+  lower priority; initializer-only repositories show an explicit warning.
+- Source reduction compares raw and retained source, not raw source against
+  formatting overhead. Genuine increases are labeled as increases.
+- Automatic result views now request before/after CO2 and energy estimates
+  from the actual local backend, with visible pending/disabled/error states.
+- Carbon comparisons use the same selected files and formatting before and
+  after packing, retain signed changes, and cannot overwrite a newer result.
+
+### Added
+
+- Overview coverage warnings, retained-source/overhead counts, and a matched
+  unpruned-context baseline. README/package edits invalidate overview caches.
+- Fair-share overview packing, nested Markdown fence handling, and regression
+  tests for tiny repositories, small budgets, stale estimates, and backend errors.
+- Normalized project-document line endings so Windows agent tool output matches
+  the context whose token count was checked.
+- Isolated real-model HTTP/carbon verification and portable result-panel checks.
+
+### Upgrade
+
+- Install the new VSIX, reload, then update the managed backend through
+  **TokenWise: Set Up Backend**. Updating only the extension cannot change
+  retrieval in an already running older Python service.
+- These remain approximate configured-scenario carbon estimates, not measured
+  Antigravity emissions. Bounded overviews do not invent missing implementation.
+
 ## 0.6.0 - 2026-10-05
 
 ### Added

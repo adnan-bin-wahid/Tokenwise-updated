@@ -26,8 +26,8 @@ function optionalNumber(cfg: vscode.WorkspaceConfiguration, key: string): number
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-export function getTokenWiseConfig(): TokenWiseConfig {
-  const cfg = vscode.workspace.getConfiguration("tokenWise");
+export function getTokenWiseConfig(resource?: vscode.Uri): TokenWiseConfig {
+  const cfg = vscode.workspace.getConfiguration("tokenWise", resource);
   return {
     apiUrl: String(cfg.get("apiUrl", "http://127.0.0.1:8000")).replace(/\/$/, ""),
     enableLocalGoalModel: Boolean(cfg.get("enableLocalGoalModel", false)),

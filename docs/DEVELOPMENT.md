@@ -86,6 +86,42 @@ in-flight retrieval. Index/search caches retain at most eight repositories;
 complete contexts retain at most 16 exact requests; per-file token counts retain
 at most eight tokenizer/text pairs. Eviction causes rebuilding, not stale reuse.
 
+## Overview and Carbon Verification
+
+After compiling the extension, with checkout dependencies and pinned local
+weights installed, run from the checkout root:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_context_results.py --report tmp/context-results.json
+```
+
+This starts its own backend on a temporary loopback port. It checks project-wide
+overview selection, a focused real-neural query, token bounds, README cache
+invalidation, the initializer-only regression, and CO2 before/after through the
+compiled extension API client. It stops only its own backend and removes the
+sample repositories. It neither downloads weights nor calls Antigravity's cloud.
+The optional ignored JSON report can be used for result-panel browser verification.
+
+For portable panel checks, install Playwright and its Chromium browser in your
+development environment (not needed by extension users), then run:
+
+```powershell
+node scripts/verify-result-panel.cjs tmp/context-results.json
+```
+
+An optional third argument can be an existing Playwright module path. The check
+renders the compiled panel with real verification results at desktop and narrow
+widths, checks overflow/overlapping stats, CO2 values, sparse-project warnings,
+and the copy-button message. Screenshots are saved under `tmp/result-panel/`.
+The editor bridge is stubbed, so this does not prove Antigravity cloud consumption.
+
+Overview requests bypass neural pruning and use representative structural
+coverage. Root documents are allowlisted, byte-bounded, and included in the
+exact-cache fingerprint; Python indexing/watcher behavior is unchanged.
+Response fields distinguish `original_tokens`, `retained_source_tokens`,
+`pruned_tokens`, `context_overhead_tokens`, and `raw_context_tokens`. The last
+field counts the same formatted bundle with unpruned source for carbon comparison.
+
 ## Retrieval Benchmark
 
 From the checkout root:
