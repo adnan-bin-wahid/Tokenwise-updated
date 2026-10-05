@@ -21,6 +21,9 @@ account lockout expiry?"). Never recover a topic from another chat, a saved
 `.tokenwise/latest.json`, or an old context bundle. If this chat provides no
 referent, ask the user which component they mean before retrieving. A new topic
 must not inherit the previous task. Retrieve fresh source on every new user turn.
+Use at most three earlier USER turns from the current topic and at most 2000
+characters of earlier user reference, preserving the topic and newest constraints.
+Do not use assistant answers as authoritative task memory or replay full transcripts.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-context.ps1 -QueryBase64 ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('QUERY')))

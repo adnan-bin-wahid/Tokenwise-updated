@@ -5,7 +5,7 @@
     ".agents/tokenwise/tokenwise-runtime.ps1": "1bded0f8f9afe4cc44dcc004feb284569655fa7cb0d385d8183e65245bc209df",
     ".agents/tokenwise/tokenwise-context.ps1": "4d2e63825d04a8acce767457144c7cd7b02024643f66083a10077319eecbe843",
     ".agents/tokenwise/tokenwise-hook.ps1": "34d2eab3ed889a26c7e81210a4b4d003aca6ffe51ba888dc611bff2a76c92bbb",
-    ".agents/rules/tokenwise.md": "d569a161dfea8392a065500164f8be07da4de8a16983e4a710eedc87db62649d"
+    ".agents/rules/tokenwise.md": "f7d5800e3f8f11cab6d7bb95d9c7a22ba21294f9ab84829d3acf5dae1976fd98"
   },
   "cleanup": {
     "ignore": {
