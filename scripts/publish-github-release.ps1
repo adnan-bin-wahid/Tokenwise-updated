@@ -16,7 +16,7 @@ $ArchiveName = "TokenWise-$Version.zip"
 $ArchivePath = Join-Path $Artifacts $ArchiveName
 $PublicChecksums = Join-Path $Artifacts "SHA256SUMS-$Version.txt"
 $ExpectedFiles = @($ArtifactName, 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CHANGELOG.md', 'RELEASE-NOTES.md',
-    'demonstation.md', 'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
+    'demonstation.md', 'study.md', 'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
 
 function Get-ReleaseFile([string]$Relative) {
     $Full = [System.IO.Path]::GetFullPath((Join-Path $Release $Relative))

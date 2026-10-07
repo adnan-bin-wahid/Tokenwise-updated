@@ -77,6 +77,19 @@ test("accepts a complete hook activity record", () => {
   assert.equal(parseAutomaticActivity(ready).result.files[0].file_path, "services/payment_service.py");
 });
 
+test("guidance traces are optional for old records and malformed metadata is rejected", () => {
+  const guidance = { version: "1", profile: "generic_task", enabled: true, status: "applied",
+    format: "full", tokens: 80, text: "Ground answers in evidence." };
+  const record = response_guidance => ({ ...ready, result: { ...ready.result, response_guidance } });
+  assert.deepEqual(parseAutomaticActivity(record(guidance)).result.response_guidance, guidance);
+  assert.ok(parseAutomaticActivity(record(null)));
+  for (const change of [{ version: 1 }, { enabled: "true" }, { status: "success" }, { format: "partial" },
+    { tokens: -1 }, { tokens: .5 }, { text: [] }, { profile: null }]) {
+    assert.equal(parseAutomaticActivity(record({ ...guidance, ...change })), undefined);
+  }
+  assert.equal(parseAutomaticActivity(record([])), undefined);
+});
+
 test("explicit exclusion metadata is optional but must contain string arrays", () => {
   const record = topics => ({ ...ready, result: { ...ready.result, structured_goal: { excluded_topics: topics } } });
   assert.ok(parseAutomaticActivity(record(["invoice pricing"])));

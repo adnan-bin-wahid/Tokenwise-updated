@@ -117,6 +117,17 @@ export interface WorkspacePruneRequest {
   token_budget?: number;
   context_hint?: string;
   max_candidates?: number;
+  response_guidance?: boolean;
+}
+
+export interface ResponseGuidance {
+  version: string;
+  profile: string;
+  enabled: boolean;
+  status: "applied" | "disabled" | "omitted_budget";
+  format: "full" | "compact" | null;
+  tokens: number;
+  text: string;
 }
 
 export interface ContextStrategy {
@@ -126,6 +137,7 @@ export interface ContextStrategy {
   source_tokens: number;
   files: string[];
   context: string;
+  response_guidance?: ResponseGuidance | null;
   carbon?: CarbonEstimateViewModel;
 }
 
@@ -152,6 +164,7 @@ export interface WorkspaceFilePruneResult {
 }
 
 export interface WorkspacePruneResponse extends CarbonImpactViewModel {
+  response_guidance?: ResponseGuidance | null;
   input_trace?: PruningInputTrace | null;
   automatic_context?: {
     query: string;

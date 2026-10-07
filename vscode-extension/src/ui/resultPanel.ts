@@ -227,6 +227,10 @@ export class ResultPanel {
       : 0;
     const overhead = result.context_overhead_tokens ?? Math.max(0, result.pruned_tokens - retained);
     const overview = result.context_mode === "repository_overview";
+    const guidance = result.response_guidance;
+    const guidanceLabel = guidance
+      ? `v${guidance.version}: ${guidance.profile} / ${guidance.status}${guidance.format ? ` (${guidance.format})` : ""} / ${guidance.tokens} tokens`
+      : "not reported";
 
     const rows = result.files
       .map(
@@ -261,6 +265,7 @@ export class ResultPanel {
           <span>Excluded topics</span><strong>${escapeHtml(result.structured_goal.excluded_topics?.join("; ") || "none")}</strong>
           <span>Diagnostics</span><strong>${escapeHtml(observedErrors.join(" | ") || "none")}</strong>
           <span>Conversation topic</span><strong>${result.context_hint_used ? "Current-chat user topic included" : "Latest task only"}</strong>
+          <span>Response guidance</span><strong>${escapeHtml(guidanceLabel)}</strong>
         </div>
       </div>
       <div class="stats">

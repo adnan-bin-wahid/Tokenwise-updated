@@ -2,6 +2,16 @@
 
 ## Current Single-Project Layout
 
+The **0.6.6 build** retains this single project and adds outgoing response guidance.
+Checked on 2026-10-07: 174 extension tests passed; 119 backend tests discovered,
+118 passed and one Windows symlink-privilege skip; all twenty application tests
+and its deterministic output passed. These checks include guidance delivery,
+budgets, traces, exports, and real-tokenizer accounting, not a live Antigravity
+answer-quality comparison. The updated `study.md` and `demonstation.md` are
+included in the [0.6.6 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+
+### Previous Single-Project Release
+
 The **0.6.5 build** uses only `tokenwise_demo`: one runnable
 application, eleven Python files, and twenty standard-library tests. The app
 and its twenty tests pass in this Windows/Python 3.12 checkout. The demo manifest,

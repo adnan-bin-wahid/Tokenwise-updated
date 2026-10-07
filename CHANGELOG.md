@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.6 - 2026-10-07
+
+### Added
+
+- Versioned, task-aware response guidance in outgoing repository-context packets
+  for explanations, debugging, refactoring, features, tests, and project overviews.
+  Guidance requests evidence citations, respects user constraints, and separates
+  observed behavior from assumptions and unexecuted validation.
+- Default-on `response_guidance` automatic-workspace setting and
+  `tokenWise.enableResponseGuidance` manual setting, with strict boolean validation.
+- Guidance profile, version, status, format, and token trace in workspace results
+  and comparison exports. Disabled and budget-omitted instructions are explicit.
+- Complete-packet budgeting and matched unpruned carbon baselines include the
+  same guidance. Cache keys distinguish its version and enabled state.
+- Regression tests and a documented on/off answer-quality evaluation protocol.
+  This feature makes no additional LLM call and does not prove improved answers
+  without downstream evaluation. Earlier published installers remain unchanged.
+- Updated study and teacher guides bundled for offline reading, with guided versus
+  unguided evaluation instructions and matching backend upgrade steps.
+
 ## 0.6.5 - 2026-10-06
 
 ### Changed

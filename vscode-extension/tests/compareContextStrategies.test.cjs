@@ -21,7 +21,7 @@ function fixture(options = {}) {
   Module._load = function (name, ...args) {
     if (name === "vscode") { return vscode; }
     if (name === "../services/config") { return { getTokenWiseConfig: () => ({
-      enableCarbonEstimation: options.carbon !== false, repositoryTokenBudget: 4096,
+      enableCarbonEstimation: options.carbon !== false, enableResponseGuidance: options.guidance !== false, repositoryTokenBudget: 4096,
       defaultThreshold: .45, expectedOutputTokens: 256 }) }; }
     if (name === "../services/apiClient") { return { TokenWiseApiClient: class {
       async compareWorkspace(request) { calls.requests.push(request); return response; }
@@ -50,8 +50,15 @@ test("manual baseline does not bias automatic retrieval with active-file editor 
   assert.equal(request.active_file, undefined);
   assert.equal(request.selected_code, undefined);
   assert.deepEqual(request.diagnostics, []);
+  assert.equal(request.response_guidance, true);
   assert.equal(f.response.comparison.carbonStatus, "ready");
   assert.equal(f.calls.shown.length, 1);
+});
+
+test("comparison forwards the disabled guidance setting without changing the task", async () => {
+  const f = fixture({ guidance: false }); await f.run();
+  assert.equal(f.calls.requests[0].response_guidance, false);
+  assert.equal(f.calls.requests[0].query, "Explain lockout");
 });
 
 test("cancelled, untrusted, dirty and changed-file requests perform no retrieval", async () => {

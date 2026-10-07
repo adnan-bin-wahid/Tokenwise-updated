@@ -101,6 +101,20 @@ test("overview coverage warnings are escaped and priorities are not labeled neur
   assert.match(html, /Only initializers &lt;found&gt;/);
 });
 
+test("guidance version, profile, budget state and overhead are visible and escaped", () => {
+  const panel = new ResultPanel();
+  assert.match(panel.getWorkspaceHtml(reportedResult), /Response guidance.*not reported/s);
+  for (const status of ["applied", "disabled", "omitted_budget"]) {
+    const html = panel.getWorkspaceHtml({ ...reportedResult, response_guidance: {
+      version: "1", profile: "generic_task <source>", enabled: status !== "disabled", status,
+      format: status === "applied" ? "full" : null, tokens: status === "applied" ? 80 : 0, text: "Grounded instructions" } });
+    assert.match(html, /Response guidance/);
+    assert.match(html, /v1: generic_task &lt;source&gt;/);
+    assert.ok(html.includes(status));
+    assert.doesNotMatch(html, /<source>/);
+  }
+});
+
 test("explicit exclusions and scope-filter methods are visible and escaped", () => {
   const html = new ResultPanel().getWorkspaceHtml({ ...reportedResult,
     structured_goal: { ...reportedResult.structured_goal, excluded_topics: ["invoice <pricing>"] },
@@ -177,4 +191,14 @@ test("pruning inputs and actual line masks distinguish threshold decisions from 
   saveDestination = "pruning.json";
   await panels.at(-1).receive({ command: "exportPruningRun" });
   assert.deepEqual(written.at(-1).result, result);
+});
+
+test("comparison export preserves the exact response-guidance trace", async () => {
+  const guidance = { version: "1", profile: "generic_task", enabled: true, status: "applied",
+    format: "full", tokens: 80, text: "Ground answers in the supplied source." };
+  const panel = new ResultPanel();
+  panel.showWorkspaceResult({ ...reportedResult, comparison, response_guidance: guidance }, "extension");
+  saveDestination = "guided-comparison.json";
+  await panels.at(-1).receive({ command: "exportComparison" });
+  assert.deepEqual(written.at(-1).result.response_guidance, guidance);
 });

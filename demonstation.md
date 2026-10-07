@@ -33,17 +33,17 @@ if you use it instead of a live run.
 
 ### Choose the Correct Build
 
-This one-project layout and **Open Demonstration Guide** command belong to the
-**0.6.5 release**. Do not expect them in the already-published 0.6.4 ZIP.
-Public 0.6.4 remains unchanged and already supports the core pruning commands.
-Download [the 0.6.5 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5)
-for the VSIX, one-project demonstration ZIP and checksums.
+Use **0.6.6** for this complete guide, including outgoing prompt engineering.
+The one-project layout and **Open Demonstration Guide** command were introduced
+in 0.6.5; older releases do not include the new response-guidance block.
+Download [the 0.6.6 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6)
+for the VSIX, study, one-project demonstration ZIP and checksums.
 
 ### Normal Installation
 
-1. Download `tokenwise-vscode-0.6.5.vsix` from the release and install it with
+1. Download `tokenwise-vscode-0.6.6.vsix` from the release and install it with
    **Extensions > ... > Install from VSIX...**. Reload the editor.
-2. Download and extract `TokenWise-0.6.5.zip`. Open its
+2. Download and extract `TokenWise-0.6.6.zip`. Open its
    `demonstration/tokenwise_demo` folder in Antigravity.
 3. Follow **Open and Configure One Folder** below. No compiling or F5 is needed.
 
@@ -58,9 +58,9 @@ npm test
 npm run package
 ```
 
-Install `vscode-extension/tokenwise-vscode-0.6.5.vsix` using **Extensions > ... >
+Install `vscode-extension/tokenwise-vscode-0.6.6.vsix` using **Extensions > ... >
 Install from VSIX...**, then reload. The shareable folder is
-`releases/TokenWise-0.6.5/`; its `demonstration/tokenwise_demo` is the same project.
+`releases/TokenWise-0.6.6/`; its `demonstration/tokenwise_demo` is the same project.
 Never install the source-code ZIP as an extension.
 
 For your existing F5 workflow, run `npm run prepare-backend` and `npm run compile`
@@ -736,7 +736,7 @@ four demos are not numeric results for the new project.
 
 | Symptom | What to do |
 | --- | --- |
-| New guide command missing | Install the 0.6.5 VSIX; reload the correct host/profile |
+| New guide command missing | Install the 0.6.6 VSIX; reload the correct host/profile |
 | First setup failed | Read Output > TokenWise Setup; fix the named cause; Retry Failed Step |
 | Slow first retrieval | Warm with Start Backend; record startup separately; do not hide timeouts |
 | Trace/method fields absent | Update the matching Python backend and repeat the task |
@@ -837,7 +837,7 @@ your normal prompt in Antigravity chat.
 | Diagnose Setup | Show installation, backend health and workspace registration in Output |
 | Check Backend Health | Show the direct API health check; inspect a missing/offline backend error instead of assuming readiness |
 | Open Setup Guide | Open the bundled installation and recovery documentation |
-| Open Demonstration Guide | Open this script from the installed 0.6.5 extension |
+| Open Demonstration Guide | Open this script from the installed 0.6.6 extension |
 | Show Automatic Context | Reopen the current automatic packet; check timestamp/query first |
 | Build Repository Context | Run the manual repository-context command from an open Python file with the lockout task; unlike controlled no-anchor mode, editor hints can affect this route |
 | Prune Current File | Process all of `security/models.py` even when a highlight exists |
@@ -862,6 +862,60 @@ warnings; it is not a harmless switch and can require setup again. Ordinary
 Uninstall invokes cleanup when removal completes, potentially after a full IDE
 restart. Customized/unrecognized files, checkout backends, Python itself and
 editor-managed history are preserved. Do not promise absolutely zero traces.
+
+## Response Guidance
+
+This optional rehearsal demonstrates **prompt engineering in 0.6.6**.
+Earlier installers do not include it. Your earlier pruning/history/carbon
+demonstrations still apply; this is an extra stage after relevant evidence is found.
+
+1. Install the 0.6.6 VSIX, reload, and open this same `demonstration/tokenwise_demo`
+   folder. Refresh **Set Up Backend** and **Enable Automatic Context**, then
+   **Start Backend**. Follow the [README steps](README.md#response-guidance).
+   F5/compiling is only an alternative for developers, not normal users.
+2. In the existing `.agents/tokenwise.json`, set `"response_guidance": true`
+   without removing other settings. Start a new Antigravity chat and enter:
+
+   ```text
+   Explain session expiry and revocation and identify the related tests.
+   Cite the relevant files and symbols. Do not modify any files.
+   ```
+
+3. Show the **current** retrieval tool output and **Show Automatic Context**.
+   Point to `Response guidance (v1: ...)` before the source excerpts and the
+   panel's `applied` trace. Export a comparison/run or retain the matching
+   `.tokenwise/latest.json` result, including `response_guidance.text`.
+4. Explain that the selected profile requests grounded behavior and boundaries,
+   citations, user-constraint compliance, and honest missing-evidence reporting.
+   It does not inject application facts: the duration and expiry boundary must
+   still come from real source. It is not permission to edit, and it does not
+   make another LLM call.
+5. Set `"response_guidance": false`, start a fresh chat, and repeat the exact
+   task. Show the new result's `disabled` trace and the absence of the guidance
+   block. Retrieval and the source-reference labels should still work. Compare
+   the evidence actually included as well as total tokens; the extra block can
+   change how much source fits under the same budget. Re-enable it afterwards.
+6. For a **prompt-only quality study**, instead use one exported packet and remove
+   only its exact guidance block for the paired condition. Keep all source,
+   task, model, and tool conditions identical, use isolated chats without a
+   TokenWise rule reinjecting guided context, and repeat several trials in
+   alternating/randomized order. Record additional file reads and score factual
+   correctness, boundaries, citations, unsupported claims, and constraint
+   compliance against the tests. These trials have not been performed for you.
+
+The separate editor setting **TokenWise > Enable Response Guidance** controls
+manual repository/demo/comparison requests. It does not control automatic chat
+retrieval; automatic retrieval uses the workspace JSON above. Selected-source
+neural commands remain raw excerpt demonstrations. Small budgets may report
+`omitted_budget`; older backend/report data shows `not reported`, which requires
+a backend refresh and a current prompt before demonstrating this feature.
+
+Say: **"I added task-aware, evidence-grounded instruction prompting to TokenWise's
+outgoing context. It is designed to improve answer reliability, and I can compare
+it with the exact same evidence without guidance to measure that effect."**
+Do not say that a nicer-looking answer proves higher accuracy or measured carbon
+savings. See [study Section 13.7](study.md#137-outgoing-response-guidance-and-prompt-engineering)
+for the full mechanism and evaluation boundaries.
 
 ## 18. Closing Statement
 

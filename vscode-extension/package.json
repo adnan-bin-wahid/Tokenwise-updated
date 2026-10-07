@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "icon": "resources/icon.png",
   "license": "MIT",
   "repository": {
@@ -138,6 +138,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show approximate before/after carbon impact in manual and automatic context results. Automatic estimates load separately without delaying context retrieval."
+        },
+        "tokenWise.enableResponseGuidance": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include bounded, task-aware response guidance in manual repository, demonstration, and comparison packets. Automatic Antigravity retrieval uses response_guidance in .agents/tokenwise.json."
         },
         "tokenWise.targetModelName": {
           "type": "string",

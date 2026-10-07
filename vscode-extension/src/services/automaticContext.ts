@@ -53,6 +53,13 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
       return undefined;
     }
     if (result.context_hint_used !== undefined && typeof result.context_hint_used !== "boolean") { return undefined; }
+    const guidance = result.response_guidance;
+    if (guidance != null && (typeof guidance !== "object" || Array.isArray(guidance)
+      || ![guidance.version, guidance.profile, guidance.text].every(value => typeof value === "string")
+      || typeof guidance.enabled !== "boolean"
+      || !["applied", "disabled", "omitted_budget"].includes(guidance.status)
+      || ![null, "full", "compact"].includes(guidance.format)
+      || !Number.isInteger(guidance.tokens) || guidance.tokens < 0)) { return undefined; }
     const trace = result.input_trace;
     if (trace != null && (typeof trace !== "object" || Array.isArray(trace)
       || !["repository", "conversation", "selected_file", "selected_excerpt"].includes(trace.mode)

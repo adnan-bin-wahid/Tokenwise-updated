@@ -82,6 +82,7 @@ class WorkspacePruneRequest(BaseModel):
     token_budget: int = Field(default=8192, ge=256, le=32768)
     max_candidates: int = Field(default=8, ge=1, le=32)
     context_hint: Optional[str] = Field(default=None, max_length=2000)
+    response_guidance: bool = Field(default=True, strict=True)
 
 
 class WorkspaceComparisonRequest(WorkspacePruneRequest):
@@ -109,6 +110,7 @@ class WorkspacePruneResponse(BaseModel):
     context_hint_used: bool = False
     comparison: Optional[dict] = None
     input_trace: Optional[dict] = None
+    response_guidance: Optional[dict] = None
 
 
 def resolve_model_path() -> Path:
@@ -272,6 +274,7 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
             return workspace_builder.build(
                 repo_index, goal, model, active_rel_path, request.query.strip(),
                 request.threshold, request.token_budget, request.max_candidates, context_hint,
+                request.response_guidance,
             )
 
     result = await asyncio.to_thread(build)

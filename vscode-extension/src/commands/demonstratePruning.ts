@@ -56,7 +56,7 @@ export function createDemonstratePruningCommand(service: PruneService, panel: Re
         const client = new TokenWiseApiClient({ ...cfg, apiUrl: url });
         const result = await client.pruneWorkspace({ query, workspace_root: folder.uri.fsPath,
           language: "python", diagnostics: [], threshold, token_budget: cfg.repositoryTokenBudget,
-          max_candidates: 8, context_hint: history });
+          max_candidates: 8, context_hint: history, response_guidance: cfg.enableResponseGuidance });
         if (!result.input_trace) { throw new Error("Update the backend through TokenWise: Set Up Backend to view pruning inputs."); }
         if (result.context_hint_used && history) { result.input_trace.history_source = "supplied_replay"; }
         try { Object.assign(result, await estimateCarbonComparison(client, cfg, result.raw_context_tokens ?? 0,

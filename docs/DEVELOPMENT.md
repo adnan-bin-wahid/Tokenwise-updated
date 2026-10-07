@@ -39,6 +39,26 @@ The verifiers do not call Antigravity's cloud model. The portable verifier uses
 two temporary repositories outside the checkout and leaves real workspace
 activity alone. The original demo verifier marks its activity `verification: true`.
 
+## Try Outgoing Response Guidance
+
+Prepare the backend bundle and compile the extension before F5. Refresh a managed
+backend through **Set Up Backend** or restart your own checkout service as described
+below; a healthy old server is reused rather than reloaded automatically. Run
+**Enable Automatic Context** to refresh the workspace rule, then start a new chat.
+
+Automatic retrieval uses the JSON boolean `response_guidance` (default true) in
+`.agents/tokenwise.json`. Manual repository/demo/comparison requests use the editor
+setting `tokenWise.enableResponseGuidance` independently. Check the current packet
+and its `response_guidance` metadata; `applied`, `disabled`, and `omitted_budget`
+are distinct states. Source-only pruning remains unchanged. The feature is
+included in 0.6.6; older public installers remain unchanged.
+
+The tests exercise budgets, version/toggle cache identity, strict boolean
+validation, template grounding, comparison disclosure, and hook/command transport.
+They do not prove downstream Antigravity answer-quality improvement; the
+[study protocol](../study.md#137-outgoing-response-guidance-and-prompt-engineering)
+describes the required guided/unguided comparison.
+
 ## Try the Background Index
 
 Background indexing is included in 0.6.0. From `vscode-extension`, run

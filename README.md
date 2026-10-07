@@ -7,26 +7,32 @@ retrieves relevant code and tests without asking you to select files manually.
 **For normal users: install the VSIX. You do not need to clone this repository,
 install Node.js, compile the extension, press F5, or manually start a server.**
 
-## Version 0.6.5
+## Version 0.6.6
 
-**0.6.5** adds the TokenWise icon and one
-complete [demonstration project](demonstration/tokenwise_demo/README.md), twenty
-tests, and a rewritten [teacher walkthrough](demonstation.md). Run
+**0.6.6** adds task-aware prompt engineering to outgoing Antigravity context:
+grounded explanations, file/symbol citations, user-constraint preservation, and
+explicit uncertainty. Guidance is enabled by default, bounded, and switchable.
+It adds no LLM call; better answer quality remains an evaluation objective.
+
+The installer retains the icon and one complete
+[demonstration project](demonstration/tokenwise_demo/README.md), twenty tests,
+and the [teacher walkthrough](demonstation.md). The updated [study](study.md)
+is included in the presentation ZIP and the extension resources. Run
 `TokenWise: Open Demonstration Guide` to open it from the installed extension.
 Get the installer and single-project presentation bundle from the
-[0.6.5 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
+[0.6.6 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
 
 **0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
-`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.5.
+`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.6.
 Previously published releases are unchanged.
 
 To install or upgrade:
 
-1. Download [tokenwise-vscode-0.6.5.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/tokenwise-vscode-0.6.5.vsix).
+1. Download [tokenwise-vscode-0.6.6.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix).
    In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
 2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
-   as well as the extension: an already-running 0.6.3 backend does not have the
-   new retrieval filter. Existing validated model downloads can be reused.
+   as well as the extension: an already-running older backend does not have the
+   new response-guidance feature. Existing validated model downloads can be reused.
 3. Open the Python folder, run **TokenWise: Enable Automatic Context**, and start
    a new chat. Repeat the task and check the fresh result, not an old panel.
 
@@ -39,11 +45,11 @@ or erase validated downloads to retry.
 
 For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
 and the single [Python demo project](demonstration/tokenwise_demo/README.md).
-The updated 0.6.5 guide focuses on **how pruning works** with repository discovery,
+The updated 0.6.6 guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
 command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
-Download the 0.6.5 installer and presentation ZIP below for the new guide command
-and single-project bundle. The optional packet-comparison command is
+Download the 0.6.6 installer and presentation ZIP below for outgoing prompt
+engineering, its rehearsal, and the single-project bundle. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
 
@@ -87,10 +93,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.5 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/tokenwise-vscode-0.6.5.vsix)
-from the [0.6.5 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
+Download [**TokenWise 0.6.6 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix)
+from the [0.6.6 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, one demonstration project, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/TokenWise-0.6.5.zip)
+provides an [installer, one demonstration project, study, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/TokenWise-0.6.6.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -192,7 +198,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.5 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.6 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -350,6 +356,59 @@ The panel reports **Excluded topics** and `scope_filter+...` methods. Exported
 repository runs include omitted-unit names, and reduction counts still compare
 the original included source against retained source plus separate overhead.
 
+### Response Guidance
+
+Version 0.6.6 adds **task-aware prompt engineering** to the context sent to
+Antigravity. A short `Response guidance (v1: ...)` block asks for grounded answers:
+cite relevant files/symbols, respect your requested scope and format, distinguish
+evidence from assumptions, and never claim unexecuted tests passed. Debugging,
+tests, features, refactoring, explanations, and overviews use different profiles.
+It does not authorize edits or change the original task.
+
+This is included automatically when space permits, not a prompt you must copy.
+It makes no additional LLM call. It counts toward the context budget and is
+included unchanged in both sides of the matched before/after carbon estimate.
+The panel reports its version, profile, format, status, and tokens; tiny budgets
+can produce `omitted_budget`. More useful answers are an evaluation objective,
+not a guaranteed or already measured improvement.
+
+For automatic Antigravity retrieval, add or change this property in your existing
+`.agents/tokenwise.json`, retaining its other properties:
+
+```json
+"response_guidance": true
+```
+
+Set it to `false` to disable the block. For **Build Repository Context**, repository
+demonstrations, history replay, and **Compare Context Strategies**, use the separate
+editor setting **TokenWise > Enable Response Guidance**
+(`tokenWise.enableResponseGuidance`). Direct **Prune Current File** and
+**Prune Selected Code** still return source excerpts, not guided agent packets.
+
+To try the installed **0.6.6** release, no source build is needed:
+
+1. Install the 0.6.6 VSIX and reload Antigravity.
+2. Open your Python repository or `demonstration/tokenwise_demo` from the ZIP.
+   Finish active prompts, then run **TokenWise: Set Up Backend** to update the
+   registered backend. An older running backend will not acquire this feature
+   just because the editor extension changed; verified downloads can be reused.
+3. Run **TokenWise: Enable Automatic Context**, then **TokenWise: Start Backend**.
+   Start a new Antigravity chat and ask: `Explain session expiry and its related
+   tests. Do not modify any files.`
+4. Open **TokenWise: Show Automatic Context**. Confirm `Response guidance` says
+   `v1: ... / applied` and the current tool output contains the guidance block.
+   `not reported` means the result came from an older backend/report; retry
+   setup and use a fresh prompt. Customized checkout backends are not stopped
+   automatically; restart only the checkout process you own, or use managed setup.
+
+For F5 development, run `npm run prepare-backend` and `npm run compile` from
+`vscode-extension`, then launch the development host and refresh its backend/setup
+as above. Older 0.6.5 installers remain unchanged and lack this new block.
+
+See [the study](study.md#137-outgoing-response-guidance-and-prompt-engineering)
+and [the teacher demonstration](demonstation.md#response-guidance)
+for the explanation and an honest comparison protocol.
+
 ### Commands
 
 | Command | Use |
@@ -489,6 +548,10 @@ not measurements of your Antigravity cloud-model consumption. See
 
 To build a shareable release from this checkout, with Node.js dependencies installed:
 
+For future changes, assign a new extension version and update the release
+filenames/links. Never replace published release assets with a differently
+behaving build using the same version.
+
 ```powershell
 cd vscode-extension
 npm ci
@@ -497,7 +560,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.5/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.6/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

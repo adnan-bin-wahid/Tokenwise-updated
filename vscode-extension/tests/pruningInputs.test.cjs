@@ -13,7 +13,7 @@ function fixture(options = {}) {
       showInputBox: async () => "Earlier account lockout task", withProgress: async (_, action) => action(),
       showErrorMessage: async text => calls.errors.push(text), showWarningMessage: async text => calls.errors.push(text), showInformationMessage() {} } };
   const config = { apiUrl: "http://127.0.0.1:9", enableCarbonEstimation: options.carbon !== false,
-    autoOpenResultPanel: true, repositoryTokenBudget: 4096, defaultThreshold: .45 };
+    autoOpenResultPanel: true, enableResponseGuidance: options.guidance !== false, repositoryTokenBudget: 4096, defaultThreshold: .45 };
   const api = { TokenWiseApiClient: class {
     constructor(cfg) { assert.equal(cfg.apiUrl, "http://127.0.0.1:8017"); }
     async prune(request) { calls.requests.push(request); return { score: .8, pruned_code: "useful=2", token_scores: [],
@@ -85,7 +85,15 @@ test("repository demonstration sends no hidden selection hints; history replay i
   assert.equal(repository.calls.requests[0].active_file, undefined);
   assert.equal(repository.calls.requests[0].selected_code, undefined);
   assert.equal(repository.calls.requests[0].context_hint, undefined);
+  assert.equal(repository.calls.requests[0].response_guidance, true);
   const history = fixture({ mode: "conversation" }); await history.runDemo();
   assert.equal(history.calls.requests[0].context_hint, "Earlier account lockout task");
   assert.equal(history.calls.shown[0].input_trace.history_source, "supplied_replay");
+});
+
+test("repository and conversation demonstrations honor the guidance toggle", async () => {
+  for (const mode of ["repository", "conversation"]) {
+    const f = fixture({ mode, guidance: false }); await f.runDemo();
+    assert.equal(f.calls.requests[0].response_guidance, false);
+  }
 });

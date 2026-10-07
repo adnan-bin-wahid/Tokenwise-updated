@@ -40,6 +40,7 @@ export function createCompareContextStrategiesCommand(
           query, workspace_root: folder.uri.fsPath, selection_file: editor.document.uri.fsPath,
           selection_text: selected || undefined, language: "python", diagnostics: [],
           threshold: cfg.defaultThreshold, token_budget: cfg.repositoryTokenBudget, max_candidates: 8,
+          response_guidance: cfg.enableResponseGuidance,
         });
         const comparison = response.comparison;
         if (!comparison?.methods?.length) { throw new Error("The backend returned no comparison packets."); }

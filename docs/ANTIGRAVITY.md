@@ -189,6 +189,26 @@ files before editing. Antigravity retains its own ability to retrieve more files
 
 ## Configuration and Activity
 
+### Outgoing Response Guidance
+
+Version 0.6.6 can attach a bounded, task-specific `Response guidance (v1: ...)`
+block before reference excerpts. It asks the agent to follow the latest user
+constraints, cite source evidence, verify gaps, and distinguish proposed tests
+from tests actually executed. This is ordinary agent guidance, not control of
+Antigravity's system prompt or a guarantee of response quality.
+
+Automatic retrieval defaults `response_guidance` to `true` in
+`.agents/tokenwise.json`; use a JSON boolean `false` for an unguided packet.
+The editor's `tokenWise.enableResponseGuidance` setting independently controls
+manual repository/demo/comparison packets. The block shares the hard token budget,
+can be compacted or omitted when space is insufficient, and makes no extra LLM call.
+Result metadata records version, profile, status, format, tokens, and exact text.
+Source comments remain reference data, not instructions.
+
+Older builds do not include this addition. Install 0.6.6 and update the backend
+using [the README steps](../README.md#response-guidance).
+An existing server/report must be refreshed before it can show the new trace.
+
 Edit your workspace's `.agents/tokenwise.json` for the token budget, pruning threshold,
 candidate limit, timeouts, and automatic startup. Set `enabled` to `false` to
 disable the adapter. Turn off `tokenWise.autoOpenAutomaticContext` in editor

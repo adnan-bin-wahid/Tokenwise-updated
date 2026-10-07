@@ -37,7 +37,7 @@ export function createBuildRepositoryContextCommand(
       return;
     }
 
-    const cfg = getTokenWiseConfig();
+    const cfg = getTokenWiseConfig(document.uri);
     const selection = editor.selection;
     const selectedCode = document.getText(selection).trim() || undefined;
     let currentSymbol: string | undefined;
@@ -78,6 +78,7 @@ export function createBuildRepositoryContextCommand(
             local_llm_url: cfg.enableLocalGoalModel ? cfg.localLlmUrl : undefined,
             local_llm_model: cfg.enableLocalGoalModel ? cfg.localLlmModelName : undefined,
             token_budget: cfg.repositoryTokenBudget,
+            response_guidance: cfg.enableResponseGuidance,
           });
 
           if (cfg.enableCarbonEstimation) {

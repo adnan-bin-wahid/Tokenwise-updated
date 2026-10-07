@@ -39,7 +39,7 @@ The extension backend is a separate installation and does require its pretrained
 model and dependencies. Check [verification notes](VERIFICATION.md) and use the
 [blank evidence worksheet](results-template.md) for actual presentation results.
 
-Get the new layout from the [0.6.5 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
+Get the project, prompt-engineering rehearsal, and study from the [0.6.6 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
 The already-published 0.6.4 ZIP
 contains the previous four-project layout; it has not been silently replaced.
 Generated exports under `results/`, `.agents`, `.tokenwise`, and Python caches

@@ -4,10 +4,17 @@ Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Quick Start
 
-**0.6.5** adds the TokenWise icon and replaces the examples with one
+**0.6.6** adds task-aware, evidence-grounded response guidance to the context
+sent to Antigravity. It requests relevant file/symbol citations, preserves user
+constraints, and distinguishes facts from assumptions and unexecuted tests.
+Guidance is bounded, switchable, and adds no LLM call. Better answer quality
+remains an evaluation objective, not a guaranteed result. The updated study
+and prompt-engineering rehearsal are included with the guides.
+
+The release retains the TokenWise icon and one
 `demonstration/tokenwise_demo` application and twenty deterministic tests.
 Run **TokenWise: Open Demonstration Guide** for the complete teacher script.
-Install `tokenwise-vscode-0.6.5.vsix` from the release below. The earlier public
+Install `tokenwise-vscode-0.6.6.vsix` from the release below. The earlier public
 releases remain unchanged.
 
 **0.6.4** fixes optional zero-valued carbon settings and explicit topic contrasts
@@ -33,10 +40,10 @@ matching updated backend; it does not grade agent answers. The source checkout's
 `demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
-Download the [TokenWise 0.6.5 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/tokenwise-vscode-0.6.5.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.5).
-For the teacher guide and single runnable example repository, download
-[TokenWise-0.6.5.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.5/TokenWise-0.6.5.zip).
+Download the [TokenWise 0.6.6 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+For the study, teacher guide and single runnable example repository, download
+[TokenWise-0.6.6.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/TokenWise-0.6.6.zip).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
@@ -71,7 +78,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.5 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.6 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified
@@ -133,6 +140,28 @@ These are approximate configured-model/hardware/intensity scenarios, not measure
 Antigravity emissions or net carbon benefits. The cloud model is not detected
 automatically. Update both the extension and backend, then issue a new prompt;
 an older saved report may not contain the matched baseline needed for comparison.
+
+## Response Guidance
+
+Install the matching 0.6.6 backend through **Set Up Backend**, refresh your
+workspace through **Enable Automatic Context**, and start a fresh chat. Ask
+`Explain session expiry and its related tests. Do not modify any files.`
+The current tool output and **Show Automatic Context** should expose a
+`Response guidance (v1: ...)` block and an `applied` trace. Old reports/backends
+show `not reported`; very small budgets may omit guidance to preserve space.
+
+Automatic retrieval uses the JSON boolean `response_guidance` in your existing
+`.agents/tokenwise.json` (default true). Set it to false for unguided context,
+retaining other settings. The separate **TokenWise > Enable Response Guidance**
+setting controls manual repository/demo/comparison requests, not automatic chat.
+Source-only pruning still returns raw excerpts and line decisions.
+
+Instructions and source excerpts share the packet budget. Matched carbon
+baselines include the same guidance before and after pruning. For a quality
+study, compare identical source/task/model conditions with and without the exact
+guidance block; a nicer-looking answer alone is not proof of higher accuracy.
+Read [the study](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/study.md#137-outgoing-response-guidance-and-prompt-engineering)
+and **Open Demonstration Guide** for a controlled rehearsal.
 
 ## Uninstall
 

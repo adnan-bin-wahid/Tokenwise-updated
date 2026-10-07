@@ -24,6 +24,7 @@ from .conversation_context import conversation_hint, next_user_turns
 MARKER = "[TokenWise automatic context]"
 DEFAULTS = {
     "enabled": True, "token_budget": 4096, "threshold": 0.45, "max_candidates": 6,
+    "response_guidance": True,
     "backend_port": 8000, "auto_start_backend": True,
     "startup_timeout_seconds": 40, "request_timeout_seconds": 90,
 }
@@ -267,7 +268,7 @@ def load_settings(workspace: Path) -> dict:
     if not isinstance(overrides, dict):
         raise ValueError("TokenWise settings must be a JSON object")
     settings = {**DEFAULTS, **overrides}
-    for key in ("enabled", "auto_start_backend"):
+    for key in ("enabled", "auto_start_backend", "response_guidance"):
         if not isinstance(settings[key], bool):
             raise ValueError(f"TokenWise setting {key} must be a boolean")
     bounds = {
@@ -290,6 +291,7 @@ def retrieve_context(project_root: Path, workspace: Path, query: str, settings: 
         "query": query, "workspace_root": str(workspace),
         "token_budget": settings["token_budget"], "threshold": settings["threshold"],
         "max_candidates": settings["max_candidates"],
+        "response_guidance": settings["response_guidance"],
         **({"context_hint": context_hint} if context_hint else {}),
     }, timeout=float(settings["request_timeout_seconds"]))
     if not result.get("files") or not result.get("unified_prompt", "").startswith(MARKER):

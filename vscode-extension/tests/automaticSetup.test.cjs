@@ -46,6 +46,7 @@ test("external repositories share a centrally registered backend; setup is idemp
   assert.equal(first.changedFiles.length, windows ? 9 : 7);
   assert.equal(await discoverRegisteredBackend(storage), await fs.realpath(installation));
   const link = await json(workspace, ".tokenwise/backend-link.json");
+  assert.equal((await json(workspace, ".agents/tokenwise.json")).response_guidance, true);
   assert.equal(link.registration_path, backend.registrationPath);
   assert.equal(backend.registration.runtime_dir, path.join(await fs.realpath(storage), "backend/runtime"));
   const second = path.join(root, "Another Repository");
@@ -63,7 +64,7 @@ test("preserves custom rules, handlers, settings, and existing ignore bytes", as
   const customRule = "---\ntrigger: always_on\n---\nMy own TokenWise instructions.\n";
   await put(workspace, ".agents/rules/tokenwise.md", customRule);
   await put(workspace, ".agents/rules/team.md", "Team rules\n");
-  await put(workspace, ".agents/tokenwise.json", { enabled: false, token_budget: 1024, threshold: 0.6, custom_setting: "keep" });
+  await put(workspace, ".agents/tokenwise.json", { enabled: false, token_budget: 1024, threshold: 0.6, response_guidance: false, custom_setting: "keep" });
   const customHandler = { type: "command", command: "team-hook.ps1", timeout: 10 };
   await put(workspace, ".agents/hooks.json", {
     team: { enabled: true, PostInvocation: [customHandler] },
@@ -84,6 +85,7 @@ test("preserves custom rules, handlers, settings, and existing ignore bytes", as
   assert.equal(settings.threshold, 0.6);
   assert.equal(settings.custom_setting, "keep");
   assert.equal(settings.enabled, true);
+  assert.equal(settings.response_guidance, false);
   assert.equal(await fs.readFile(path.join(workspace, ".gitignore"), "utf8"), "# Team ignores\r\nvenv/\r\n# TokenWise local context and backend link\r\n/.tokenwise/\r\n");
   assert.deepEqual((await configureAutomaticContext(workspace, backend, templates)).changedFiles, []);
 });
@@ -101,6 +103,7 @@ test("malformed JSON and invalid settings cause no partial workspace setup", asy
   for (const [filename, content] of [
     [".agents/hooks.json", '{"unfinished":'], [".agents/tokenwise.json", '{"token_budget": "1024"}'],
     [".agents/tokenwise/setup.json", "[]"],
+    [".agents/tokenwise.json", '{"response_guidance": "false"}'],
   ]) {
     await put(workspace, filename, content);
     await assert.rejects(configureAutomaticContext(workspace, backend, templates));

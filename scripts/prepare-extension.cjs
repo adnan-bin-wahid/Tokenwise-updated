@@ -44,6 +44,7 @@ async function main() {
   await fs.writeFile(path.join(target, "backend-manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   await fs.copyFile(path.join(root, "README.md"), path.join(resourceRoot, "user-guide.md"));
   await fs.copyFile(path.join(root, "demonstation.md"), path.join(resourceRoot, "demonstation.md"));
+  await fs.copyFile(path.join(root, "study.md"), path.join(resourceRoot, "study.md"));
   const demoTarget = path.join(resourceRoot, "demonstration");
   const demoSource = path.join(root, "demonstration");
   const demoCases = JSON.parse(await fs.readFile(path.join(demoSource, "cases.json"), "utf8")).cases;

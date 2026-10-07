@@ -8,6 +8,7 @@ export interface TokenWiseConfig {
   timeoutMs: number;
   defaultThreshold: number;
   repositoryTokenBudget: number;
+  enableResponseGuidance: boolean;
   autoOpenResultPanel: boolean;
   enableCarbonEstimation: boolean;
   targetModelName: string;
@@ -36,6 +37,7 @@ export function getTokenWiseConfig(resource?: vscode.Uri): TokenWiseConfig {
     timeoutMs: Number(cfg.get("timeoutMs", 120000)),
     defaultThreshold: Number(cfg.get("defaultThreshold", 0.45)),
     repositoryTokenBudget: Number(cfg.get("repositoryTokenBudget", 8192)),
+    enableResponseGuidance: Boolean(cfg.get("enableResponseGuidance", true)),
     autoOpenResultPanel: Boolean(cfg.get("autoOpenResultPanel", true)),
     enableCarbonEstimation: Boolean(cfg.get("enableCarbonEstimation", true)),
     targetModelName: String(cfg.get("targetModelName", "meta-llama-3-8b-instruct")),
