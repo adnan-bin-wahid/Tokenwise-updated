@@ -134,6 +134,7 @@ export interface ContextStrategy {
   id: "all_python" | "selected" | "tokenwise";
   title: string;
   input_tokens: number;
+  prompt_tokens?: number;
   source_tokens: number;
   files: string[];
   context: string;
@@ -147,6 +148,7 @@ export interface ContextComparison {
   selection_scope: string;
   methods: ContextStrategy[];
   notes: string[];
+  measurement_scope?: "prepared_packets";
   carbonStatus?: "ready" | "disabled" | "unavailable";
   carbonError?: string;
 }
@@ -164,6 +166,9 @@ export interface WorkspaceFilePruneResult {
 }
 
 export interface WorkspacePruneResponse extends CarbonImpactViewModel {
+  repository_fingerprint?: string;
+  comparisonStatus?: "pending" | "ready" | "unavailable";
+  comparisonError?: string;
   response_guidance?: ResponseGuidance | null;
   input_trace?: PruningInputTrace | null;
   automatic_context?: {

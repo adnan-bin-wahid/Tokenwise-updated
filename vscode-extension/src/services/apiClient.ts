@@ -1,6 +1,7 @@
 import {
   CarbonEstimateRequest,
   CarbonEstimateResponse,
+  ContextComparison,
   HealthResponse,
   PruneRequest,
   PruneResponse,
@@ -120,5 +121,18 @@ export class TokenWiseApiClient {
     }
     if (!response.ok) { throw new Error(`Context comparison failed (${response.status}): ${await response.text()}`); }
     return await response.json() as WorkspacePruneResponse;
+  }
+
+  public async comparePreparedWorkspace(workspace_root: string, query: string,
+    prepared_context: WorkspacePruneResponse): Promise<ContextComparison> {
+    const response = await fetchWithTimeout(`${this.config.apiUrl}/compare-prepared-workspace`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_root, query, prepared_context }),
+    }, this.config.timeoutMs);
+    if (response.status === 404) {
+      throw new Error("Update the backend through TokenWise: Set Up Backend, then retry the comparison.");
+    }
+    if (!response.ok) { throw new Error(`Automatic comparison failed (${response.status}): ${await response.text()}`); }
+    return await response.json() as ContextComparison;
   }
 }

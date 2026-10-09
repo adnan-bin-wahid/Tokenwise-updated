@@ -239,6 +239,16 @@ test("background indexing never installs missing backends or changes user settin
   manager.dispose();
 });
 
+test("validation guide opens the bundled comparison protocol without setup or a checkout", async () => {
+  const manager = new BackendManager(context);
+  await manager.validationGuide();
+  const call = calls.find(item => item[0] === "command");
+  assert.equal(call[1], "markdown.showPreview");
+  assert.match(call[2].fsPath, /resources\/validation.md$/);
+  assert.ok(!calls.some(item => ["install", "process", "setting"].includes(item[0])));
+  manager.dispose();
+});
+
 test("background indexing honors disabled automatic startup", async () => {
   const manager = new BackendManager(context);
   registered = managedRoot;

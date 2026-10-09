@@ -172,11 +172,11 @@ class RepositoryIndexCache:
         index.build_index(verify_contents=True)
         index.last_reconciled = self.clock()
 
-    def get(self, workspace_root: str) -> tuple[RepositoryIndex, bool]:
+    def get(self, workspace_root: str, force_reconcile: bool = False) -> tuple[RepositoryIndex, bool]:
         index = self._entry(workspace_root)
         with index.lock:
             previous = index.fingerprint
-            if not previous or not self._watching(index) or self.clock() - index.last_reconciled >= self.reconcile_seconds:
+            if force_reconcile or not previous or not self._watching(index) or self.clock() - index.last_reconciled >= self.reconcile_seconds:
                 self._scan(index)
             return index.snapshot(), bool(previous and previous == index.fingerprint)
 

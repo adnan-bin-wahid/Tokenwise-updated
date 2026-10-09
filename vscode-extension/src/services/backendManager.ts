@@ -185,6 +185,10 @@ export class BackendManager implements vscode.Disposable {
     await vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.joinPath(this.context.extensionUri, "resources", "demonstation.md"));
   }
 
+  public async validationGuide(): Promise<void> {
+    await vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.joinPath(this.context.extensionUri, "resources", "validation.md"));
+  }
+
   public async welcome(): Promise<void> {
     if (!vscode.workspace.isTrusted || vscode.env.remoteName) { return; }
     const installation = await this.installation();

@@ -33,11 +33,11 @@ Push without force and create an annotated version tag on the release commit:
 
 ```powershell
 git push origin main
-git tag -a v0.6.6 -m "TokenWise 0.6.6 - Windows Beta"
-git push origin v0.6.6
+git tag -a v0.6.7 -m "TokenWise 0.6.7 - Windows Beta"
+git push origin v0.6.7
 ```
 
-Use the new version instead of `v0.6.6` for future releases. Never move a
+Use the new version instead of `v0.6.7` for future releases. Never move a
 published tag or replace a published installer; release a new version instead.
 
 ## Publish
@@ -63,7 +63,9 @@ unrelated draft. If an upload was interrupted, inspect the draft and re-run with
 Demo archive paths are derived from Git's tracked `demonstration/` inventory,
 restricted to Python/JSON/Markdown without private runtime/results folders, and
 must match the package-generated checksum manifest. Unexpected release files,
-missing demo files, and symbolic links are rejected before any upload.
+missing demo files, and symbolic links are rejected before any upload. The
+bundled `validation.md` protocol is allowlisted too. Personal `ss/` screenshots
+are excluded from the release-status check and are never added to release assets.
 Generated `.agents`, `.tokenwise`, cache/results folders and Git ignore/attribute
 metadata are excluded even if they were tracked during local testing. Their
 checkout files are preserved; they are not copied into a friend's release ZIP.

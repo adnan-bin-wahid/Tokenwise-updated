@@ -2,6 +2,10 @@
 
 Record real observations only. Empty fields are intentional.
 
+For the teacher's validation and native with/without study, follow
+[validation.md](../validation.md). Do not label the all-code packet as an
+observed native Antigravity run without TokenWise.
+
 - Date/machine/OS:
 - Extension/backend versions and source revision:
 - Project / fingerprint / saved or unsaved selected buffer:
@@ -71,3 +75,36 @@ trial, or label the result a tool-assisted workflow instead.
 The unpruned Selected baseline is not selected-source neural pruning. Define
 expected facts from runnable source/tests before grading answers. Source-marker
 checks are not semantic grades.
+
+## Native With/Without Workflow Comparison
+
+Same saved snapshot, model, effort, permissions and task; fresh chat for every
+run. Disable TokenWise integration only in the without condition. Leave native
+repository tools available in both. Each task has six predefined required items
+in `validation.md`. Record missing counters as N/A, never zero.
+
+| Task / repeat | Condition | Order | Coverage / 6 | Unsupported claims | Observed completed tool calls | Total answer seconds | Actual reported input tokens | Actual reported total tokens | Status / evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Lockout / 1 | Without TokenWise | First | | | | | | | |
+| Lockout / 1 | With TokenWise | Second | | | | | | | |
+| Sessions / 1 | Without TokenWise | First | | | | | | | |
+| Sessions / 1 | With TokenWise | Second | | | | | | | |
+| Invoices / 1 | Without TokenWise | First | | | | | | | |
+| Invoices / 1 | With TokenWise | Second | | | | | | | |
+
+Add repeats 2 and 3 for every task, reversing order in repeat 2. Keep errors,
+timeouts and invalid-setup records; explain reruns. Save answers, traces, exact
+settings, timestamps, snapshot evidence and usage-source labels. Report missing
+or partial traces and do not interpret observed calls as all model-visible files.
+
+## Pilot Summary
+
+| Task | Valid matched pairs | Coverage without / with | Mean or median total seconds without / with | Actual-usage pairs available | Actual-usage change | Failures / limitations |
+| --- | --- | --- | --- | --- | --- | --- |
+| Lockout | | | | | | |
+| Sessions | | | | | | |
+| Invoices | | | | | | |
+
+Keep local packet tokens, provider usage and predicted CO2 in separate fields.
+Compare the same provider counter over matched pairs only. Empty results mean
+the study has not yet been performed, not that savings are zero or guaranteed.

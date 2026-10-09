@@ -8,7 +8,7 @@ let currentActivity;
 let currentHooks;
 const outputLines = [];
 const commandCallbacks = new Map();
-let settings, carbonRequests, carbonClients, carbonResponder;
+let settings, carbonRequests, carbonClients, carbonResponder, comparisonRequests, comparisonResponder;
 function makePanel(panels = [], updates = []) {
   return {
     showWorkspaceResult: (...args) => panels.push(args),
@@ -33,13 +33,27 @@ class FakeClient {
     carbonRequests.push(request);
     return carbonResponder ? carbonResponder(request) : estimate(request);
   }
+  async comparePreparedWorkspace(root, query, prepared) {
+    comparisonRequests.push({ root, query, prepared });
+    return comparisonResponder ? comparisonResponder(root, query, prepared) : {
+      query, repository_fingerprint: prepared.repository_fingerprint, selection_scope: "none (automatic comparison)",
+      measurement_scope: "prepared_packets", notes: [],
+      methods: [{ id: "all_python", title: "All Python", input_tokens: 600, source_tokens: 500,
+        files: ["auth.py", "test_auth.py"], context: "all code" },
+      { id: "tokenwise", title: "TokenWise", input_tokens: prepared.pruned_tokens, source_tokens: 100,
+        files: prepared.files.map(file => file.file_path), context: prepared.unified_prompt }],
+    };
+  }
 }
 const vscodeStub = {
   window: { createOutputChannel: () => ({ appendLine: (line) => outputLines.push(line), show() {}, dispose() {} }) },
   commands: { registerCommand: (name, handler) => { commandCallbacks.set(name, handler); return { dispose() {} }; } },
   Uri: { joinPath: (...parts) => parts.join("/") },
   RelativePattern: class {},
+  env: {},
+  ConfigurationTarget: { WorkspaceFolder: 3 },
   workspace: {
+    isTrusted: true,
     workspaceFolders: [],
     onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
     fs: { readFile: async (uri) => Buffer.from(JSON.stringify(String(uri).endsWith("/.agents/hooks.json") ? currentHooks ?? {} : currentActivity)), stat: async () => ({}) },
@@ -60,6 +74,8 @@ Module._load = originalLoad;
 beforeEach(() => {
   settings = { enableCarbonEstimation: false };
   carbonRequests = []; carbonClients = []; carbonResponder = undefined;
+  comparisonRequests = []; comparisonResponder = undefined;
+  vscodeStub.workspace.isTrusted = true; vscodeStub.env.remoteName = undefined;
   watcherCallbacks.length = 0; outputLines.length = 0;
   commandCallbacks.clear(); currentHooks = undefined;
 });
@@ -233,7 +249,7 @@ test("owned hook setup without previous activity shows awaiting prompt", async (
 });
 
 async function freshMonitor(panel = makePanel()) {
-  vscodeStub.workspace.workspaceFolders = [{ uri: { toString: () => "demo" } }];
+  vscodeStub.workspace.workspaceFolders = [{ uri: { scheme: "file", fsPath: "C:/demo", toString: () => "demo" } }];
   currentActivity = { ...ready, status: "retrieving", result: undefined };
   const monitor = new AutomaticContextMonitor({}, panel, "extension");
   await new Promise(resolve => setImmediate(resolve));
@@ -257,6 +273,82 @@ test("fresh automatic context gets carbon values from its actual backend without
   assert.equal(carbonClients[0].apiUrl, "http://127.0.0.1:8005");
   assert.deepEqual(carbonRequests.map(item => item.input_tokens), [600, 100]);
   assert.equal(updates[0].carbonBaseline, "formatted-context");
+  monitor.dispose();
+});
+
+test("automatic comparison is opt-in and requires a fresh recorded snapshot", async () => {
+  const monitor = await freshMonitor();
+  assert.equal(comparisonRequests.length, 0);
+  settings.autoCompareAutomaticContext = true;
+  currentActivity = { ...ready, event_id: "missing-snapshot", query: "Explain auth" };
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(comparisonRequests.length, 0);
+  assert.equal(monitor.latest.result.comparisonStatus, "unavailable");
+  assert.match(monitor.latest.result.comparisonError, /snapshot/);
+  monitor.dispose();
+});
+
+test("fresh automatic comparison uses the exact packet and local backend, without an editor", async () => {
+  settings.autoCompareAutomaticContext = true;
+  const panels = [], updates = [];
+  const monitor = await freshMonitor(makePanel(panels, updates));
+  currentActivity = { ...ready, event_id: "compare-turn", query: "Explain auth", result: {
+    ...ready.result, repository_fingerprint: "a".repeat(64), retained_source_tokens: 100 } };
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(comparisonRequests.length, 1);
+  assert.equal(comparisonRequests[0].root, "C:/demo");
+  assert.equal(comparisonRequests[0].prepared.unified_prompt, ready.result.unified_prompt);
+  assert.equal(carbonClients.at(-1).apiUrl, ready.backend_url);
+  assert.equal(monitor.latest.result.comparisonStatus, "ready");
+  assert.equal(monitor.latest.result.comparison.carbonStatus, "disabled");
+  assert.ok(updates.some(update => update.comparisonStatus === "ready"));
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(comparisonRequests.length, 1);
+  monitor.dispose();
+});
+
+test("failed automatic comparison leaves context usable, and stale results never update a newer prompt", async () => {
+  settings.autoCompareAutomaticContext = true;
+  comparisonResponder = () => { throw new Error("Repository changed. Retrieve again."); };
+  const panels = [], updates = [];
+  const monitor = await freshMonitor(makePanel(panels, updates));
+  const activity = { ...ready, query: "Explain auth", result: { ...ready.result, repository_fingerprint: "a".repeat(64) } };
+  currentActivity = { ...activity, event_id: "failed-comparison" };
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(monitor.latest.result.comparisonStatus, "unavailable");
+  assert.equal(monitor.latest.result.unified_prompt, ready.result.unified_prompt);
+  let resolve;
+  comparisonResponder = () => new Promise(done => { resolve = done; });
+  currentActivity = { ...activity, event_id: "late-comparison" };
+  watcherCallbacks.at(-1)();
+  await new Promise(done => setTimeout(done, 180));
+  currentActivity = { ...ready, event_id: "next-prompt", status: "retrieving", result: undefined };
+  watcherCallbacks.at(-1)();
+  await new Promise(done => setTimeout(done, 180));
+  const count = updates.length;
+  resolve({ methods: [], notes: [] });
+  await new Promise(done => setImmediate(done));
+  assert.equal(updates.length, count);
+  monitor.dispose();
+});
+
+test("automatic comparison never sends source to a remote server or runs verification reports", async () => {
+  settings.autoCompareAutomaticContext = true;
+  const monitor = await freshMonitor();
+  const result = { ...ready.result, repository_fingerprint: "a".repeat(64) };
+  currentActivity = { ...ready, result, event_id: "remote-comparison", query: "Explain auth", backend_url: "https://example.com" };
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(comparisonRequests.length, 0);
+  assert.match(monitor.latest.result.comparisonError, /local TokenWise backend/);
+  currentActivity = { ...ready, result: { ...result }, event_id: "verification-comparison", query: "Explain auth", verification: true };
+  watcherCallbacks.at(-1)();
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(comparisonRequests.length, 0);
   monitor.dispose();
 });
 

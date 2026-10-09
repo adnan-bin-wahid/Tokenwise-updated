@@ -2,6 +2,28 @@
 
 Automatic, bounded Python repository context for Antigravity coding prompts.
 
+## Automatic Comparison (0.6.7)
+
+Run **TokenWise: Configure Automatic Comparison**, select **Enable automatic
+packet comparison**, and send a normal prompt with automatic context enabled.
+No file selection is needed. The panel compares the exact prepared packet with
+all indexed Python code, lists both sets of files, counts packet and task-plus-
+packet tokens locally, and offers JSON export. Carbon remains a configured
+scenario estimate. A failed comparison does not prevent context delivery; use
+**Retry latest comparison** or send a fresh prompt if saved files changed.
+Comparison exports support at most 200 Python files and 2 MiB of source.
+
+These are prepared-packet measurements, not observed IDE token consumption.
+**TokenWise: Import Antigravity Usage Comparison** accepts two successful,
+fresh single-turn CLI JSON/stream-JSON logs and displays reported input/output/
+cache/thinking/total counters, durations, answers, and observed tool parameters.
+It does not launch cloud requests. The without/with labels are user-assigned;
+identical tasks and settings still need experimental control. Neither panel
+guarantees a saving or proves answer quality. Install matching development
+0.6.7 extension/backend code; earlier published installers are unchanged.
+Run **TokenWise: Open Validation Guide** for the classroom quick route and
+controlled with/without experiment, including a blank results worksheet.
+
 ## Quick Start
 
 **0.6.6** adds task-aware, evidence-grounded response guidance to the context
@@ -14,7 +36,7 @@ and prompt-engineering rehearsal are included with the guides.
 The release retains the TokenWise icon and one
 `demonstration/tokenwise_demo` application and twenty deterministic tests.
 Run **TokenWise: Open Demonstration Guide** for the complete teacher script.
-Install `tokenwise-vscode-0.6.6.vsix` from the release below. The earlier public
+Install `tokenwise-vscode-0.6.7.vsix` from the release below. The earlier public
 releases remain unchanged.
 
 **0.6.4** fixes optional zero-valued carbon settings and explicit topic contrasts
@@ -40,10 +62,10 @@ matching updated backend; it does not grade agent answers. The source checkout's
 `demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
-Download the [TokenWise 0.6.6 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+Download the [TokenWise 0.6.7 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
 For the study, teacher guide and single runnable example repository, download
-[TokenWise-0.6.6.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/TokenWise-0.6.6.zip).
+[TokenWise-0.6.7.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/TokenWise-0.6.7.zip).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
@@ -78,7 +100,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.6 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.7 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified
@@ -143,7 +165,7 @@ an older saved report may not contain the matched baseline needed for comparison
 
 ## Response Guidance
 
-Install the matching 0.6.6 backend through **Set Up Backend**, refresh your
+Install the matching 0.6.7 backend through **Set Up Backend**, refresh your
 workspace through **Enable Automatic Context**, and start a fresh chat. Ask
 `Explain session expiry and its related tests. Do not modify any files.`
 The current tool output and **Show Automatic Context** should expose a

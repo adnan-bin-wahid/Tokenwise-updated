@@ -12,6 +12,7 @@ async function main() {
   const files = [[path.join(root, "vscode-extension", artifact), artifact], [path.join(root, "README.md"), "README.md"],
     [path.join(root, "demonstation.md"), "demonstation.md"],
     [path.join(root, "study.md"), "study.md"],
+    [path.join(root, "validation.md"), "validation.md"],
     [path.join(root, "LICENSE"), "LICENSE"], [path.join(root, "docs/THIRD-PARTY-NOTICES.md"), "THIRD-PARTY-NOTICES.md"],
     [path.join(root, "CHANGELOG.md"), "CHANGELOG.md"], [path.join(root, `docs/release-notes/v${manifest.version}.md`), "RELEASE-NOTES.md"]];
   for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md"]) {

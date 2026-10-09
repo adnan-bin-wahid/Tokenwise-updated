@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.7 - 2026-10-09
+
+### Added
+
+- Opt-in automatic packet comparison after real Antigravity context preparation,
+  reusing the exact outgoing packet without a second neural retrieval pass.
+- **Configure Automatic Comparison** command with enable, disable, and retry;
+  snapshot reconciliation, bounded all-Python baselines, file lists, signed
+  changes, task-plus-packet counts, configured carbon scenarios, and JSON export.
+- **Import Antigravity Usage Comparison** for independent successful single-turn
+  CLI JSON/stream-JSON runs: reported counters, answers, durations and completed
+  tool traces remain separate from local packet measurements. Invalid, resumed,
+  mixed-conversation and mismatched-model logs are rejected.
+- Comparison instructions and regression coverage. No private IDE telemetry is
+  intercepted, no paid requests are launched automatically, and no universal
+  token or answer-quality improvement is asserted. Published 0.6.6 is unchanged.
+- **Open Validation Guide** opens the bundled teacher-facing with/without pilot,
+  three fixed tasks, six-item answer rubrics, and blank results worksheet.
+
 ## 0.6.6 - 2026-10-07
 
 ### Added

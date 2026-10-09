@@ -7,6 +7,11 @@ checkout or the `demonstration` parent as the retrieval workspace.
 The complete, ordered teacher script is **[demonstation.md](../demonstation.md)**.
 The 0.6.5 extension also opens it with **TokenWise: Open Demonstration Guide**.
 
+For the teacher's validation and comparison request, follow the current-source
+[validation protocol](../validation.md): real native with/without runs, fixed
+tasks, predefined answer rubrics and a blank results worksheet. That guide and
+these comparison additions are included in 0.6.7, not the existing 0.6.6 assets.
+
 The application contains account lockout, sessions, invoices, shipping, and
 activity reports. All features work; unrelated features serve as pruning controls,
 not filler. Eleven Python files and twenty deterministic tests provide the
@@ -39,7 +44,7 @@ The extension backend is a separate installation and does require its pretrained
 model and dependencies. Check [verification notes](VERIFICATION.md) and use the
 [blank evidence worksheet](results-template.md) for actual presentation results.
 
-Get the project, prompt-engineering rehearsal, and study from the [0.6.6 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+Get the project, validation protocol, prompt-engineering rehearsal, and study from the [0.6.7 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
 The already-published 0.6.4 ZIP
 contains the previous four-project layout; it has not been silently replaced.
 Generated exports under `results/`, `.agents`, `.tokenwise`, and Python caches

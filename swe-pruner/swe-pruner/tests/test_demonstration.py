@@ -125,6 +125,23 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(result["selection_scope"], "selected excerpt")
         self.assertNotIn("\r", result["methods"][1]["context"])
 
+    def test_automatic_comparison_needs_no_selection_and_reuses_prepared_context(self):
+        calls = self.model.calls
+        result = build_comparison(self.index, self.model, {**self.automatic, "comparison_query": "Explain account lockout"})
+        self.assertEqual([item["id"] for item in result["methods"]], ["all_python", "tokenwise"])
+        self.assertEqual(result["measurement_scope"], "prepared_packets")
+        self.assertEqual(result["methods"][1]["context"], self.automatic["unified_prompt"])
+        self.assertEqual(self.model.calls, calls)
+        for method in result["methods"]:
+            self.assertEqual(method["prompt_tokens"], len(self.model.tokenizer.encode(result["query"] + "\n\n" + method["context"])))
+        self.assertTrue(any("hypothetical" in note for note in result["notes"]))
+
+    def test_wrong_packet_counts_and_outside_files_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "token count"):
+            build_comparison(self.index, self.model, {**self.automatic, "pruned_tokens": 1})
+        with self.assertRaisesRegex(ValueError, "outside"):
+            build_comparison(self.index, self.model, {**self.automatic, "files": [{"file_path": "../outside.md"}]})
+
     def test_invalid_selection_and_changed_snapshot_fail_closed(self):
         for filename, text in (("../outside.py", None), ("README.md", None), ("auth.py", "invented source"), ("auth.py", " ")):
             with self.assertRaises(ValueError):
@@ -187,6 +204,30 @@ class ComparisonTests(unittest.TestCase):
                 self.assertEqual(client.post("/compare-workspace", json={**payload, "selection_file": "../outside.py"}).status_code, 400)
                 with patch("swe_pruner.retrieval.context_comparison.MAX_BASELINE_FILES", 1):
                     self.assertEqual(client.post("/compare-workspace", json=payload).status_code, 413)
+
+    def test_http_prepared_comparison_has_no_inference_and_reconciles_missed_file_changes(self):
+        from fastapi.testclient import TestClient
+        from swe_pruner import online_serving as serving
+        cache = RepositoryIndexCache()
+        cache.synchronize(str(self.root), "live-watcher", "start")
+        with patch.object(serving, "repository_cache", cache), \
+                patch.object(serving, "workspace_builder", WorkspaceContextBuilder()), \
+                patch.object(serving, "check_model_path", return_value=False), \
+                patch.object(serving, "model", None), TestClient(serving.app) as client:
+            serving.model = ReferenceModel()
+            original = client.post("/prune-workspace", json={"workspace_root": str(self.root), "query": "Explain account lockout"}).json()
+            calls = serving.model.calls
+            payload = {"workspace_root": str(self.root), "query": "Explain account lockout", "prepared_context": original}
+            response = client.post("/compare-prepared-workspace", json=payload)
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()["methods"][1]["context"], original["unified_prompt"])
+            self.assertEqual(serving.model.calls, calls)
+            with patch("swe_pruner.retrieval.context_comparison.MAX_BASELINE_FILES", 1):
+                self.assertEqual(client.post("/compare-prepared-workspace", json=payload).status_code, 413)
+            self.assertEqual(client.post("/compare-prepared-workspace", json={**payload, "query": "  "}).status_code, 400)
+            (self.root / "settings.py").write_text("LOCKOUT_THRESHOLD = 4\n", encoding="utf-8")
+            self.assertEqual(client.post("/compare-prepared-workspace", json=payload).status_code, 409)
+            self.assertEqual(serving.model.calls, calls)
 
 
 if __name__ == "__main__":

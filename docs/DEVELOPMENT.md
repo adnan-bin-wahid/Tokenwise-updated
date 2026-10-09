@@ -61,6 +61,23 @@ describes the required guided/unguided comparison.
 
 ## Try the Background Index
 
+### Automatic Comparison (0.6.7)
+
+Run `npm run prepare-backend` and `npm run compile` from `vscode-extension`, then
+press F5. In the development host, refresh the managed backend through **Set Up
+Backend** or restart your own checkout service as described below. Open the
+trusted Python demo folder and enable automatic context. Run **TokenWise:
+Configure Automatic Comparison**, select **Enable automatic packet comparison**,
+and send a normal prompt. No editor file selection is required.
+
+The result compares the exact prepared packet to an all-Python baseline after
+delivery, not actual IDE consumption. Retry through the configuration command;
+changed snapshots need a fresh retrieval. For actual reported CLI usage, use
+**Import Antigravity Usage Comparison** with two independent successful
+single-turn logs. The [teacher procedure](../demonstation.md#automatic-comparison-067)
+explains controls and telemetry capture. No paid requests are launched by these
+commands. The feature is included in 0.6.7, not the previous 0.6.6 VSIX.
+
 Background indexing is included in 0.6.0. From `vscode-extension`, run
 `npm run prepare-backend` and `npm run compile`, then press F5. In the development
 host, open a trusted local Python repository and run **TokenWise: Enable Automatic
@@ -215,7 +232,7 @@ From the checkout root, after compiling the extension:
 .\.venv\Scripts\python.exe scripts/verify_demonstration.py
 ```
 
-The first checks 28 example tests and four runnable apps. The second starts an
+The first checks twenty example tests and one runnable app. The second starts an
 isolated backend with real local weights/carbon artifacts, exports three context
 strategies per project, exercises real selected-file/excerpt pruning through the
 compiled service, and checks multi-turn native-hook state/new-chat isolation with
@@ -231,3 +248,15 @@ It also accepts `demonstration/results/pruning-inputs.json` to check repository,
 selected file at two thresholds, selected excerpt, native-history, and new-chat
 result views. Use `scripts/verify_demonstration.py --inputs-only` to retry just
 these real input paths without regenerating the optional packet comparisons.
+
+For 0.6.7 comparison rendering, install Playwright in a temporary directory,
+install its Chromium browser, compile the extension, then run:
+
+```powershell
+node scripts/verify-comparison-panels.cjs <path-to-playwright-module> tmp/release-0.6.7-ui
+```
+
+This checks automatic two-packet comparisons, pending/unavailable states, and
+the separate imported-usage view at desktop and narrow widths, including button
+messages and overflow. Its data is explicitly synthetic UI verification, not
+agent experiment results. Screenshots and the checks report stay under `tmp/`.

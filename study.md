@@ -3,13 +3,18 @@
 **Project:** TokenWise: Sustainable Context Optimization for Coding Agents  
 **Student:** Adnan Bin Wahid, BSSE-1442, Institute of Information Technology, University of Dhaka  
 **Supervisor named in the proposal:** Mridha Md. Nafis Fuad  
-**Implementation studied:** TokenWise extension 0.6.6, inspected on October 7, 2026
+**Implementation studied:** TokenWise extension 0.6.7, inspected on October 9, 2026
+
+**Comparison addendum:** Automatic packet comparison, CLI-usage import and the
+validation-guide shortcut are included in 0.6.7. Earlier public
+0.6.6 assets remain unchanged. The comparison measurements and their
+limitations are explained in Section 32.8 below and in the teacher guide.
 
 **Purpose:** Understand the entire project, explain its engineering and research foundations, demonstrate it, and answer project-defense questions confidently.
 
 This guide describes TokenWise as a complete system: its requirements, architecture, implementation, research basis, operation, evaluation, distribution, and limitations. It is not a chronological account of repairs, and it does not explain source code line by line. Instead, it explains the reasoning and behavior behind the important parts of the implementation.
 
-The implementation descriptions cover 0.6.6, including broad repository overviews, explicit topic exclusions, pruning-input traces, bounded conversation hints, context-strategy comparisons, automatic-result carbon reporting, the single teaching project, and outgoing prompt engineering in Section 13.7. Earlier installers remain unchanged and do not acquire response guidance automatically. Historical performance and carbon-model measurements retain their original dates, fixtures, and evaluation boundaries. A supported experiment or a proposed comparative study is not presented as a completed downstream-quality result.
+The implementation descriptions cover 0.6.7, including broad repository overviews, explicit topic exclusions, pruning-input traces, bounded conversation hints, context-strategy comparisons, automatic-result carbon reporting, the single teaching project, outgoing prompt engineering in Section 13.7, and comparison/validation support in Section 32.8. Earlier installers remain unchanged and do not acquire new functionality automatically. Historical performance and carbon-model measurements retain their original dates, fixtures, and evaluation boundaries. A supported experiment or a proposed comparative study is not presented as a completed downstream-quality result.
 
 The project ownership statement must remain precise. I built the TokenWise application and integrated its components into a working developer workflow. That includes the extension, repository-context pipeline, local service integration, sustainability-estimation workflow, installation, configuration, caching, diagnostics, packaging, and testing represented in this repository. The neural checkpoint and the foundational Qwen model are pretrained third-party components; their original training and published benchmark results belong to the cited researchers. Building an application from its requirements is not the same as training every dependency from random initialization. A strong defense can explain both the original system engineering and the properly attributed research it builds on.
 
@@ -370,6 +375,9 @@ Backend management handles installation, registration, startup, update prompts, 
 | **Open Demonstration Guide** | Open the bundled current one-project teacher walkthrough |
 | **Demonstrate Pruning Inputs** | Inspect no-anchor repository discovery, exact selected source, or an explicitly supplied user-history replay |
 | **Compare Context Strategies** | Export unpruned all-Python/manual-selection packets and unbiased automatic context for the same snapshot/task |
+| **Configure Automatic Comparison** (0.6.7) | Enable/disable local comparison for fresh automatic packets or retry the latest snapshot |
+| **Import Antigravity Usage Comparison** (0.6.7) | Compare two independent successful CLI usage logs separately from packet counts |
+| **Open Validation Guide** (0.6.7) | Open the bundled classroom quick route, fixed tasks and with/without rubrics |
 | **Show Automatic Context** | Inspect the most recently observed prepared context |
 | **Remove All Local Data** | Explicitly remove extension-owned data while the extension is still installed |
 | **Prune Selected Code** | Manually analyze a selected text region for a task |
@@ -417,6 +425,7 @@ CPU thread settings are bounded. The default is four CPU threads, configurable w
 | `POST /prune` | Query-conditioned pruning of submitted code text | Nonempty query/code and threshold bounds through request schema |
 | `POST /prune-workspace` | Goal-driven repository retrieval, pruning, and packing | Python language, existing workspace, nonblank task, active-file containment, budget and candidate bounds |
 | `POST /compare-workspace` | All-indexed-Python/manual-selection/automatic packet comparison for one snapshot | Saved selection containment, at most 200 indexed files/2 MiB of source, and unchanged fingerprint; editor/history hints are removed from the automatic branch |
+| `POST /compare-prepared-workspace` (0.6.7) | All-Python baseline versus an exact already-prepared packet, without a second pruning pass | Saved-file reconciliation, snapshot equality, packet-count validation and baseline size limits |
 | `POST /index-workspace` | Start, update, reconcile, or stop a background watcher session | Absolute workspace path, bounded path batches, watcher identity, and sequence values |
 | `POST /estimate-carbon` | Predicted phase energy and carbon from workload/model assumptions | Feature values, supported encoded hardware, and loaded artifacts |
 
@@ -537,7 +546,7 @@ The repository result panel shows version, profile, status, format, and fragment
 
 Automatic Antigravity retrieval uses `"response_guidance": true` in the repository's `.agents/tokenwise.json`; a boolean `false` disables it. The default is true even for an older settings file that omits the key. Manual **Build Repository Context**, repository/history demonstrations, and **Compare Context Strategies** independently use `tokenWise.enableResponseGuidance` in editor settings. Direct `/prune` and selected-source commands still produce raw excerpts and line decisions, not guided outgoing repository packets. Disabling response guidance does not disable retrieval, earlier-user hints, source-reference labels, or the existing Antigravity rule.
 
-Normal users install the 0.6.6 VSIX, reload, update the Python backend through **Set Up Backend**, and refresh workspace rules through **Enable Automatic Context**. A developer source-build trial instead requires `npm run prepare-backend`, `npm run compile`, and F5 from `vscode-extension`, followed by the same backend/setup refresh. Compile alone updates TypeScript, not an already installed/running Python service. See the [README rehearsal](README.md#response-guidance) and [demonstration](demonstation.md#response-guidance).
+Normal users install the 0.6.7 VSIX, reload, update the Python backend through **Set Up Backend**, and refresh workspace rules through **Enable Automatic Context**. A developer source-build trial instead requires `npm run prepare-backend`, `npm run compile`, and F5 from `vscode-extension`, followed by the same backend/setup refresh. Compile alone updates TypeScript, not an already installed/running Python service. See the [README rehearsal](README.md#response-guidance) and [demonstration](demonstation.md#response-guidance).
 
 #### How to establish whether answers are better
 
@@ -1378,7 +1387,7 @@ This separates a modest distributable extension from the much larger ML runtime 
 
 ### 30.3 Public distribution
 
-The 0.6.6 distribution is [TokenWise 0.6.6](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6), dated October 7, 2026. Its assets are `tokenwise-vscode-0.6.6.vsix`, `TokenWise-0.6.6.zip`, and `SHA256SUMS.txt`. The ZIP includes the installer, one teaching project, `study.md`, `demonstation.md`, usage/operational documentation, notices, and internal checksums. Normal users install the VSIX through **Extensions > ... > Install from VSIX...**, reload, set up/update the matching backend, and enable their trusted Python folder. They do not need Node.js, a source clone, or F5.
+The 0.6.7 distribution is [TokenWise 0.6.7](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7), dated October 9, 2026. Its assets are `tokenwise-vscode-0.6.7.vsix`, `TokenWise-0.6.7.zip`, and `SHA256SUMS.txt`. The ZIP includes the installer, one teaching project, `study.md`, `demonstation.md`, `validation.md`, usage/operational documentation, notices, and internal checksums. Normal users install the VSIX through **Extensions > ... > Install from VSIX...**, reload, set up/update the matching backend, and enable their trusted Python folder. They do not need Node.js, a source clone, or F5.
 
 The release publisher verifies an explicit file allowlist and hashes, checks that the annotated tag and remote `main` match the release commit, creates a draft, uploads three assets, and verifies GitHub sizes/digests before publication. The final 0.6.5 VSIX, ZIP, and checksums were also downloaded without authentication and checked against the local build. The installer was inspected for the icon, guide, one-project inventory, and backend integrity. These checks establish distribution integrity, not general agent quality. Earlier public assets/tags remain unchanged; a future update requires a new version. GitHub's automatically generated source archives are not the normal-user installer.
 
@@ -1402,12 +1411,12 @@ TokenWise therefore has several forms of evidence rather than treating one test 
 
 ### 31.2 Current unit-test results
 
-The 0.6.6 source/release checks on October 7, 2026 report the following suites. These are functional checks, not downstream agent-quality measurements. The prior 0.6.5 record remains historical: 167 extension passes, 105 backend passes and one skip, and twenty application passes.
+The 0.6.7 source/release checks on October 9, 2026 report the following suites. These are functional checks, not downstream agent-quality measurements. The October 7 record for 0.6.6 remains historical: 174 extension passes, 118 backend passes and one skip, and twenty application passes. The prior 0.6.5 record reports 167 extension passes, 105 backend passes and one skip, and twenty application passes.
 
 | Suite | Result | Meaning |
 | --- | --- | --- |
-| Extension Node tests | 174 passed, no failures | Setup/lifecycle, synchronization, carbon states/counts, input traces, comparisons, response guidance, bundled study/guide, packaging, and icon contracts |
-| Backend Python tests | 119 discovered: 118 passed, 1 skipped, no failures | Adapter, installer, index/cache, overview/focused retrieval, exclusions, history, budgets, response templates, real-tokenizer packet checks, and HTTP/comparison contracts |
+| Extension Node tests | 191 passed, no failures | Setup/lifecycle, synchronization, carbon states/counts, input traces, automatic comparisons, CLI-usage imports, response guidance, bundled study/validation guides, packaging, and icon contracts |
+| Backend Python tests | 122 discovered: 121 passed, 1 skipped, no failures | Adapter, installer, index/cache, overview/focused retrieval, exclusions, history, budgets, response templates, tokenizer accounting, and HTTP/prepared-comparison snapshot contracts |
 | Current demo tests | 20 passed, no failures; deterministic app output passed | Lockout/session boundaries, invoice/shipping, model defaults, and activity reports |
 
 The skipped backend test requires creating file symlinks, which this Windows account cannot do. This is a test-coverage qualification, not an unexplained silent pass. The run also emits dependency deprecation warnings; successful assertions do not imply that every library API is future-proof.
@@ -1517,6 +1526,12 @@ The reference script supplies assumptions including phase-latency and quality fe
 
 ### 32.7 Comparative-study support and remaining work
 
+The practical teacher-facing protocol is [validation.md](validation.md), with a
+native Antigravity with/without workflow study, three source-grounded tasks and
+predefined six-item answer rubrics. Its eighteen-run pilot and blank worksheet
+are a plan, not completed cloud-agent measurements. A native baseline is distinct
+from supplying all code as a hypothetical context-only baseline.
+
 The current implementation supports a comparative study, but a completed comparative answer-quality dataset is not implied by the commands or tests. **Compare Context Strategies** exports all indexed Python, unpruned saved selection, and automatic TokenWise packets for one task/snapshot. **Demonstrate Pruning Inputs** separately exposes repository discovery, exact selected-source neural pruning, and a supplied-history replay. These two commands investigate different questions: what context is supplied, and what inputs influence its preparation.
 
 An initial study can use six tasks in `tokenwise_demo`: lockout/tests, session expiry/revocation, the `Session` class, invoice calculation/tests, shipping/tests, and a whole-project overview. Keep task wording, source snapshot, agent model/settings, and carbon scenario fixed. Export the packets and define required facts from source/tests before examining answers. For the lockout task, those facts include three failures, sixty seconds, correct-password rejection before the deadline, acceptance/reset at the deadline, and a new count after an expired wrong-password attempt.
@@ -1526,6 +1541,76 @@ Use fresh isolated chats and one packet/question per condition. In a context-onl
 Report complete packet tokens, source retention, required-fact coverage, incorrect/unsupported assertions, context preparation time, total response time, manual selection effort, and estimated scenario carbon. Record cold startup separately from warm operation; report total prompt/history/output tokens where observable. Three repetitions per task/strategy would produce 54 initial answer trials, with rotated strategy order and reported variability. This is a proposed pilot protocol, not a table of outcomes already obtained. One deliberately small teaching project cannot establish general performance across real repositories.
 
 History belongs in a separate controlled experiment: compare the same recognized follow-up with and without the specified earlier user topic, then test an explicit topic switch and a fresh chat. Label supplied replay versus actual native/fallback behavior. Do not describe history as an interchangeable source baseline or persistent cross-chat memory. Carbon comparisons remain configured downstream predictions, not measured net savings including local pruning. Optional graph/neural/cache ablations would need their own explicit configurations and results; the current UI does not automatically run or grade those research ablations.
+
+### 32.8 Automatic comparisons and reported Antigravity usage (0.6.7)
+
+The October 9 source implementation adds two distinct measurement paths. Keeping
+them distinct is essential: preparing a packet is observable locally, but it does
+not reveal every request that Antigravity's IDE agent sends to a cloud model.
+
+**Automatic prepared-packet comparison.** A developer enables
+`tokenWise.autoCompareAutomaticContext` using **TokenWise: Configure Automatic
+Comparison**. After a fresh, non-verification automatic result arrives, the
+extension sends its exact prepared context, current task and workspace to
+`POST /compare-prepared-workspace` on the recorded loopback backend. The backend
+reconciles saved Python files, rejects a changed repository fingerprint, validates
+the packet's tokenizer count, and constructs an unpruned all-indexed-Python
+baseline. It does not run the neural pruner again or use a selected editor file.
+Study exports are bounded to 200 Python files and 2 MiB of Python source; an
+oversized baseline is rejected rather than misleadingly truncated.
+
+The result contains both complete packets, source and packet token counts,
+task-plus-packet counts, file lists, the Python snapshot fingerprint, notes and
+the explicit measurement scope `prepared_packets`. The frontend shows absolute
+token differences and percentage reductions or increases. A zero baseline has
+no meaningful percentage; small repositories can legitimately expand because of
+formatting and response guidance. Carbon estimates are calculated under the
+same configured inference scenario and remain predictions. Overview packets can
+include project documents that the Python-only baseline excludes, so the
+comparison is not claimed to contain identical categories of evidence.
+
+This analysis is asynchronous and opt-in. A failed comparison does not remove
+the already prepared context, and event identity prevents an old result from
+replacing a newer prompt's panel. The same configuration command provides
+disable and retry actions. Export records preserve packets for inspection;
+TokenWise does not inject the all-code baseline into the actual agent conversation.
+The exported comparison is not persisted back into the adapter's `latest.json`;
+that file continues to represent the adapter's original preparation event.
+
+**Reported CLI-usage comparison.** Antigravity's
+[official headless CLI](https://www.antigravity.google/docs/cli/headless/)
+can produce JSON usage envelopes and stream-JSON completed tool events.
+**TokenWise: Import Antigravity Usage Comparison** reads two user-selected logs
+locally and creates a separately labeled `imported_antigravity_cli_usage` report.
+It retains input, output, cache-read, thinking and total counters as reported;
+it never adds per-step values to already cumulative terminal totals. Completed
+tool transitions are deduplicated by step index. Answers, durations, reported
+model identity and observed tool parameters are available for evaluation and
+JSON export. Tool output bodies are not included in the imported tool summary.
+
+Both runs must be successful, fresh single-turn conversations with usable
+reported usage. Failed, zero-usage, resumed, mixed-conversation or oversized logs
+are rejected. The importer also rejects using the same conversation twice or
+different models when both model identities are reported. If a model identity
+is missing, equality is explicitly unverified. Plain JSON envelopes lack tool
+traces; stream logs show observed calls, not every file or instruction visible
+to the model. Terminal commands may read many files, and system instructions,
+rules, history or subagents can supply context outside the observed trace.
+
+The without/with labels are assigned by the experimenter. The logs alone do not
+verify identical task wording, settings, evidence, or TokenWise consumption.
+Keep those controls explicit, use independent conversations, rotate condition
+order, and inspect tool-assisted contamination. CLI telemetry cannot be relabeled
+as telemetry from a prior IDE chat. The extension does not intercept private
+IDE storage, automatically send paid A/B requests, or automatically grade answer
+quality. A context-only all-code-versus-pruned experiment and an unrestricted
+native-agent workflow comparison answer different questions. Neither is a
+completed superiority study just because the measurement interface exists.
+
+These features are included in 0.6.7, not functionality added to the older
+published 0.6.6 installer. **Open Validation Guide** opens the bundled quick route
+and evaluation protocol. The runnable procedure is in the
+[teacher guide](demonstation.md#automatic-comparison-067).
 
 ## 33. Project Contributions and Design Justification
 
@@ -1647,7 +1732,7 @@ I report the saved local metrics rather than adopting the source paper's numbers
 
 I implemented central backend registration, recoverable managed installation, arbitrary-workspace integration, background saved-file synchronization, exact cache identities, diagnostics, and ownership-aware uninstall. I added tests for the failure and concurrency cases that could otherwise make a working demo unreliable for another user.
 
-I packaged version 0.6.6 with outgoing response guidance, its icon, one runnable teaching application, twenty application tests, bundled study/guides, integrity metadata, and separately downloaded weights. Functional tests, isolated integration checks, performance benchmarks, and public-download checks verify different aspects of this complete system. The real-model/agent results recorded for older fixtures are not relabeled as current single-project experiments.
+I packaged version 0.6.7 with outgoing response guidance, automatic packet comparison, independent CLI-usage import, its icon, one runnable teaching application, twenty application tests, bundled study/validation guides, integrity metadata, and separately downloaded weights. Functional tests, isolated integration checks, performance benchmarks, and public-download checks verify different aspects of this complete system. The real-model/agent results recorded for older fixtures are not relabeled as current single-project experiments.
 
 ### 35.6 Evaluation and reflection
 
@@ -2033,7 +2118,7 @@ I can say that I implemented task-aware outgoing prompting **designed to improve
 
 | Item | Current value or distinction |
 | --- | --- |
-| Extension snapshot / release version | 0.6.6 / Windows beta on GitHub Releases |
+| Extension snapshot / release version | 0.6.7 / Windows beta on GitHub Releases |
 | Normal managed interpreter | 64-bit Python 3.12 |
 | Neural foundation | Qwen3-Reranker-0.6B-derived pretrained SWE-Pruner checkpoint |
 | Backbone layers used for fusion | 7, 14, 28 from 28 layers |
@@ -2064,6 +2149,7 @@ I can say that I implemented task-aware outgoing prompting **designed to improve
 | Local carbon CV folds | Five, not the paper's ten |
 | Recorded 0.6.5 extension/backend/demo checks | 167 pass / 105 pass and one skip / 20 pass |
 | 0.6.6 extension/backend/demo checks | 174 pass / 118 pass and one skip / 20 pass |
+| 0.6.7 extension/backend/demo checks | 191 pass / 121 pass and one skip / 20 pass |
 | Current demo source | `demonstration/tokenwise_demo`, eleven Python files |
 | Demo lockout threshold / duration | Three failures / sixty seconds; exact deadline resets |
 | Demo session duration / validity | 300 seconds / not revoked and strictly before expiry |

@@ -7,7 +7,36 @@ retrieves relevant code and tests without asking you to select files manually.
 **For normal users: install the VSIX. You do not need to clone this repository,
 install Node.js, compile the extension, press F5, or manually start a server.**
 
-## Version 0.6.6
+For teacher-facing functional validation and a real native Antigravity
+with/without pilot, use the current-source [validation guide](validation.md).
+It separates working-system evidence, supplied-packet measurements and actual
+agent outcomes; its results worksheet starts blank, not with invented savings.
+
+## Version 0.6.7
+
+### Automatic Comparison
+
+Version 0.6.7 adds **TokenWise: Configure Automatic Comparison**.
+Choose **Enable automatic packet comparison**, then send an ordinary Antigravity
+prompt with automatic context enabled. The result compares all indexed Python
+code against the exact TokenWise packet in the background, without another
+pruning pass or manual file selection. It shows file lists, local packet tokens,
+task-plus-packet tokens, genuine increases or reductions, configured carbon
+estimates, and JSON export. It is off by default; disable it or retry a failed
+comparison through the same command. Saved repository changes invalidate the
+comparison; send a fresh prompt instead of comparing different snapshots.
+
+**This is not automatic surveillance of the IDE's model usage or file reads.**
+The all-Python packet is an explicit hypothetical baseline. Actual Antigravity
+usage can be compared through **TokenWise: Import Antigravity Usage Comparison**,
+using two independent successful, single-turn CLI JSON/stream-JSON logs. The
+importer preserves reported counters, answers, durations and completed tool
+traces; it rejects failed/resumed runs, identical conversation IDs, and differing
+reported models. Importing logs makes no cloud request. The feature does not
+launch paid comparison runs automatically, grade answer quality, or guarantee
+lower usage. Instructions are in [the teacher guide](demonstation.md#automatic-comparison-067).
+Run **TokenWise: Open Validation Guide** for the bundled with/without procedure.
+These additions require 0.6.7 and its matching backend; public 0.6.6 is unchanged.
 
 **0.6.6** adds task-aware prompt engineering to outgoing Antigravity context:
 grounded explanations, file/symbol citations, user-constraint preservation, and
@@ -20,19 +49,19 @@ and the [teacher walkthrough](demonstation.md). The updated [study](study.md)
 is included in the presentation ZIP and the extension resources. Run
 `TokenWise: Open Demonstration Guide` to open it from the installed extension.
 Get the installer and single-project presentation bundle from the
-[0.6.6 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+[0.6.7 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
 
 **0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
-`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.6.
+`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.7.
 Previously published releases are unchanged.
 
 To install or upgrade:
 
-1. Download [tokenwise-vscode-0.6.6.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix).
+1. Download [tokenwise-vscode-0.6.7.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix).
    In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
 2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
    as well as the extension: an already-running older backend does not have the
-   new response-guidance feature. Existing validated model downloads can be reused.
+   new comparison endpoint. Existing validated model downloads can be reused.
 3. Open the Python folder, run **TokenWise: Enable Automatic Context**, and start
    a new chat. Repeat the task and check the fresh result, not an old panel.
 
@@ -45,10 +74,10 @@ or erase validated downloads to retry.
 
 For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
 and the single [Python demo project](demonstration/tokenwise_demo/README.md).
-The updated 0.6.6 guide focuses on **how pruning works** with repository discovery,
+The updated 0.6.7 guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
 command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
-Download the 0.6.6 installer and presentation ZIP below for outgoing prompt
+Download the 0.6.7 installer and presentation ZIP below for automatic comparison, validation and outgoing prompt
 engineering, its rehearsal, and the single-project bundle. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
@@ -93,10 +122,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.6 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/tokenwise-vscode-0.6.6.vsix)
-from the [0.6.6 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6).
+Download [**TokenWise 0.6.7 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix)
+from the [0.6.7 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, one demonstration project, study, and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.6/TokenWise-0.6.6.zip)
+provides an [installer, one demonstration project, study, validation and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/TokenWise-0.6.7.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -198,7 +227,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.6 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.7 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -385,9 +414,9 @@ editor setting **TokenWise > Enable Response Guidance**
 (`tokenWise.enableResponseGuidance`). Direct **Prune Current File** and
 **Prune Selected Code** still return source excerpts, not guided agent packets.
 
-To try the installed **0.6.6** release, no source build is needed:
+To try the installed **0.6.7** release, no source build is needed:
 
-1. Install the 0.6.6 VSIX and reload Antigravity.
+1. Install the 0.6.7 VSIX and reload Antigravity.
 2. Open your Python repository or `demonstration/tokenwise_demo` from the ZIP.
    Finish active prompts, then run **TokenWise: Set Up Backend** to update the
    registered backend. An older running backend will not acquire this feature
@@ -420,8 +449,11 @@ for the explanation and an honest comparison protocol.
 | **Show Automatic Context** | Reopen the latest supplied context |
 | **Demonstrate Pruning Inputs** (0.6.3+) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
 | **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
+| **Configure Automatic Comparison** (0.6.7+) | Enable/disable packet comparison or retry the latest result |
+| **Import Antigravity Usage Comparison** (0.6.7+) | Compare two independent successful CLI usage logs |
 | **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
 | **Open Demonstration Guide** (0.6.5+) | Open the bundled one-project teacher walkthrough |
+| **Open Validation Guide** (0.6.7+) | Open the classroom quick route and controlled with/without protocol |
 | **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
 
 All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
@@ -560,7 +592,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.6/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.7/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

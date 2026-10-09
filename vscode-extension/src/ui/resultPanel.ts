@@ -1,11 +1,13 @@
 import * as vscode from "vscode";
 import { CarbonImpactViewModel, PruneResultViewModel, PruningInputTrace, WorkspacePruneResponse } from "../types";
+import { AgentUsageComparison } from "../services/antigravityUsage";
 
 export class ResultPanel {
   private static readonly viewType = "tokenwise.resultPanel";
   private panel: vscode.WebviewPanel | undefined;
   private latestResult: PruneResultViewModel | undefined;
   private latestWorkspaceResult: WorkspacePruneResponse | undefined;
+  private latestAgentComparison: AgentUsageComparison | undefined;
 
   private ensurePanel(preserveFocus = false): vscode.WebviewPanel {
     if (this.panel) {
@@ -23,9 +25,17 @@ export class ResultPanel {
       this.panel = undefined;
       this.latestResult = undefined;
       this.latestWorkspaceResult = undefined;
+      this.latestAgentComparison = undefined;
     });
 
     this.panel.webview.onDidReceiveMessage(async (message: { command?: string; method?: string }) => {
+      if (message.command === "exportAgentComparison" && this.latestAgentComparison) {
+        try {
+          const destination = await vscode.window.showSaveDialog({ saveLabel: "Export Reported Usage Comparison", filters: { JSON: ["json"] } });
+          if (destination) { await vscode.workspace.fs.writeFile(destination, Buffer.from(JSON.stringify(this.latestAgentComparison, null, 2), "utf8")); }
+        } catch (error) { await vscode.window.showWarningMessage(`TokenWise: usage export failed: ${String(error)}`); }
+        return;
+      }
       if (message.command === "exportPruningRun") {
         const result = this.latestResult ?? this.latestWorkspaceResult;
         if (!result) { return; }
@@ -72,6 +82,7 @@ export class ResultPanel {
   ): void {
     this.latestResult = result;
     this.latestWorkspaceResult = undefined;
+    this.latestAgentComparison = undefined;
     const panel = this.ensurePanel();
     panel.title = "TokenWise Prune Result";
     panel.webview.html = this.getHtml(result);
@@ -85,6 +96,7 @@ export class ResultPanel {
   ): void {
     this.latestWorkspaceResult = result;
     this.latestResult = undefined;
+    this.latestAgentComparison = undefined;
     const panel = this.ensurePanel(preserveFocus);
     panel.title = "TokenWise Repository Context";
     panel.webview.html = this.getWorkspaceHtml(result);
@@ -99,6 +111,33 @@ export class ResultPanel {
     this.latestWorkspaceResult = result;
     this.panel.webview.html = this.getWorkspaceHtml(result);
     return true;
+  }
+
+  public showAgentUsageComparison(result: AgentUsageComparison): void {
+    this.latestAgentComparison = result;
+    this.latestResult = undefined;
+    this.latestWorkspaceResult = undefined;
+    const panel = this.ensurePanel();
+    panel.title = "TokenWise Antigravity Usage Comparison";
+    const rows = ["input_tokens", "output_tokens", "cache_read_tokens", "thinking_tokens", "total_tokens"] as const;
+    panel.webview.html = this.shell("Antigravity reported usage comparison", `
+      <div class="subtle">Imported CLI telemetry | ${escapeHtml(result.importedAt)} | User-labeled independent runs</div>
+      <div class="table-wrap"><table><thead><tr><th>Reported counter</th><th>Without TokenWise</th><th>With TokenWise</th><th>Change</th></tr></thead>
+      <tbody>${rows.map(key => {
+        const before = result.without.usage[key], after = result.with.usage[key];
+        return `<tr><td>${escapeHtml(key)}</td><td>${before ?? "not reported"}</td><td>${after ?? "not reported"}</td>
+          <td>${before === undefined || after === undefined ? "not available" : tokenChange(before, after)}</td></tr>`;
+      }).join("")}</tbody></table></div>
+      <div class="meta-grid"><span>Duration without / with</span><strong>${result.without.durationSeconds.toFixed(2)}s / ${result.with.durationSeconds.toFixed(2)}s</strong>
+      <span>Completed tool calls without / with</span><strong>${result.without.toolTraceAvailable ? result.without.tools.length : "not reported"} / ${result.with.toolTraceAvailable ? result.with.tools.length : "not reported"}</strong></div>
+      ${result.notes.map(note => `<div class="notice">${escapeHtml(note)}</div>`).join("")}
+      ${([result.without, result.with]).map((run, index) => `<section><h2>${index === 0 ? "Without TokenWise" : "With TokenWise"}</h2>
+        <div class="subtle">Conversation: ${escapeHtml(run.conversationId)} | Model: ${escapeHtml(run.model ?? "not reported")}</div>
+        <details><summary>Answer</summary><pre>${escapeHtml(run.answer)}</pre></details>
+        <details><summary>Observed tool calls (${run.toolTraceAvailable ? run.tools.length : "trace unavailable"})</summary>
+          ${run.tools.map(tool => `<div><strong>${tool.step}: ${escapeHtml(tool.name)}${tool.failed ? " (failed)" : ""}</strong><pre>${escapeHtml(JSON.stringify(tool.parameters, null, 2))}</pre></div>`).join("")}</details></section>`).join("")}
+      <div class="actions"><button onclick="send('exportAgentComparison')">Export Reported Usage Comparison</button></div>`);
+    panel.reveal(vscode.ViewColumn.Beside);
   }
 
   private getHtml(result: PruneResultViewModel): string {
@@ -294,26 +333,34 @@ export class ResultPanel {
 
   private renderComparison(result: WorkspacePruneResponse): string {
     const comparison = result.comparison;
-    if (!comparison) { return ""; }
+    if (!comparison) {
+      if (result.comparisonStatus === "pending") { return `<div class="notice">Preparing automatic packet comparison...</div>`; }
+      if (result.comparisonStatus === "unavailable") { return `<div class="notice">Automatic packet comparison unavailable: ${escapeHtml(result.comparisonError ?? "Retrieve a new prompt and retry.")}</div>`; }
+      return "";
+    }
     const whole = comparison.methods.find(item => item.id === "all_python")?.input_tokens ?? 0;
+    const prepared = comparison.methods.find(item => item.id === "tokenwise");
     return `<section>
       <h2>Context strategy comparison</h2>
       <div class="subtle">Task: ${escapeHtml(comparison.query)}<br>Manual baseline: ${escapeHtml(comparison.selection_scope)}</div>
+      <div class="notice">Measurement: local prepared packets, not actual Antigravity IDE consumption. Without-pruning baseline assumes all indexed Python code is supplied.</div>
+      ${prepared ? `<div class="stats">${stat("All-Python baseline", `${whole} tokens`)}${stat("TokenWise packet", `${prepared.input_tokens} tokens`)}
+        ${stat("Packet change", tokenChange(whole, prepared.input_tokens), whole > prepared.input_tokens)}</div>` : ""}
       <div class="table-wrap"><table>
-        <thead><tr><th>Strategy</th><th>Files</th><th>Source tokens</th><th>Input tokens</th><th>Change vs all code</th><th>Estimated energy</th><th>Estimated CO2</th></tr></thead>
+        <thead><tr><th>Strategy</th><th>Files</th><th>Source tokens</th><th>Packet tokens</th><th>Task + packet tokens</th><th>Change vs all code</th><th>Estimated energy</th><th>Estimated CO2</th></tr></thead>
         <tbody>${comparison.methods.map(item => {
-          const delta = whole > 0 ? (whole - item.input_tokens) / whole * 100 : 0;
           return `<tr><td>${escapeHtml(item.title)}</td><td class="num">${item.files.length}</td>
             <td class="num">${item.source_tokens}</td><td class="num">${item.input_tokens}</td>
-            <td>${Math.abs(delta).toFixed(2)}% ${delta < 0 ? "increase" : "reduction"}</td>
+            <td class="num">${item.prompt_tokens ?? "not reported"}</td><td>${tokenChange(whole, item.input_tokens)}</td>
             <td>${item.carbon ? `${item.carbon.totalJoules.toFixed(4)} J` : "unavailable"}</td>
             <td>${item.carbon ? formatCarbon(item.carbon.co2Grams) : escapeHtml(comparison.carbonStatus ?? "unavailable")}</td></tr>`;
         }).join("")}</tbody></table></div>
       ${comparison.carbonError ? `<div class="notice">Carbon estimate unavailable: ${escapeHtml(comparison.carbonError)}</div>` : ""}
       ${comparison.notes.map(note => `<div class="notice">${escapeHtml(note)}</div>`).join("")}
+      ${comparison.methods.map(item => `<details><summary>${escapeHtml(item.title)}: ${item.files.length} included files</summary><pre>${escapeHtml(item.files.join("\n"))}</pre></details>`).join("")}
       <div class="actions">
         <button onclick="send('copyComparison', 'all_python')">Copy All Python Code</button>
-        <button onclick="send('copyComparison', 'selected')">Copy Selected Code</button>
+        ${comparison.methods.some(item => item.id === "selected") ? `<button onclick="send('copyComparison', 'selected')">Copy Selected Code</button>` : ""}
         <button onclick="send('copyComparison', 'tokenwise')">Copy TokenWise Context</button>
         <button onclick="send('exportComparison')">Export Comparison</button>
       </div>
@@ -383,6 +430,13 @@ export class ResultPanel {
 
 function stat(label: string, value: string, ok = false): string {
   return `<div class="stat"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value${ok ? " ok" : ""}">${escapeHtml(value)}</div></div>`;
+}
+
+function tokenChange(before: number, after: number): string {
+  const difference = before - after;
+  const label = difference < 0 ? "increase" : "reduction";
+  const percentage = before > 0 ? `${(Math.abs(difference) / before * 100).toFixed(2)}% ${label}` : "percentage unavailable (zero baseline)";
+  return `${percentage}; ${Math.abs(difference)} tokens ${difference < 0 ? "added" : "saved"}`;
 }
 
 function escapeHtml(value: string): string {

@@ -12,6 +12,7 @@ import { UninstallTracker } from "./services/uninstallTracker";
 import { RepositoryIndexSync } from "./services/repositoryIndexSync";
 import { createCompareContextStrategiesCommand } from "./commands/compareContextStrategies";
 import { createDemonstratePruningCommand } from "./commands/demonstratePruning";
+import { createImportAntigravityComparisonCommand } from "./commands/importAntigravityComparison";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const tracker = new UninstallTracker(context);
@@ -61,8 +62,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("tokenwise.showDiagnostics", () => backend.diagnostics()),
     vscode.commands.registerCommand("tokenwise.openSetupGuide", () => backend.guide()),
     vscode.commands.registerCommand("tokenwise.openDemonstrationGuide", () => backend.demonstrationGuide()),
+    vscode.commands.registerCommand("tokenwise.openValidationGuide", () => backend.validationGuide()),
     vscode.commands.registerCommand("tokenwise.compareContextStrategies",
       createCompareContextStrategiesCommand(panel, context.extensionUri, () => backend.backgroundUrl(true))),
+    vscode.commands.registerCommand("tokenwise.importAntigravityComparison", createImportAntigravityComparisonCommand(panel)),
     vscode.commands.registerCommand("tokenwise.demonstratePruning",
       createDemonstratePruningCommand(service, panel, context.extensionUri, () => backend.backgroundUrl(true))),
     vscode.commands.registerCommand("tokenwise.removeAllLocalData", () => tracker.removeAll(async () => {

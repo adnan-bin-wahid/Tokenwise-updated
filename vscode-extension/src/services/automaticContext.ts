@@ -3,7 +3,7 @@ import { WorkspacePruneResponse } from "../types";
 import { ResultPanel } from "../ui/resultPanel";
 import { TokenWiseApiClient } from "./apiClient";
 import { getTokenWiseConfig } from "./config";
-import { estimateCarbonComparison } from "./carbonComparison";
+import { estimateCarbonComparison, estimateCarbonForInputs } from "./carbonComparison";
 
 interface AutomaticActivity {
   event_id: string;
@@ -45,6 +45,8 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
       return undefined;
     }
     const goal = result.structured_goal;
+    if (result.repository_fingerprint !== undefined
+      && (typeof result.repository_fingerprint !== "string" || !/^[a-f0-9]{64}$/.test(result.repository_fingerprint))) { return undefined; }
     if ((goal.objective !== undefined && typeof goal.objective !== "string")
       || (goal.task_type !== undefined && typeof goal.task_type !== "string")
       || [goal.identifiers, goal.observed_errors, goal.excluded_topics].some(list => list !== undefined
@@ -93,6 +95,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
   private disposed = false;
   private readonly foldersListener: vscode.Disposable;
   private readonly command: vscode.Disposable;
+  private readonly comparisonCommand: vscode.Disposable;
 
   public constructor(
     private readonly status: vscode.StatusBarItem,
@@ -105,6 +108,25 @@ export class AutomaticContextMonitor implements vscode.Disposable {
         if (this.latestFolder) { void this.enrichCarbon(this.latest, this.latestFolder); }
       } else {
         this.output.show(true);
+      }
+    });
+    this.comparisonCommand = vscode.commands.registerCommand("tokenwise.configureAutomaticComparison", async () => {
+      const folder = this.latestFolder ?? vscode.workspace.workspaceFolders?.[0];
+      if (!folder || !vscode.workspace.isTrusted || vscode.env.remoteName || folder.uri.scheme !== "file") {
+        await vscode.window.showWarningMessage("Open a trusted local Python workspace first."); return;
+      }
+      const choice = await vscode.window.showQuickPick(["Enable automatic packet comparison", "Disable automatic packet comparison",
+        "Retry latest comparison"], { placeHolder: "Packet measurements are local; actual model usage requires Antigravity telemetry." });
+      if (!choice) { return; }
+      if (choice !== "Retry latest comparison") {
+        await vscode.workspace.getConfiguration("tokenWise", folder.uri).update("autoCompareAutomaticContext",
+          choice.startsWith("Enable"), vscode.ConfigurationTarget.WorkspaceFolder);
+      }
+      if (!choice.startsWith("Disable") && this.latest?.status === "ready" && this.latestFolder) {
+        this.showResult(this.latest, false);
+        await this.enrichComparison(this.latest, this.latestFolder, true);
+      } else if (choice.startsWith("Enable")) {
+        await vscode.window.showInformationMessage("Automatic packet comparison enabled. Send a new Antigravity prompt with automatic context enabled.");
       }
     });
     this.foldersListener = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
@@ -198,6 +220,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
         );
         this.output.appendLine(result.files.map((file) => file.file_path).join(", "));
         if (openPanel && !activity.verification) { void this.enrichCarbon(activity, folder); }
+        if (openPanel && !activity.verification) { void this.enrichComparison(activity, folder); }
         if (openPanel && !activity.verification
           && vscode.workspace.getConfiguration("tokenWise").get("autoOpenAutomaticContext", true)) {
           this.showResult(activity, true);
@@ -259,6 +282,55 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     }
   }
 
+  private async enrichComparison(activity: AutomaticActivity, folder: vscode.WorkspaceFolder, retry = false): Promise<void> {
+    const result = activity.result;
+    if (!result || activity.verification || this.disposed || this.latest !== activity
+      || !vscode.workspace.isTrusted || vscode.env.remoteName || folder.uri.scheme !== "file"
+      || result.comparisonStatus === "pending"
+      || (!retry && (!vscode.workspace.getConfiguration("tokenWise", folder.uri).get("autoCompareAutomaticContext", false)
+        || result.comparisonStatus))) { return; }
+    result.comparisonStatus = "pending";
+    result.comparison = undefined;
+    result.comparisonError = undefined;
+    this.panel.updateWorkspaceResult(this.viewResult(activity));
+    try {
+      if (!result.repository_fingerprint || !activity.query) {
+        throw new Error("Retrieve a new prompt with the updated backend to obtain a repository snapshot and task.");
+      }
+      const cfg = getTokenWiseConfig(folder.uri);
+      const url = new URL(activity.backend_url ?? cfg.apiUrl);
+      if (url.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+        || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+        throw new Error("Automatic comparison requires the local TokenWise backend.");
+      }
+      const client = new TokenWiseApiClient({ ...cfg, apiUrl: url.origin, timeoutMs: Math.min(cfg.timeoutMs, 30000) });
+      const comparison = await client.comparePreparedWorkspace(folder.uri.fsPath, activity.query, result);
+      if (this.disposed || this.latest !== activity) { return; }
+      result.comparison = comparison;
+      result.comparisonStatus = "ready";
+      comparison.carbonStatus = cfg.enableCarbonEstimation ? "unavailable" : "disabled";
+      this.panel.updateWorkspaceResult(this.viewResult(activity));
+      if (cfg.enableCarbonEstimation) {
+        try {
+          const estimates = await estimateCarbonForInputs(client, cfg, comparison.methods.map(item => item.input_tokens));
+          if (this.disposed || this.latest !== activity) { return; }
+          comparison.methods.forEach((item, index) => { item.carbon = estimates[index]; });
+          comparison.carbonStatus = "ready";
+          comparison.notes.push(`Carbon scenario: ${estimates[0].modelFamily}; ${cfg.expectedOutputTokens} expected output tokens; ${cfg.carbonIntensityGPerKwh} gCO2/kWh. Not detected agent hardware.`);
+        } catch (error) { comparison.carbonError = String(error); }
+      }
+      if (this.disposed || this.latest !== activity) { return; }
+      this.output.appendLine(`Automatic packet comparison: ${comparison.methods.map(item => `${item.id}: ${item.input_tokens} tokens, ${item.files.length} files`).join("; ")}. Not observed model consumption.`);
+    } catch (error) {
+      if (this.disposed || this.latest !== activity) { return; }
+      result.comparison = undefined;
+      result.comparisonStatus = "unavailable";
+      result.comparisonError = error instanceof Error ? error.message : String(error);
+      this.output.appendLine(`Automatic comparison unavailable: ${result.comparisonError}`);
+    }
+    if (!this.disposed && this.latest === activity) { this.panel.updateWorkspaceResult(this.viewResult(activity)); }
+  }
+
   private unwatch(folder: vscode.WorkspaceFolder): void {
     const key = folder.uri.toString();
     for (const item of this.watchers.get(key) ?? []) {
@@ -289,6 +361,7 @@ export class AutomaticContextMonitor implements vscode.Disposable {
     }
     this.foldersListener.dispose();
     this.command.dispose();
+    this.comparisonCommand.dispose();
     this.output.dispose();
   }
 }

@@ -151,6 +151,44 @@ test("comparison rendering escapes data and labels expansion honestly", () => {
   assert.match(html, /Export Comparison/);
 });
 
+test("automatic two-packet comparison discloses the baseline, lists files and omits selected controls", () => {
+  const automatic = { ...comparison, methods: comparison.methods.filter(method => method.id !== "selected") };
+  const html = new ResultPanel().getWorkspaceHtml({ ...reportedResult, comparison: automatic });
+  assert.match(html, /not actual Antigravity IDE consumption/);
+  assert.match(html, /All-Python baseline/);
+  assert.match(html, /20 tokens added/);
+  assert.match(html, /auth\.py/);
+  assert.doesNotMatch(html, /Copy Selected Code/);
+  const zero = { ...automatic, methods: automatic.methods.map(item => item.id === "all_python" ? { ...item, input_tokens: 0 } : item) };
+  assert.match(new ResultPanel().getWorkspaceHtml({ ...reportedResult, comparison: zero }), /zero baseline/);
+});
+
+test("automatic comparison failures and pending state remain visible without hiding the packet", () => {
+  const panel = new ResultPanel();
+  assert.match(panel.getWorkspaceHtml({ ...reportedResult, comparisonStatus: "pending" }), /Preparing automatic packet comparison/);
+  const html = panel.getWorkspaceHtml({ ...reportedResult, comparisonStatus: "unavailable", comparisonError: "Snapshot <changed>" });
+  assert.match(html, /Snapshot &lt;changed&gt;/);
+  assert.match(html, /Unified context/);
+});
+
+test("reported CLI usage is separate from local counts, preserved in exports and escaped", async () => {
+  const panel = new ResultPanel();
+  const run = { conversationId: "first", durationSeconds: 2, answer: "Answer <unsafe>",
+    usage: { input_tokens: 100, output_tokens: 10, total_tokens: 110 }, tools: [], toolTraceAvailable: false };
+  const actual = { measurement_scope: "imported_antigravity_cli_usage", importedAt: "now", notes: ["CLI, not IDE"],
+    without: run, with: { ...run, conversationId: "second", usage: { input_tokens: 120, output_tokens: 10, total_tokens: 130 } } };
+  panel.showAgentUsageComparison(actual);
+  const webview = panels.at(-1);
+  assert.match(webview.webview.html, /20\.00% increase/);
+  assert.match(webview.webview.html, /Answer &lt;unsafe&gt;/);
+  assert.match(webview.webview.html, /trace unavailable/);
+  assert.match(webview.webview.html, /not reported/);
+  saveDestination = "actual.json";
+  await webview.receive({ command: "exportAgentComparison" });
+  assert.deepEqual(written.at(-1).result, actual);
+  saveDestination = undefined;
+});
+
 test("copy controls use exact matching packets; export cancellation and failure are handled", async () => {
   const panel = new ResultPanel(); panel.showWorkspaceResult({ ...reportedResult, comparison }, "extension");
   const webview = panels.at(-1);

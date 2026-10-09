@@ -16,7 +16,7 @@ $ArchiveName = "TokenWise-$Version.zip"
 $ArchivePath = Join-Path $Artifacts $ArchiveName
 $PublicChecksums = Join-Path $Artifacts "SHA256SUMS-$Version.txt"
 $ExpectedFiles = @($ArtifactName, 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CHANGELOG.md', 'RELEASE-NOTES.md',
-    'demonstation.md', 'study.md', 'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
+    'demonstation.md', 'study.md', 'validation.md', 'docs/ANTIGRAVITY.md', 'docs/PROJECT-EVALUATION.md', 'docs/DEVELOPMENT.md', 'docs/PUBLISHING.md', 'docs/THIRD-PARTY-NOTICES.md')
 
 function Get-ReleaseFile([string]$Relative) {
     $Full = [System.IO.Path]::GetFullPath((Join-Path $Release $Relative))
@@ -105,7 +105,8 @@ try {
     $ReleaseStatus = Get-GitOutput -Arguments @('status', '--porcelain', '--', '.',
         ':(glob,exclude)demonstration/**/.agents/**', ':(glob,exclude)demonstration/**/.tokenwise/**',
         ':(glob,exclude)demonstration/**/__pycache__/**', ':(glob,exclude)demonstration/**/results/**',
-        ':(glob,exclude)demonstration/**/.gitignore', ':(glob,exclude)demonstration/**/.gitattributes')
+        ':(glob,exclude)demonstration/**/.gitignore', ':(glob,exclude)demonstration/**/.gitattributes',
+        ':(glob,exclude)ss/**')
     if ($ReleaseStatus) { throw 'Commit/review all release source and documentation changes before publishing.' }
     if ((Get-GitOutput -Arguments @('branch', '--show-current')) -ne 'main') { throw 'Publish from the main branch.' }
     if ((Get-GitOutput -Arguments @('remote', 'get-url', 'origin')) -ne $Package.repository.url) { throw 'Git origin and package repository disagree.' }

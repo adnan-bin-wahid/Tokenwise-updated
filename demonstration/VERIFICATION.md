@@ -1,5 +1,23 @@
 # Local Verification Record
 
+## October 9 Release Validation (0.6.7)
+
+The 0.6.7 automatic-comparison, usage-import and validation-guide code passed
+191 extension tests and 122 discovered backend tests: 121 passed and one
+platform-related skip. The twenty demo tests and deterministic app output were
+checked again while preparing [the teacher validation protocol](../validation.md)
+and passed. These are functional checks, not live Antigravity answer-quality or
+full-session consumption measurements. The protocol and worksheet contain no
+invented comparative results; collect independent with/without runs before
+claiming a downstream benefit. Public 0.6.6 assets remain unchanged.
+
+Browser checks passed for automatic two-packet comparison, pending/unavailable
+states, and imported CLI usage at 1280x1000 and 390x844. All eight views had no
+document overflow, overlapping/overflowing statistics, or page errors; the new
+copy/export messages passed. Data was explicitly synthetic UI fixture data,
+not measured agent outcomes. `scripts/verify-comparison-panels.cjs` reproduces
+these checks; screenshots and reports remain under ignored `tmp/`.
+
 ## Current Single-Project Layout
 
 The **0.6.6 build** retains this single project and adds outgoing response guidance.

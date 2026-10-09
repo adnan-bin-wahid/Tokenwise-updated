@@ -113,6 +113,37 @@ class WorkspacePruneResponse(BaseModel):
     response_guidance: Optional[dict] = None
 
 
+class PreparedComparisonRequest(BaseModel):
+    workspace_root: str
+    query: str = Field(min_length=1, max_length=20000)
+    prepared_context: WorkspacePruneResponse
+
+
+@app.post("/compare-prepared-workspace")
+async def compare_prepared_workspace(request: PreparedComparisonRequest) -> dict:
+    if model is None:
+        raise HTTPException(status_code=503, detail="Pruner model is not loaded")
+    if not request.query.strip() or len(request.prepared_context.unified_prompt.encode("utf-8")) > 512 * 1024:
+        raise HTTPException(status_code=400, detail="A nonblank query and bounded prepared packet are required")
+    root = Path(request.workspace_root).expanduser().resolve()
+    if not root.is_dir():
+        raise HTTPException(status_code=400, detail="Workspace root does not exist")
+
+    def compare() -> dict:
+        # Reconcile saved files before comparing an already-delivered snapshot.
+        index, _ = repository_cache.get(str(root), force_reconcile=True)
+        with inference_lock:
+            result = request.prepared_context.model_dump()
+            result["comparison_query"] = request.query.strip()
+            try:
+                return build_comparison(index, model, result)
+            except ComparisonTooLarge as exc:
+                raise HTTPException(status_code=413, detail=str(exc)) from exc
+            except (ValueError, KeyError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return await asyncio.to_thread(compare)
+
+
 def resolve_model_path() -> Path:
     configured = os.getenv("SWEPRUNER_MODEL_PATH")
     return Path(configured).expanduser().resolve() if configured else DEFAULT_MODEL_PATH.resolve()

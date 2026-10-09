@@ -33,17 +33,17 @@ if you use it instead of a live run.
 
 ### Choose the Correct Build
 
-Use **0.6.6** for this complete guide, including outgoing prompt engineering.
+Use **0.6.7** for this complete guide, including automatic comparison and validation.
 The one-project layout and **Open Demonstration Guide** command were introduced
 in 0.6.5; older releases do not include the new response-guidance block.
-Download [the 0.6.6 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.6)
+Download [the 0.6.7 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7)
 for the VSIX, study, one-project demonstration ZIP and checksums.
 
 ### Normal Installation
 
-1. Download `tokenwise-vscode-0.6.6.vsix` from the release and install it with
+1. Download `tokenwise-vscode-0.6.7.vsix` from the release and install it with
    **Extensions > ... > Install from VSIX...**. Reload the editor.
-2. Download and extract `TokenWise-0.6.6.zip`. Open its
+2. Download and extract `TokenWise-0.6.7.zip`. Open its
    `demonstration/tokenwise_demo` folder in Antigravity.
 3. Follow **Open and Configure One Folder** below. No compiling or F5 is needed.
 
@@ -58,9 +58,9 @@ npm test
 npm run package
 ```
 
-Install `vscode-extension/tokenwise-vscode-0.6.6.vsix` using **Extensions > ... >
+Install `vscode-extension/tokenwise-vscode-0.6.7.vsix` using **Extensions > ... >
 Install from VSIX...**, then reload. The shareable folder is
-`releases/TokenWise-0.6.6/`; its `demonstration/tokenwise_demo` is the same project.
+`releases/TokenWise-0.6.7/`; its `demonstration/tokenwise_demo` is the same project.
 Never install the source-code ZIP as an extension.
 
 For your existing F5 workflow, run `npm run prepare-backend` and `npm run compile`
@@ -593,6 +593,101 @@ Record supported facts, omissions, unsupported claims, packet/answer timing,
 and tool violations separately. Literal source-marker presence is not semantic
 answer correctness. One small demo does not prove universal superiority.
 
+### Automatic Comparison (0.6.7)
+
+For the teacher's **validation plus real native with/without study**, start with
+[validation.md](validation.md). It defines independent runs, an uncontaminated
+baseline, three fixed tasks, six-point rubrics and results collection. The packet
+comparison below is a separate supplied-context experiment, not a recording of
+native Antigravity without TokenWise.
+
+This subsection documents 0.6.7. Install its VSIX and update the matching backend;
+normal users do not compile or press F5. Earlier 0.6.6 assets are unchanged.
+Keep the same demo folder; no second demonstration project is needed.
+
+#### A. Automatic Packet Measurement
+
+1. Open `demonstration/tokenwise_demo` as the workspace. Enable automatic context.
+2. Run **TokenWise: Configure Automatic Comparison** and select **Enable automatic
+   packet comparison**. This sets `tokenWise.autoCompareAutomaticContext` for the
+   workspace. It is off by default to avoid study overhead during ordinary work.
+3. Start a new chat and send the account-lockout question above. No selected file
+   or highlighted excerpt is required.
+4. Show the **Context strategy comparison** section. The all-Python baseline and
+   TokenWise packet use the same saved Python snapshot and local tokenizer.
+   Expand both file lists, compare complete packet counts and task-plus-packet
+   counts, then export the comparison JSON. No second pruning pass is performed.
+5. Explain: "This measures the packets we could provide, not every token that
+   Antigravity actually consumes." The all-code baseline is hypothetical, not a
+   captured run of Antigravity without the extension. Small projects may show an
+   increase due to formatting/guidance; present that honestly.
+6. If the snapshot changed, send a fresh prompt. For backend/temporary errors,
+   select **Retry latest comparison**. Missing endpoints need a backend update.
+   Comparisons over 200 indexed Python files or 2 MiB of Python source are refused
+   rather than quietly truncated. Disable study mode through the same command.
+
+The comparison runs after context delivery; failure does not remove usable
+context. Late results cannot replace a newer prompt's report. Carbon estimates
+use the same configured scenario for both packets, not detected agent hardware.
+The task-plus-packet count excludes hidden system instructions, conversation
+history, rule/tool overhead, later file reads, cache accounting and output.
+An overview packet can include root project documents excluded from the Python-
+only baseline; the panel discloses that limitation.
+
+#### B. Actual Reported Antigravity Usage
+
+The IDE integration does not expose complete request usage or every native tool
+call to TokenWise. Do not ask the agent to guess its token consumption.
+Antigravity's [official CLI headless documentation](https://www.antigravity.google/docs/cli/headless/)
+documents JSON usage and stream-JSON tool events. CLI telemetry belongs to the
+CLI run, not a previous IDE conversation.
+
+For a controlled packet study, copy each packet from the comparison panel. In
+two fresh CLI runs outside the demo workspace, send the same task and identical
+answer constraints, once with the all-Python packet and once with the TokenWise
+packet. Pin the same model and effort, do not resume a conversation, and do not
+allow automatic TokenWise rules to inject another packet. A PowerShell capture
+for either condition, with `$taskAndPacket` containing that condition's complete
+task/context and `$model` the installed CLI's valid model slug, is:
+
+```powershell
+@{ event = 'user'; message = @{ content = $taskAndPacket } } |
+  ConvertTo-Json -Compress -Depth 4 |
+  agy --input-format stream-json --output-format stream-json --model $model --effort medium |
+  Set-Content -Encoding UTF8 without-tokenwise.jsonl
+```
+
+For the other independent run, change only its packet and destination to
+`with-tokenwise.jsonl`. Authenticate the CLI first and keep both full logs. The
+command sends repository excerpts to the configured agent and can consume
+credits; TokenWise does not run it automatically. Normal permission policies
+remain in effect; do not add a dangerous permission-bypass flag for this study.
+Instructions alone do not enforce tool isolation. Reject or classify a
+context-only trial as tool-assisted if any tool obtains extra evidence.
+
+Run **TokenWise: Import Antigravity Usage Comparison**, select the **WITHOUT**
+log first and the **WITH** log second. Show:
+
+- Reported input, output, cache-read, thinking and total tokens, separately.
+- Each run's reported duration, answer and observed completed tool parameters.
+- Honest increases or reductions, missing-field notices, and JSON export.
+
+The importer uses the terminal result's usage once, not a sum of streamed steps
+plus cumulative totals. It rejects failed/zero-usage/resumed sessions, repeated
+conversation IDs, mixed logs, and different reported models. JSON-only logs
+cannot show tool traces. Even stream logs do not establish all files visible to
+the model; a command can read multiple files and unrecorded system/rule sources
+can supply other information. Without/with labels are assigned by you, not
+independently verified by the importer. If model metadata is missing, equality
+is unverified. Match tasks/settings, rotate order, repeat conditions, assess the
+answers against the lockout rubric, and report failures as well as successes.
+
+For a separate unrestricted workflow study, compare normal agent runs with and
+without TokenWise integration enabled, keeping repository, model, task and tool
+capabilities constant. That measures real retrieval behavior rather than the
+isolated supplied-packet experiment. Do not substitute the hypothetical all-code
+packet for a captured native-agent run and call it an observed IDE baseline.
+
 ## 12. Token Metrics and Your CO2 Screenshot
 
 ### Different Counts Have Different Meanings
@@ -736,7 +831,7 @@ four demos are not numeric results for the new project.
 
 | Symptom | What to do |
 | --- | --- |
-| New guide command missing | Install the 0.6.6 VSIX; reload the correct host/profile |
+| New guide command missing | Install the 0.6.7 VSIX; reload the correct host/profile |
 | First setup failed | Read Output > TokenWise Setup; fix the named cause; Retry Failed Step |
 | Slow first retrieval | Warm with Start Backend; record startup separately; do not hide timeouts |
 | Trace/method fields absent | Update the matching Python backend and repeat the task |
@@ -837,7 +932,8 @@ your normal prompt in Antigravity chat.
 | Diagnose Setup | Show installation, backend health and workspace registration in Output |
 | Check Backend Health | Show the direct API health check; inspect a missing/offline backend error instead of assuming readiness |
 | Open Setup Guide | Open the bundled installation and recovery documentation |
-| Open Demonstration Guide | Open this script from the installed 0.6.6 extension |
+| Open Demonstration Guide | Open this script from the installed 0.6.7 extension |
+| Open Validation Guide | Open the quick route, native with/without protocol and scoring rubric |
 | Show Automatic Context | Reopen the current automatic packet; check timestamp/query first |
 | Build Repository Context | Run the manual repository-context command from an open Python file with the lockout task; unlike controlled no-anchor mode, editor hints can affect this route |
 | Prune Current File | Process all of `security/models.py` even when a highlight exists |
@@ -869,7 +965,7 @@ This optional rehearsal demonstrates **prompt engineering in 0.6.6**.
 Earlier installers do not include it. Your earlier pruning/history/carbon
 demonstrations still apply; this is an extra stage after relevant evidence is found.
 
-1. Install the 0.6.6 VSIX, reload, and open this same `demonstration/tokenwise_demo`
+1. Install the 0.6.7 VSIX, reload, and open this same `demonstration/tokenwise_demo`
    folder. Refresh **Set Up Backend** and **Enable Automatic Context**, then
    **Start Backend**. Follow the [README steps](README.md#response-guidance).
    F5/compiling is only an alternative for developers, not normal users.

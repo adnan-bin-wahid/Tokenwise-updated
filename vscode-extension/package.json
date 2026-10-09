@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "icon": "resources/icon.png",
   "license": "MIT",
   "repository": {
@@ -30,11 +30,14 @@
     "commands": [
       { "command": "tokenwise.demonstratePruning", "title": "TokenWise: Demonstrate Pruning Inputs" },
       { "command": "tokenwise.compareContextStrategies", "title": "TokenWise: Compare Context Strategies" },
+      { "command": "tokenwise.configureAutomaticComparison", "title": "TokenWise: Configure Automatic Comparison" },
+      { "command": "tokenwise.importAntigravityComparison", "title": "TokenWise: Import Antigravity Usage Comparison" },
       { "command": "tokenwise.setUpBackend", "title": "TokenWise: Set Up Backend" },
       { "command": "tokenwise.startBackend", "title": "TokenWise: Start Backend" },
       { "command": "tokenwise.showDiagnostics", "title": "TokenWise: Diagnose Setup" },
       { "command": "tokenwise.openSetupGuide", "title": "TokenWise: Open Setup Guide" },
       { "command": "tokenwise.openDemonstrationGuide", "title": "TokenWise: Open Demonstration Guide" },
+      { "command": "tokenwise.openValidationGuide", "title": "TokenWise: Open Validation Guide" },
       { "command": "tokenwise.removeAllLocalData", "title": "TokenWise: Remove All Local Data" },
       {
         "command": "tokenwise.enableAutomaticContext",
@@ -95,6 +98,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show automatically prepared Antigravity context beside the editor without taking keyboard focus."
+        },
+        "tokenWise.autoCompareAutomaticContext": {
+          "type": "boolean",
+          "default": false,
+          "description": "Compare every newly prepared automatic packet against all indexed Python code in the background. Local packet counts, not observed IDE model usage. Comparison exports support at most 200 Python files and 2 MiB of source."
         },
         "tokenWise.apiUrl": {
           "type": "string",

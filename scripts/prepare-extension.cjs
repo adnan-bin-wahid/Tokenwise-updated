@@ -45,6 +45,7 @@ async function main() {
   await fs.copyFile(path.join(root, "README.md"), path.join(resourceRoot, "user-guide.md"));
   await fs.copyFile(path.join(root, "demonstation.md"), path.join(resourceRoot, "demonstation.md"));
   await fs.copyFile(path.join(root, "study.md"), path.join(resourceRoot, "study.md"));
+  await fs.copyFile(path.join(root, "validation.md"), path.join(resourceRoot, "validation.md"));
   const demoTarget = path.join(resourceRoot, "demonstration");
   const demoSource = path.join(root, "demonstration");
   const demoCases = JSON.parse(await fs.readFile(path.join(demoSource, "cases.json"), "utf8")).cases;

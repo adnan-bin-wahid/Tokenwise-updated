@@ -25,7 +25,7 @@ async function fixture(t) {
   for (const relative of ["scripts/antigravity_context.py", "scripts/antigravity_hook.py",
     "scripts/install_backend.py", "scripts/backend_control.py", `${backend}/pyproject.toml`,
     `${backend}/README.md`, `${backend}/LICENSE`, `${backend}/src/fixture.py`, `${backend}/carbon_artifacts/fixture.json`,
-    ...models.map(name => `${backend}/model/${name}`), "README.md", "demonstation.md", "study.md", "LICENSE", "CHANGELOG.md",
+    ...models.map(name => `${backend}/model/${name}`), "README.md", "demonstation.md", "study.md", "validation.md", "LICENSE", "CHANGELOG.md",
     "docs/release-notes/v0.6.5.md", ...documents.map(name => `docs/${name}`),
     "demonstration/tokenwise_demo/app.py", "demonstration/tokenwise_demo/tests/test_app.py",
     "demonstration/old_project/app.py", "demonstration/tokenwise_demo/.agents/rules/private.md",
@@ -53,6 +53,7 @@ test("rebundling removes stale demos and includes only manifest projects without
   assert.equal(await fs.readFile(path.join(root, "demonstration/old_project/app.py"), "utf8"), "fixture\n");
   assert.equal(await fs.readFile(path.join(root, "demonstration/tokenwise_demo/.tokenwise/latest.json"), "utf8"), "fixture\n");
   assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/study.md"), "utf8"), "fixture\n");
+  assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/validation.md"), "utf8"), "fixture\n");
 });
 
 test("shareable package contains the one project and hashes it, not unrelated local folders", async t => {
@@ -63,7 +64,9 @@ test("shareable package contains the one project and hashes it, not unrelated lo
   const checksums = await fs.readFile(path.join(release, "SHA256SUMS.txt"), "utf8");
   assert.match(checksums, /demonstration\/tokenwise_demo\/app\.py/);
   assert.match(checksums, /  study\.md/);
+  assert.match(checksums, /  validation\.md/);
   assert.equal(await fs.readFile(path.join(release, "study.md"), "utf8"), "fixture\n");
+  assert.equal(await fs.readFile(path.join(release, "validation.md"), "utf8"), "fixture\n");
   assert.doesNotMatch(checksums, /old_project|\.agents|\.tokenwise|private/);
 });
 
