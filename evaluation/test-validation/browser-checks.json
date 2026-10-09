@@ -1,0 +1,92 @@
+[
+  {
+    "name": "memory",
+    "layout": "desktop",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "memory",
+    "layout": "narrow",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "automatic",
+    "layout": "desktop",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "automatic",
+    "layout": "narrow",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "pending",
+    "layout": "desktop",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "pending",
+    "layout": "narrow",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "unavailable",
+    "layout": "desktop",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "unavailable",
+    "layout": "narrow",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "cli_usage",
+    "layout": "desktop",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  },
+  {
+    "name": "cli_usage",
+    "layout": "narrow",
+    "horizontalOverflow": false,
+    "overflowingStats": 0,
+    "overlappingStats": false,
+    "pageErrors": 0,
+    "fixture": "synthetic UI only"
+  }
+]

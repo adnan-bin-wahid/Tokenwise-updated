@@ -1,0 +1,114 @@
+{
+  "protocol": "tokenwise-context-study-v1",
+  "run_started_utc": "2026-10-09T08:07:58.576122+00:00",
+  "extension_version": "0.6.8",
+  "git_commit": "573b82bcb2eb4856f1f4af65eb5735e3f6475404",
+  "python": "3.12.4 (tags/v3.12.4:8e8a4ba, Jun  6 2024, 19:30:16) [MSC v.1940 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 191 Stepping 2, GenuineIntel",
+  "logical_processors": 16,
+  "cpu_threads": 4,
+  "token_budget": 4096,
+  "threshold": 0.45,
+  "max_candidates": 8,
+  "response_guidance": true,
+  "antigravity_cloud_called": false,
+  "real_weights": true,
+  "follow_up": "Which tests cover that behavior? Do not modify any files.",
+  "history": "[current explicit task, Use bullet points.]",
+  "carbon_scenario": {
+    "model": "meta-llama-3-8b-instruct",
+    "output_tokens": 256,
+    "intensity_g_per_kwh": 475
+  },
+  "results": [],
+  "failures": [
+    {
+      "repository": "pallets/click",
+      "error": "timed out"
+    },
+    {
+      "repository": "pallets/itsdangerous",
+      "error": "[WinError 10054] An existing connection was forcibly closed by the remote host"
+    },
+    {
+      "repository": "pallets/markupsafe",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "pallets-eco/blinker",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "psf/requests",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "pallets/flask",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "hukkin/tomli",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "hukkin/tomli-w",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "tqdm/tqdm",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "theskumar/python-dotenv",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "dbader/schedule",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "mahmoud/boltons",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "pypa/packaging",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "tox-dev/platformdirs",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "tox-dev/filelock",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "tkem/cachetools",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "un33k/python-slugify",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "more-itertools/more-itertools",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "python-semver/python-semver",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "repository": "jd/tenacity",
+      "error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    }
+  ],
+  "weights_sha256": "373b77f5262c3298b803303d49ea38949d3e92f08dc3bbb90b03f490413adae9",
+  "health": {
+    "model_loaded": true,
+    "carbon_models_loaded": true,
+    "device": "cpu"
+  },
+  "run_finished_utc": "2026-10-09T08:21:20.576136+00:00"
+}

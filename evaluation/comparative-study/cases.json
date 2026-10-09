@@ -1,0 +1,30 @@
+{
+  "protocol": "tokenwise-context-study-v2-bounded-neural",
+  "excerpt_token_limit": 1024,
+  "token_budget": 4096,
+  "threshold": 0.45,
+  "max_candidates": 8,
+  "follow_up": "Which tests cover that behavior? Do not modify any files.",
+  "cases": [
+    {"repository": "pallets/click", "ref": "8.1.8", "file": "src/click/types.py", "symbol": "_NumberRangeBase.convert", "test_identifiers": ["IntRange"], "query": "Explain IntRange range validation and clamping via _NumberRangeBase.convert and its related tests. Do not modify any files."},
+    {"repository": "pallets/itsdangerous", "ref": "2.2.0", "file": "src/itsdangerous/timed.py", "symbol": "TimestampSigner.unsign", "query": "Explain TimestampSigner.unsign timestamp expiry validation and its related tests. Do not modify any files."},
+    {"repository": "pallets/markupsafe", "ref": "3.0.2", "file": "src/markupsafe/__init__.py", "symbol": "escape", "query": "Explain escape HTML special character handling and its related tests. Do not modify any files."},
+    {"repository": "pallets-eco/blinker", "ref": "1.9.0", "file": "src/blinker/base.py", "symbol": "Signal.send", "query": "Explain Signal.send receiver dispatch and its related tests. Do not modify any files."},
+    {"repository": "psf/requests", "ref": "v2.32.3", "file": "src/requests/models.py", "symbol": "Response.json", "query": "Explain Response.json JSON decoding and error handling and its related tests. Do not modify any files."},
+    {"repository": "pallets/flask", "ref": "3.1.0", "file": "src/flask/ctx.py", "symbol": "RequestContext.pop", "query": "Explain RequestContext.pop teardown and context cleanup and its related tests. Do not modify any files."},
+    {"repository": "hukkin/tomli", "ref": "2.2.1", "file": "src/tomli/_parser.py", "symbol": "loads", "query": "Explain loads TOML parsing and invalid input handling and its related tests. Do not modify any files."},
+    {"repository": "hukkin/tomli-w", "ref": "1.2.0", "file": "src/tomli_w/_writer.py", "symbol": "dumps", "query": "Explain dumps TOML serialization and its related tests. Do not modify any files."},
+    {"repository": "tqdm/tqdm", "ref": "v4.67.1", "file": "tqdm/std.py", "symbol": "tqdm.update", "query": "Explain tqdm.update progress counter refresh behavior and its related tests. Do not modify any files."},
+    {"repository": "theskumar/python-dotenv", "ref": "v1.0.1", "file": "src/dotenv/main.py", "symbol": "load_dotenv", "query": "Explain load_dotenv environment overwrite behavior and its related tests. Do not modify any files."},
+    {"repository": "dbader/schedule", "ref": "1.2.2", "file": "schedule/__init__.py", "symbol": "Scheduler.run_pending", "query": "Explain Scheduler.run_pending due job scheduling and its related tests. Do not modify any files."},
+    {"repository": "mahmoud/boltons", "ref": "24.1.0", "file": "boltons/cacheutils.py", "symbol": "LRI.__setitem__", "query": "Explain LRI cache eviction in __setitem__ and its related tests. Do not modify any files."},
+    {"repository": "pypa/packaging", "ref": "24.2", "file": "src/packaging/version.py", "symbol": "Version.__init__", "query": "Explain Version initialization and InvalidVersion validation and its related tests. Do not modify any files."},
+    {"repository": "tox-dev/platformdirs", "ref": "4.3.6", "file": "src/platformdirs/unix.py", "symbol": "Unix.user_cache_dir", "query": "Explain Unix.user_cache_dir XDG cache path handling and its related tests. Do not modify any files."},
+    {"repository": "tox-dev/filelock", "ref": "3.16.1", "file": "src/filelock/_api.py", "symbol": "BaseFileLock.acquire", "query": "Explain BaseFileLock.acquire timeout and blocking behavior and its related tests. Do not modify any files."},
+    {"repository": "tkem/cachetools", "ref": "v5.5.1", "file": "src/cachetools/__init__.py", "symbol": "TTLCache.__getitem__", "query": "Explain TTLCache item expiry in __getitem__ and its related tests. Do not modify any files."},
+    {"repository": "un33k/python-slugify", "ref": "v8.0.4", "file": "slugify/slugify.py", "symbol": "slugify", "query": "Explain slugify text normalization and truncation and its related tests. Do not modify any files."},
+    {"repository": "more-itertools/more-itertools", "ref": "v10.6.0", "file": "more_itertools/more.py", "symbol": "chunked_even", "query": "Explain chunked_even balanced iterable grouping and its related tests. Do not modify any files."},
+    {"repository": "python-semver/python-semver", "ref": "3.0.3", "file": "src/semver/version.py", "symbol": "Version.bump_patch", "query": "Explain Version.bump_patch semantic version incrementing and its related tests. Do not modify any files."},
+    {"repository": "jd/tenacity", "ref": "9.0.0", "file": "tenacity/stop.py", "symbol": "stop_after_attempt.__call__", "query": "Explain stop_after_attempt retry attempt limits and its related tests. Do not modify any files."}
+  ]
+}

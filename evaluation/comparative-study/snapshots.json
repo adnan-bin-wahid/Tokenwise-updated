@@ -1,0 +1,754 @@
+{
+  "pallets/itsdangerous": {
+    "ref": "2.2.0",
+    "commit": "096c8d42545d3b68ea21a4f890fb2b2d8979c0bd",
+    "commit_date": "2024-04-16T21:19:20Z",
+    "archive_sha256": "502ad59b29c347f90448be4761bce5fea55b84e232ad00ce6f1a212db7737172",
+    "archive_bytes": 81642,
+    "indexed_python_files": 15,
+    "indexed_source_bytes": 60224,
+    "source_fingerprint": "037b5cdf8adc71b588c997939bb2ec515ae5d6be6958fbd3f23cbba2025938c2",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/itsdangerous/timed.py",
+        "symbol": "TimestampSigner.unsign",
+        "line": 72,
+        "definition": "def unsign(",
+        "anchor": "result = super().unsign(signed_value)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_itsdangerous/test_serializer.py",
+        "symbol": "TestSerializer.test_serializer",
+        "line": 52,
+        "definition": "def test_serializer(",
+        "anchor": "assert serializer.loads(serializer.dumps(value)) == value"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_itsdangerous/test_serializer.py",
+        "symbol": "TestSerializer.test_changed_value",
+        "line": 64,
+        "definition": "def test_changed_value(",
+        "anchor": "assert serializer.loads(signed) == value"
+      }
+    ],
+    "workspace_name": "pallets--itsdangerous-096c8d42545d",
+    "source_url": "https://github.com/pallets/itsdangerous/tree/096c8d42545d3b68ea21a4f890fb2b2d8979c0bd"
+  },
+  "pallets/markupsafe": {
+    "ref": "3.0.2",
+    "commit": "28ace20b140d15c083e1cbc163ee6b7778ba098c",
+    "commit_date": "2024-10-18T15:02:00Z",
+    "archive_sha256": "6af09bde722942dfcfa4c7a9fd41ad2e67bec2aaa25722a1043824300abf8bc8",
+    "archive_bytes": 42774,
+    "indexed_python_files": 11,
+    "indexed_source_bytes": 28548,
+    "source_fingerprint": "25d1396eb21052050ca6aec9b99adc7106dab30ea36a28b0b1b933d868a28af8",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/markupsafe/__init__.py",
+        "symbol": "escape",
+        "line": 24,
+        "definition": "def escape(",
+        "anchor": "if type(s) is str:"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_escape.py",
+        "symbol": "test_escape",
+        "line": 33,
+        "definition": "def test_escape(",
+        "anchor": "assert escape(value) == Markup(expect)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_escape.py",
+        "symbol": "test_proxy",
+        "line": 50,
+        "definition": "def test_proxy(",
+        "anchor": "assert p.__class__ is str"
+      }
+    ],
+    "workspace_name": "pallets--markupsafe-28ace20b140d",
+    "source_url": "https://github.com/pallets/markupsafe/tree/28ace20b140d15c083e1cbc163ee6b7778ba098c"
+  },
+  "pallets-eco/blinker": {
+    "ref": "1.9.0",
+    "commit": "669f3a027828d19786e708b511277fabcd6b9532",
+    "commit_date": "2024-11-08T17:22:45Z",
+    "archive_sha256": "9e011056ff1a54144a0ae24dfb01df1c2556b289ed3eb5261a35a52e987d1825",
+    "archive_bytes": 37647,
+    "indexed_python_files": 7,
+    "indexed_source_bytes": 36164,
+    "source_fingerprint": "ea6b89ce13f8677abb09f37a33511ac6aa39b4c38d9c62d8f4b964c9617973ba",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/blinker/base.py",
+        "symbol": "Signal.send",
+        "line": 204,
+        "definition": "def send(",
+        "anchor": "if iscoroutinefunction(receiver):"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_context.py",
+        "symbol": "test_temp_connection",
+        "line": 10,
+        "definition": "def test_temp_connection(",
+        "anchor": "assert canary == [2]"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_context.py",
+        "symbol": "test_temp_connection_for_sender",
+        "line": 27,
+        "definition": "def test_temp_connection_for_sender(",
+        "anchor": "assert canary == [2]"
+      }
+    ],
+    "workspace_name": "pallets-eco--blinker-669f3a027828",
+    "source_url": "https://github.com/pallets-eco/blinker/tree/669f3a027828d19786e708b511277fabcd6b9532"
+  },
+  "psf/requests": {
+    "ref": "v2.32.3",
+    "commit": "0e322af87745eff34caffe4df68456ebc20d9068",
+    "commit_date": "2024-05-29T15:36:10Z",
+    "archive_sha256": "706ac73e0ff00779543dc4dceaf11127cc1d927c5bc551d74729107a70d9a311",
+    "archive_bytes": 4100454,
+    "indexed_python_files": 36,
+    "indexed_source_bytes": 376403,
+    "source_fingerprint": "81df24453cab7be4769e54be27eb9845223444b06a22129a9ff0de9df698d4a9",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/requests/models.py",
+        "symbol": "Response.json",
+        "line": 947,
+        "definition": "def json(",
+        "anchor": "if not self.encoding and self.content and len(self.content) > 3:"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_lowlevel.py",
+        "symbol": "test_json_decode_compatibility_for_alt_utf_encodings",
+        "line": 407,
+        "definition": "def test_json_decode_compatibility_for_alt_utf_encodings(",
+        "anchor": "assert isinstance(excinfo.value, requests.exceptions.RequestException)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_requests.py",
+        "symbol": "TestRequests.test_basic_building",
+        "line": 111,
+        "definition": "def test_basic_building(",
+        "anchor": "assert pr.url == req.url"
+      }
+    ],
+    "workspace_name": "psf--requests-0e322af87745",
+    "source_url": "https://github.com/psf/requests/tree/0e322af87745eff34caffe4df68456ebc20d9068"
+  },
+  "pallets/flask": {
+    "ref": "3.1.0",
+    "commit": "ab8149664182b662453a563161aa89013c806dc9",
+    "commit_date": "2024-11-13T18:20:07Z",
+    "archive_sha256": "8e9fd863522ef7461ba578ec488541c032c75eb32a00cedb5439e2c1b45fee79",
+    "archive_bytes": 807976,
+    "indexed_python_files": 83,
+    "indexed_source_bytes": 572874,
+    "source_fingerprint": "0c5ac161b8b0fe11948f02d7e1e605d635c6f9370d130ce13f2c13a5ccbc01aa",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/flask/ctx.py",
+        "symbol": "RequestContext.pop",
+        "line": 396,
+        "definition": "def pop(",
+        "anchor": "clear_request = len(self._cv_tokens) == 1"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_appctx.py",
+        "symbol": "test_app_ctx_globals_methods",
+        "line": 134,
+        "definition": "def test_app_ctx_globals_methods(",
+        "anchor": "assert flask.g.get(\"foo\") is None"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_basic.py",
+        "symbol": "test_session_using_session_settings",
+        "line": 291,
+        "definition": "def test_session_using_session_settings(",
+        "anchor": "assert \"domain=example.com\" in cookie or \"domain=.example.com\" in cookie"
+      }
+    ],
+    "workspace_name": "pallets--flask-ab8149664182",
+    "source_url": "https://github.com/pallets/flask/tree/ab8149664182b662453a563161aa89013c806dc9"
+  },
+  "hukkin/tomli": {
+    "ref": "2.2.1",
+    "commit": "73c3d102eb81fe0d2b87f905df4f740f8878d8da",
+    "commit_date": "2024-11-27T22:11:57Z",
+    "archive_sha256": "eb2b57ef570537a58e5ad69100f2207ac9d34a2c11051e37f7df35134f5c6a46",
+    "archive_bytes": 462809,
+    "indexed_python_files": 14,
+    "indexed_source_bytes": 49620,
+    "source_fingerprint": "847f49ad8c8d54a9debcfd3828849cd87a79a7a464f8441eec715de806b36d5d",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/tomli/_parser.py",
+        "symbol": "loads",
+        "line": 142,
+        "definition": "def loads(",
+        "anchor": "src = __s.replace(\"\\r\\n\", \"\\n\")"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_data.py",
+        "symbol": "TestData.test_invalid",
+        "line": 37,
+        "definition": "def test_invalid(",
+        "anchor": "self.assertRaises(tomllib.TOMLDecodeError)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_data.py",
+        "symbol": "TestData.test_valid",
+        "line": 49,
+        "definition": "def test_valid(",
+        "anchor": "assert valid.stem in {"
+      }
+    ],
+    "workspace_name": "hukkin--tomli-73c3d102eb81",
+    "source_url": "https://github.com/hukkin/tomli/tree/73c3d102eb81fe0d2b87f905df4f740f8878d8da"
+  },
+  "hukkin/tomli-w": {
+    "ref": "1.2.0",
+    "commit": "a8f80172ba16fe694e37f6e07e6352ecee384c58",
+    "commit_date": "2025-01-15T12:04:36Z",
+    "archive_sha256": "285420b94501d962af0bb2f6318604c6f6752801e3b8ac3636f8fae2872936a4",
+    "archive_bytes": 163947,
+    "indexed_python_files": 10,
+    "indexed_source_bytes": 19913,
+    "source_fingerprint": "957a610d62809a952bcc25fb7d1786bbe78397fd8f358717d93bb5b826d172b5",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/tomli_w/_writer.py",
+        "symbol": "dumps",
+        "line": 56,
+        "definition": "def dumps(",
+        "anchor": "return \"\".join(gen_table_chunks(obj, ctx, name=\"\"))"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_invalid.py",
+        "symbol": "test_invalid_type_nested",
+        "line": 8,
+        "definition": "def test_invalid_type_nested(",
+        "anchor": "assert str(exc_info.value) == \"Object of type 'bytearray' is not TOML serializable\""
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_invalid.py",
+        "symbol": "test_invalid_key__falsy",
+        "line": 25,
+        "definition": "def test_invalid_key__falsy(",
+        "anchor": "assert ("
+      }
+    ],
+    "workspace_name": "hukkin--tomli-w-a8f80172ba16",
+    "source_url": "https://github.com/hukkin/tomli-w/tree/a8f80172ba16fe694e37f6e07e6352ecee384c58"
+  },
+  "tqdm/tqdm": {
+    "ref": "v4.67.1",
+    "commit": "0ed5d7f18fa3153834cbac0aa57e8092b217cc16",
+    "commit_date": "2024-11-12T13:36:45Z",
+    "archive_sha256": "c6193f737e53ae5e0fcf8c1869b417dc0b5953df2c99f09c44cba0705d22526a",
+    "archive_bytes": 163477,
+    "indexed_python_files": 62,
+    "indexed_source_bytes": 293780,
+    "source_fingerprint": "8cf45be26d9fab6b18b5b707edc35dfd409731399337766ed32d39fe4978647e",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "tqdm/std.py",
+        "symbol": "tqdm.update",
+        "line": 1198,
+        "definition": "def update(",
+        "anchor": "if self.n - self.last_print_n >= self.miniters:"
+      },
+      {
+        "kind": "test",
+        "file": "tests/tests_asyncio.py",
+        "symbol": "test_generators",
+        "line": 42,
+        "definition": "def test_generators(",
+        "anchor": "assert '9it' in err"
+      },
+      {
+        "kind": "test",
+        "file": "tests/tests_asyncio.py",
+        "symbol": "test_range",
+        "line": 64,
+        "definition": "def test_range(",
+        "anchor": "assert '9/9' in our_file.getvalue()"
+      }
+    ],
+    "workspace_name": "tqdm--tqdm-0ed5d7f18fa3",
+    "source_url": "https://github.com/tqdm/tqdm/tree/0ed5d7f18fa3153834cbac0aa57e8092b217cc16"
+  },
+  "dbader/schedule": {
+    "ref": "1.2.2",
+    "commit": "82a43db1b938d8fdf60103bd41f329e06c8d3651",
+    "commit_date": "2024-05-25T18:40:33Z",
+    "archive_sha256": "025b3154b72482c9ca682a54266a0aa968b294a3bd588888dd6e3d72a49d3bf1",
+    "archive_bytes": 52800,
+    "indexed_python_files": 4,
+    "indexed_source_bytes": 110777,
+    "source_fingerprint": "f3c17f2718c0812a37d4cd1a631ab1b7b52d062a924daff00bb2217510e98674",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "schedule/__init__.py",
+        "symbol": "Scheduler.run_pending",
+        "line": 89,
+        "definition": "def run_pending(",
+        "anchor": "runnable_jobs = (job for job in self.jobs if job.should_run)"
+      },
+      {
+        "kind": "test",
+        "file": "test_schedule.py",
+        "symbol": "SchedulerTests.test_time_units",
+        "line": 108,
+        "definition": "def test_time_units(",
+        "anchor": "assert every().seconds.unit == \"seconds\""
+      },
+      {
+        "kind": "test",
+        "file": "test_schedule.py",
+        "symbol": "SchedulerTests.test_next_run_with_tag",
+        "line": 222,
+        "definition": "def test_next_run_with_tag(",
+        "anchor": "assert schedule.next_run(\"tag1\") == job1.next_run"
+      }
+    ],
+    "workspace_name": "dbader--schedule-82a43db1b938",
+    "source_url": "https://github.com/dbader/schedule/tree/82a43db1b938d8fdf60103bd41f329e06c8d3651"
+  },
+  "pypa/packaging": {
+    "ref": "24.2",
+    "commit": "d8e3b31b734926ebbcaff654279f6855a73e052f",
+    "commit_date": "2024-11-08T09:47:12Z",
+    "archive_sha256": "fb0994c19b71cf31bbe2d2a729878143eb2b4f3360d4ca0884c72fe494e783a4",
+    "archive_bytes": 155307,
+    "indexed_python_files": 35,
+    "indexed_source_bytes": 435041,
+    "source_fingerprint": "e440e40fcad9d6c3fe88563222b553ab68c13453cf56c5675c46a29702e01459",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/packaging/version.py",
+        "symbol": "Version.__init__",
+        "line": 188,
+        "definition": "def __init__(",
+        "anchor": "match = self._regex.search(version)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_metadata.py",
+        "symbol": "TestMetadata.test_from_email",
+        "line": 284,
+        "definition": "def test_from_email(",
+        "anchor": "assert meta.metadata_version == metadata_version"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_metadata.py",
+        "symbol": "TestMetadata.test_from_email_unparsed",
+        "line": 292,
+        "definition": "def test_from_email_unparsed(",
+        "anchor": "assert len(exc_info.exceptions) == 1"
+      }
+    ],
+    "workspace_name": "pypa--packaging-d8e3b31b7349",
+    "source_url": "https://github.com/pypa/packaging/tree/d8e3b31b734926ebbcaff654279f6855a73e052f"
+  },
+  "tox-dev/platformdirs": {
+    "ref": "4.3.6",
+    "commit": "bc0405cb9c9439e6923b2dc090f91ad5daaf7dec",
+    "commit_date": "2024-09-17T19:04:46Z",
+    "archive_sha256": "c393ce364d4c4cadf52f11c75b901f8171c16c62455ac2531f70877f0878f3b2",
+    "archive_bytes": 42067,
+    "indexed_python_files": 15,
+    "indexed_source_bytes": 95348,
+    "source_fingerprint": "a326f8f6d2b4ec72cdace3180a3bfe1541d3ebd3b73a9824624833aff7920e4b",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/platformdirs/unix.py",
+        "symbol": "Unix.user_cache_dir",
+        "line": 99,
+        "definition": "def user_cache_dir(",
+        "anchor": "path = os.environ.get(\"XDG_CACHE_HOME\", \"\")"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_android.py",
+        "symbol": "test_android",
+        "line": 32,
+        "definition": "def test_android(",
+        "anchor": "assert result == expected"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_comp_with_appdirs.py",
+        "symbol": "test_compatibility",
+        "line": 52,
+        "definition": "def test_compatibility(",
+        "anchor": "assert new == old.rstrip(\"/\")"
+      }
+    ],
+    "workspace_name": "tox-dev--platformdirs-bc0405cb9c94",
+    "source_url": "https://github.com/tox-dev/platformdirs/tree/bc0405cb9c9439e6923b2dc090f91ad5daaf7dec"
+  },
+  "tox-dev/filelock": {
+    "ref": "3.16.1",
+    "commit": "c2c43e456b4369ecac8c932115e41b3addc5c3d6",
+    "commit_date": "2024-09-17T18:57:52Z",
+    "archive_sha256": "6442e17d8cf85284b39ce751a5480efe92ae937368a3f70bebaad7592a3c9af2",
+    "archive_bytes": 226680,
+    "indexed_python_files": 13,
+    "indexed_source_bytes": 75797,
+    "source_fingerprint": "c7017b0079c35161c787fb61476578045b2456324f2f759377021c448e22e7ea",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/filelock/_api.py",
+        "symbol": "BaseFileLock.acquire",
+        "line": 271,
+        "definition": "def acquire(",
+        "anchor": "if timeout is None:"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_async_filelock.py",
+        "symbol": "test_simple",
+        "line": 15,
+        "definition": "def test_simple(",
+        "anchor": "assert lock.is_locked"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_async_filelock.py",
+        "symbol": "test_acquire",
+        "line": 47,
+        "definition": "def test_acquire(",
+        "anchor": "assert lock.is_locked"
+      }
+    ],
+    "workspace_name": "tox-dev--filelock-c2c43e456b43",
+    "source_url": "https://github.com/tox-dev/filelock/tree/c2c43e456b4369ecac8c932115e41b3addc5c3d6"
+  },
+  "python-semver/python-semver": {
+    "ref": "3.0.3",
+    "commit": "486e4897da9fa6f02e1392bbf24d2f69599f0970",
+    "commit_date": "2025-01-18T13:53:32Z",
+    "archive_sha256": "c96c0cf1defa877536622cb69ff1f846162d50a43bff9e6bcf3f326bdd887316",
+    "archive_bytes": 306283,
+    "indexed_python_files": 26,
+    "indexed_source_bytes": 97080,
+    "source_fingerprint": "36faff1701715cfc7ce8883059831182c20c22684d750efb38ef82c91177279a",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/semver/version.py",
+        "symbol": "Version.bump_patch",
+        "line": 294,
+        "definition": "def bump_patch(",
+        "anchor": "return cls(self._major, self._minor, self._patch + 1)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_bump.py",
+        "symbol": "test_should_bump_patch",
+        "line": 21,
+        "definition": "def test_should_bump_patch(",
+        "anchor": "assert bump_patch(\"3.4.5\") == \"3.4.6\""
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_bump.py",
+        "symbol": "test_should_versioninfo_bump_minor_and_patch",
+        "line": 31,
+        "definition": "def test_should_versioninfo_bump_minor_and_patch(",
+        "anchor": "assert v.bump_minor().bump_patch() == expected"
+      }
+    ],
+    "workspace_name": "python-semver--python-semver-486e4897da9f",
+    "source_url": "https://github.com/python-semver/python-semver/tree/486e4897da9fa6f02e1392bbf24d2f69599f0970"
+  },
+  "jd/tenacity": {
+    "ref": "9.0.0",
+    "commit": "a662bbb487cd6d34541824589f8e8c7a1f7791bb",
+    "commit_date": "2024-07-29T12:10:10Z",
+    "archive_sha256": "02a69e148f4871cfaf01d69e01f385f5e4a0f53089da5136b5d48d8bb3d30ed3",
+    "archive_bytes": 76609,
+    "indexed_python_files": 21,
+    "indexed_source_bytes": 155618,
+    "source_fingerprint": "ff02b6398e56efdede37600d0ef728f2fb4284eb32c5581c5fc231f384ced14f",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "tenacity/stop.py",
+        "symbol": "stop_after_attempt.__call__",
+        "line": 90,
+        "definition": "def __call__(",
+        "anchor": "return retry_state.attempt_number >= self.max_attempt_number"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_asyncio.py",
+        "symbol": "TestAsyncio.test_retry",
+        "line": 68,
+        "definition": "def test_retry(",
+        "anchor": "assert thing.counter == thing.count"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_asyncio.py",
+        "symbol": "TestAsyncio.test_iscoroutinefunction",
+        "line": 74,
+        "definition": "def test_iscoroutinefunction(",
+        "anchor": "assert asyncio.iscoroutinefunction(_retryable_coroutine)"
+      }
+    ],
+    "workspace_name": "jd--tenacity-a662bbb487cd",
+    "source_url": "https://github.com/jd/tenacity/tree/a662bbb487cd6d34541824589f8e8c7a1f7791bb"
+  },
+  "pallets/click": {
+    "ref": "8.1.8",
+    "commit": "934813e4d421071a1b3db3973c02fe2721359a6e",
+    "commit_date": "2024-12-19T17:04:12Z",
+    "archive_sha256": "266110f5eb2ac4b460c833636e2859d95de080f84786844969c930981db04cd2",
+    "archive_bytes": 399834,
+    "indexed_python_files": 70,
+    "indexed_source_bytes": 565386,
+    "source_fingerprint": "a6de9c236b9c15ac0c62e43b27da99480aa6d4426769fac64f5be9ad0a155168",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/click/types.py",
+        "symbol": "_NumberRangeBase.convert",
+        "line": 449,
+        "definition": "def convert(",
+        "anchor": "import operator"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_options.py",
+        "symbol": "test_counting",
+        "line": 57,
+        "definition": "def test_counting(",
+        "anchor": "assert not result.exception"
+      }
+    ],
+    "workspace_name": "pallets--click-934813e4d421",
+    "source_url": "https://github.com/pallets/click/tree/934813e4d421071a1b3db3973c02fe2721359a6e"
+  },
+  "theskumar/python-dotenv": {
+    "ref": "v1.0.1",
+    "commit": "d6c0b9638349a7dd605d60ee555ff60421c1a594",
+    "commit_date": "2024-01-23T06:30:54Z",
+    "archive_sha256": "f7fc691ddbf4b140c4859089a12643974343b320bd833068b601222cb04ba709",
+    "archive_bytes": 38501,
+    "indexed_python_files": 18,
+    "indexed_source_bytes": 61086,
+    "source_fingerprint": "a9fc1c07663fbb9bbed43e5aa7e59291d49a8dc7a2011890bb25fab5540f2753",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/dotenv/main.py",
+        "symbol": "load_dotenv",
+        "line": 321,
+        "definition": "def load_dotenv(",
+        "anchor": "dotenv = DotEnv("
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_main.py",
+        "symbol": "test_load_dotenv_existing_file",
+        "line": 239,
+        "definition": "def test_load_dotenv_existing_file(",
+        "anchor": "assert result is True"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_main.py",
+        "symbol": "test_load_dotenv_no_file_verbose",
+        "line": 248,
+        "definition": "def test_load_dotenv_no_file_verbose(",
+        "anchor": "assert result is False"
+      }
+    ],
+    "workspace_name": "theskumar--python-dotenv-d6c0b9638349",
+    "source_url": "https://github.com/theskumar/python-dotenv/tree/d6c0b9638349a7dd605d60ee555ff60421c1a594"
+  },
+  "mahmoud/boltons": {
+    "ref": "24.1.0",
+    "commit": "5aed99eb066f563fbad2231498492df8403a643d",
+    "commit_date": "2024-11-02T03:42:53Z",
+    "archive_sha256": "300c4c0e25aac427c8deb697874784b47b6b922761547f4c325516293efa7136",
+    "archive_bytes": 302481,
+    "indexed_python_files": 65,
+    "indexed_source_bytes": 777733,
+    "source_fingerprint": "0b17405e43726d6fcc540340c8cd594bf33d46cb8f6728407e47235b9140aa45",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "boltons/cacheutils.py",
+        "symbol": "LRI.__setitem__",
+        "line": 219,
+        "definition": "def __setitem__(",
+        "anchor": "if len(self) < self.max_size:"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_cacheutils.py",
+        "symbol": "test_lri",
+        "line": 27,
+        "definition": "def test_lri(",
+        "anchor": "assert x == char.upper()"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_cacheutils.py",
+        "symbol": "test_cache_sizes_on_repeat_insertions",
+        "line": 79,
+        "definition": "def test_cache_sizes_on_repeat_insertions(",
+        "anchor": "assert initial_list_size == list_size_after_inserts"
+      }
+    ],
+    "workspace_name": "mahmoud--boltons-5aed99eb066f",
+    "source_url": "https://github.com/mahmoud/boltons/tree/5aed99eb066f563fbad2231498492df8403a643d"
+  },
+  "tkem/cachetools": {
+    "ref": "v5.5.1",
+    "commit": "b072920d6cfb803be7dbbc7eafd9adc61c5c3cbd",
+    "commit_date": "2025-01-21T21:22:37Z",
+    "archive_sha256": "6d57b9076983d273e84d4d2cef5aa77bce174a8027e5eea44bb79f1718cd3ff7",
+    "archive_bytes": 40072,
+    "indexed_python_files": 18,
+    "indexed_source_bytes": 88320,
+    "source_fingerprint": "d83d3f5da8480121705a2c362133702bd2d42fe75164aa47ba523a6a167a7f18",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "src/cachetools/__init__.py",
+        "symbol": "TTLCache.__getitem__",
+        "line": 410,
+        "definition": "def __getitem__(",
+        "anchor": "expired = not (self.timer() < link.expires)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_ttl.py",
+        "symbol": "TTLCacheTest.test_ttl",
+        "line": 31,
+        "definition": "def test_ttl(",
+        "anchor": "self.assertEqual(0, cache.timer())"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_ttl.py",
+        "symbol": "TTLCacheTest.test_ttl_lru",
+        "line": 87,
+        "definition": "def test_ttl_lru(",
+        "anchor": "self.assertEqual(len(cache), 2)"
+      }
+    ],
+    "workspace_name": "tkem--cachetools-b072920d6cfb",
+    "source_url": "https://github.com/tkem/cachetools/tree/b072920d6cfb803be7dbbc7eafd9adc61c5c3cbd"
+  },
+  "un33k/python-slugify": {
+    "ref": "v8.0.4",
+    "commit": "f85f9488520148d5f6899b5639199882b605e30a",
+    "commit_date": "2024-02-08T18:32:25Z",
+    "archive_sha256": "7ee20bfc0de1d89561e34f407319aa26f96365c7c41c8ea8bde3cae2b6b6877a",
+    "archive_bytes": 22077,
+    "indexed_python_files": 7,
+    "indexed_source_bytes": 39125,
+    "source_fingerprint": "df71e52a2e5901502145f127a3b7a40004226c64785e56554eb2cbce1c485b22",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "slugify/slugify.py",
+        "symbol": "slugify",
+        "line": 75,
+        "definition": "def slugify(",
+        "anchor": "text = QUOTE_PATTERN.sub(DEFAULT_SEPARATOR, text)"
+      },
+      {
+        "kind": "test",
+        "file": "test.py",
+        "symbol": "TestSlugify.test_extraneous_seperators",
+        "line": 15,
+        "definition": "def test_extraneous_seperators(",
+        "anchor": "self.assertEqual(r, \"this-is-a-test\")"
+      },
+      {
+        "kind": "test",
+        "file": "test.py",
+        "symbol": "TestSlugify.test_non_word_characters",
+        "line": 29,
+        "definition": "def test_non_word_characters(",
+        "anchor": "self.assertEqual(r, \"this-is-a-test\")"
+      }
+    ],
+    "workspace_name": "un33k--python-slugify-f85f94885201",
+    "source_url": "https://github.com/un33k/python-slugify/tree/f85f9488520148d5f6899b5639199882b605e30a"
+  },
+  "more-itertools/more-itertools": {
+    "ref": "v10.6.0",
+    "commit": "1681cea3cd8fd1bfce41ac5db3987ae919d51b84",
+    "commit_date": "2025-01-14T16:21:18Z",
+    "archive_sha256": "9da6d7ee7ff442ea6c311f714a44b9c1959cbcb365b347ad85f7bb8e6fc477b1",
+    "archive_bytes": 134529,
+    "indexed_python_files": 8,
+    "indexed_source_bytes": 442238,
+    "source_fingerprint": "f19f366414b7c14231f74e8815ddc3d6834f5b9ff87370d9c34ff2ae9b1dd483",
+    "oracle": [
+      {
+        "kind": "implementation",
+        "file": "more_itertools/more.py",
+        "symbol": "chunked_even",
+        "line": 4375,
+        "definition": "def chunked_even(",
+        "anchor": "min_buffer = (n - 1) * (n - 2)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_more.py",
+        "symbol": "ChunkedEvenTests.test_infinite",
+        "line": 4906,
+        "definition": "def test_infinite(",
+        "anchor": "self.assertLessEqual(i, n * k + n * n)"
+      },
+      {
+        "kind": "test",
+        "file": "tests/test_more.py",
+        "symbol": "ChunkedEvenTests.test_evenness",
+        "line": 4921,
+        "definition": "def test_evenness(",
+        "anchor": "self.assertLessEqual(L, n)"
+      }
+    ],
+    "workspace_name": "more-itertools--more-itertools-1681cea3cd8f",
+    "source_url": "https://github.com/more-itertools/more-itertools/tree/1681cea3cd8fd1bfce41ac5db3987ae919d51b84"
+  }
+}

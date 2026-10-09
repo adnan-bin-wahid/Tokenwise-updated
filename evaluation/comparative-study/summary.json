@@ -1,0 +1,171 @@
+{
+  "repositories": 20,
+  "packet_conditions": 140,
+  "indexed_python_files": 538,
+  "indexed_source_bytes": 4381075,
+  "required_evidence_items": 59,
+  "excerpt_clipped_cases": 0,
+  "strategies": {
+    "all_python": {
+      "input_tokens": {
+        "min": 5827,
+        "median": 26240.0,
+        "mean": 55361.6,
+        "max": 196713
+      },
+      "total_input_tokens": 1107232,
+      "aggregate_reduction_vs_all_python_pct": 0.0,
+      "mean_per_repository_reduction_vs_all_python_pct": 0.0,
+      "evidence_retained": 59,
+      "macro_evidence_recall_pct": 100.0,
+      "required_files_retrieved": 43,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 23.514830234689846,
+      "budget_violations_4096": 20
+    },
+    "neural_excerpt": {
+      "input_tokens": {
+        "min": 74,
+        "median": 335.5,
+        "mean": 366.45,
+        "max": 993
+      },
+      "total_input_tokens": 7329,
+      "aggregate_reduction_vs_all_python_pct": 99.33807910176006,
+      "mean_per_repository_reduction_vs_all_python_pct": 97.96942613423647,
+      "evidence_retained": 17,
+      "macro_evidence_recall_pct": 28.333333333333332,
+      "required_files_retrieved": 20,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 2.481058632795285,
+      "budget_violations_4096": 0
+    },
+    "history_on": {
+      "input_tokens": {
+        "min": 2120,
+        "median": 4095.0,
+        "mean": 3562.4,
+        "max": 4096
+      },
+      "total_input_tokens": 71248,
+      "aggregate_reduction_vs_all_python_pct": 93.56521487818272,
+      "mean_per_repository_reduction_vs_all_python_pct": 84.69071186413665,
+      "evidence_retained": 6,
+      "macro_evidence_recall_pct": 10.0,
+      "required_files_retrieved": 40,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 3.7034006457014215,
+      "budget_violations_4096": 0
+    },
+    "history_off": {
+      "input_tokens": {
+        "min": 1875,
+        "median": 4095.0,
+        "mean": 3577.9,
+        "max": 4096
+      },
+      "total_input_tokens": 71558,
+      "aggregate_reduction_vs_all_python_pct": 93.53721713245282,
+      "mean_per_repository_reduction_vs_all_python_pct": 84.57714930322463,
+      "evidence_retained": 4,
+      "macro_evidence_recall_pct": 6.666666666666667,
+      "required_files_retrieved": 33,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 3.709328867732444,
+      "budget_violations_4096": 0
+    },
+    "selected_excerpt": {
+      "input_tokens": {
+        "min": 74,
+        "median": 335.5,
+        "mean": 378.75,
+        "max": 993
+      },
+      "total_input_tokens": 7575,
+      "aggregate_reduction_vs_all_python_pct": 99.31586153579376,
+      "mean_per_repository_reduction_vs_all_python_pct": 97.93981982311216,
+      "evidence_retained": 20,
+      "macro_evidence_recall_pct": 34.166666666666664,
+      "required_files_retrieved": 20,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 2.485762963826354,
+      "budget_violations_4096": 0
+    },
+    "selected_file": {
+      "input_tokens": {
+        "min": 1026,
+        "median": 4259.0,
+        "mean": 6667.05,
+        "max": 41677
+      },
+      "total_input_tokens": 133341,
+      "aggregate_reduction_vs_all_python_pct": 87.95726640848531,
+      "mean_per_repository_reduction_vs_all_python_pct": 80.15977127204205,
+      "evidence_retained": 20,
+      "macro_evidence_recall_pct": 34.166666666666664,
+      "required_files_retrieved": 20,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 4.890823518515151,
+      "budget_violations_4096": 11
+    },
+    "retrieval_only": {
+      "input_tokens": {
+        "min": 2069,
+        "median": 4095.0,
+        "mean": 3555.95,
+        "max": 4096
+      },
+      "total_input_tokens": 71119,
+      "aggregate_reduction_vs_all_python_pct": 93.57686555301869,
+      "mean_per_repository_reduction_vs_all_python_pct": 84.7492450960686,
+      "evidence_retained": 6,
+      "macro_evidence_recall_pct": 10.0,
+      "required_files_retrieved": 40,
+      "required_files_total": 43,
+      "estimated_total_co2_g": 3.700933740404641,
+      "budget_violations_4096": 0
+    }
+  },
+  "neural_seconds": {
+    "min": 0.47218939999947906,
+    "median": 1.4759004500010633,
+    "mean": 2.2805803499999455,
+    "max": 13.86476699999912
+  },
+  "index_prepare_seconds": {
+    "min": 0.01675230000182637,
+    "median": 0.07348269999965851,
+    "mean": 0.12679793499992228,
+    "max": 0.31892879999941215
+  },
+  "warm_search_seconds": {
+    "min": 0.0002449000021442771,
+    "median": 0.0002904499997384846,
+    "mean": 0.00030626500010839665,
+    "max": 0.0004664999978558626
+  },
+  "matched_neural_comparison": {
+    "packet_reduction_pct": 3.2475247524752477,
+    "per_case_reduction_pct": {
+      "min": -0.3787878787878788,
+      "median": 0.0,
+      "mean": 1.8623173095807912,
+      "max": 29.260450160771704
+    },
+    "cases_smaller": 3,
+    "cases_equal": 16,
+    "cases_larger": 1,
+    "source_tokens_before": 6664,
+    "source_tokens_after": 6418,
+    "estimated_co2_saved_g": 0.004704331031069042,
+    "estimated_co2_reduction_pct": 0.18925099052194538
+  },
+  "memory_comparison": {
+    "required_file_coverage_improved_cases": 6,
+    "required_file_coverage_equal_cases": 13,
+    "required_file_coverage_worse_cases": 1,
+    "off_clarification_cases": 20,
+    "on_clarification_cases": 0,
+    "on_hint_used_cases": 20
+  }
+}
