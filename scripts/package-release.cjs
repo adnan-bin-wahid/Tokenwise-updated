@@ -16,8 +16,11 @@ async function main() {
     [path.join(root, "demonstration2.md"), "demonstration2.md"],
     [path.join(root, "LICENSE"), "LICENSE"], [path.join(root, "docs/THIRD-PARTY-NOTICES.md"), "THIRD-PARTY-NOTICES.md"],
     [path.join(root, "CHANGELOG.md"), "CHANGELOG.md"], [path.join(root, `docs/release-notes/v${manifest.version}.md`), "RELEASE-NOTES.md"]];
-  for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md"]) {
+  for (const name of ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md", "SETUP.md"]) {
     files.push([path.join(root, "docs", name), `docs/${name}`]);
+  }
+  for (const name of ["tokenwise-icon.png", "antigravity-context.png", "repository-context.png", "neural-pruning.png", "README.md"]) {
+    files.push([path.join(root, "docs/images", name), `docs/images/${name}`]);
   }
   const checksums = [];
   const demoCases = JSON.parse(await fs.readFile(path.join(root, "demonstration/cases.json"), "utf8")).cases;

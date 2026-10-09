@@ -21,12 +21,13 @@ async function fixture(t) {
   const backend = "swe-pruner/swe-pruner";
   const models = ["config.json", "tokenizer.json", "tokenizer_config.json", "backbone/config.json",
     "added_tokens.json", "special_tokens_map.json", "chat_template.jinja", "merges.txt", "vocab.json", "README.md"];
-  const documents = ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md"];
+  const documents = ["ANTIGRAVITY.md", "PROJECT-EVALUATION.md", "DEVELOPMENT.md", "PUBLISHING.md", "THIRD-PARTY-NOTICES.md", "SETUP.md"];
   for (const relative of ["scripts/antigravity_context.py", "scripts/antigravity_hook.py",
     "scripts/install_backend.py", "scripts/backend_control.py", `${backend}/pyproject.toml`,
     `${backend}/README.md`, `${backend}/LICENSE`, `${backend}/src/fixture.py`, `${backend}/carbon_artifacts/fixture.json`,
     ...models.map(name => `${backend}/model/${name}`), "README.md", "demonstation.md", "demonstration2.md", "study.md", "validation.md", "LICENSE", "CHANGELOG.md",
     "docs/release-notes/v0.6.5.md", ...documents.map(name => `docs/${name}`),
+    "docs/images/tokenwise-icon.png", "docs/images/antigravity-context.png", "docs/images/repository-context.png", "docs/images/neural-pruning.png", "docs/images/README.md",
     "demonstration/tokenwise_demo/app.py", "demonstration/tokenwise_demo/tests/test_app.py",
     "demonstration/old_project/app.py", "demonstration/tokenwise_demo/.agents/rules/private.md",
     "demonstration/tokenwise_demo/.tokenwise/latest.json", "demonstration/results/private.json"]) {
@@ -55,6 +56,11 @@ test("rebundling removes stale demos and includes only manifest projects without
   assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/study.md"), "utf8"), "fixture\n");
   assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/validation.md"), "utf8"), "fixture\n");
   assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/demonstration2.md"), "utf8"), "fixture\n");
+  assert.equal(await fs.readFile(path.join(root, "vscode-extension/resources/docs/SETUP.md"), "utf8"), "fixture\n");
+  for (const name of ["tokenwise-icon.png", "antigravity-context.png", "repository-context.png", "neural-pruning.png", "README.md"]) {
+    assert.deepEqual(await fs.readFile(path.join(root, "vscode-extension/resources/docs/images", name)),
+      await fs.readFile(path.join(root, "docs/images", name)));
+  }
 });
 
 test("shareable package contains the one project and hashes it, not unrelated local folders", async t => {
@@ -67,6 +73,13 @@ test("shareable package contains the one project and hashes it, not unrelated lo
   assert.match(checksums, /  study\.md/);
   assert.match(checksums, /  validation\.md/);
   assert.match(checksums, /  demonstration2\.md/);
+  assert.match(checksums, /  docs\/SETUP\.md/);
+  for (const name of ["tokenwise-icon.png", "antigravity-context.png", "repository-context.png", "neural-pruning.png", "README.md"]) {
+    const bytes = await fs.readFile(path.join(root, "docs/images", name));
+    assert.deepEqual(await fs.readFile(path.join(release, "docs/images", name)), bytes);
+    const hash = require("node:crypto").createHash("sha256").update(bytes).digest("hex");
+    assert.ok(checksums.includes(`${hash}  docs/images/${name}\n`));
+  }
   assert.equal(await fs.readFile(path.join(release, "study.md"), "utf8"), "fixture\n");
   assert.equal(await fs.readFile(path.join(release, "validation.md"), "utf8"), "fixture\n");
   assert.doesNotMatch(checksums, /old_project|\.agents|\.tokenwise|private/);

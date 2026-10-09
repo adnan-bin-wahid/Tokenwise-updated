@@ -1,631 +1,435 @@
+<p align="center">
+  <img src="docs/images/tokenwise-icon.png" width="88" height="88" alt="TokenWise extension icon">
+</p>
+
 # TokenWise
 
-Automatic, bounded Python repository context for Antigravity coding prompts.
-Open a repository, enable TokenWise once, and enter your normal prompt. TokenWise
-retrieves relevant code and tests without asking you to select files manually.
+**Task-aware Python repository context for Antigravity. One prompt, relevant code and tests, no manual file selection.**
 
-**For normal users: install the VSIX. You do not need to clone this repository,
-install Node.js, compile the extension, press F5, or manually start a server.**
+TokenWise is a VS Code-compatible extension with a local Python backend. It finds
+repository code relevant to your task, reduces it where appropriate, and supplies
+a token-bounded context packet to Antigravity. Inspect the selected files, retained
+source, pruning decisions, conversation references and estimated carbon impact
+instead of treating context preparation as a black box.
 
-For teacher-facing functional validation and a real native Antigravity
-with/without pilot, use the current-source [validation guide](validation.md).
-It separates working-system evidence, supplied-packet measurements and actual
-agent outcomes; its results worksheet starts blank, not with invented savings.
+**Current release: 0.6.8, Windows-tested beta.** Automatic chat integration targets
+Antigravity; manual pruning commands also work in compatible VS Code installations.
 
-## Version 0.6.8
+[Download the VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix)
+| [Release and checksums](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8)
+| [Demo bundle](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/TokenWise-0.6.8.zip)
+| [Classroom walkthrough](demonstration2.md)
 
-### Inspectable Conversation Memory
+**For users:** install the VSIX. No repository clone, Node.js, compilation, F5 or
+manual backend-server launch is required.
 
-Version 0.6.8 selects earlier same-chat user intent for follow-ups and explicit
-same-topic requests. Up to eight relevant turns and 4000 characters preserve
-the task and recognized active requirements. The panel's **Conversation memory**
-shows selected messages/reasons, omitted counts, truncation and the exact outgoing
-reference status. Assistant replies, tool output and old packets are excluded.
-Selection is deterministic lexical matching, not perfect semantic chat understanding.
+## Contents
 
-After installing 0.6.8, update through **Set Up Backend**, then run **Enable
-Automatic Context** again to refresh owned rules/launchers. Native hooks use
-verified same-chat history; fallback passes separate agent-supplied user references,
-clearly labeled in the panel. To opt out, set `"conversation_memory": false` in
-`.agents/tokenwise.json`. Reference blocks count toward the complete packet budget
-and can be compact or omitted. No extra LLM call runs.
+- [What TokenWise does](#what-tokenwise-does)
+- [Quick start](#quick-start)
+- [See it working](#see-it-working)
+- [How it works](#how-it-works)
+- [Understand the result panel](#understand-the-result-panel)
+- [Conversation memory and response guidance](#conversation-memory-and-response-guidance)
+- [Comparison and validation](#comparison-and-validation)
+- [Settings and commands](#settings-and-commands)
+- [Troubleshooting and updates](#troubleshooting-and-updates)
+- [Privacy and limitations](#privacy-and-limitations)
+- [Development and project structure](#development-and-project-structure)
+- [Documentation](#documentation)
+- [Credits and license](#credits-and-license)
 
-For the shortest classroom walkthrough, use [demonstration2.md](demonstration2.md),
-now included in the installer resources and presentation ZIP.
+## What TokenWise Does
 
-### Automatic Comparison
+AI coding agents need repository evidence, but attaching everything can exceed a
+context budget and selecting files manually can miss dependencies or tests.
+TokenWise prepares a smaller, task-focused reference packet while exposing what
+was retained and omitted. It is a context-preparation tool, not a replacement for
+Antigravity's answer model or a guarantee of a correct answer.
 
-Version 0.6.7 adds **TokenWise: Configure Automatic Comparison**.
-Choose **Enable automatic packet comparison**, then send an ordinary Antigravity
-prompt with automatic context enabled. The result compares all indexed Python
-code against the exact TokenWise packet in the background, without another
-pruning pass or manual file selection. It shows file lists, local packet tokens,
-task-plus-packet tokens, genuine increases or reductions, configured carbon
-estimates, and JSON export. It is off by default; disable it or retry a failed
-comparison through the same command. Saved repository changes invalidate the
-comparison; send a fresh prompt instead of comparing different snapshots.
-
-**This is not automatic surveillance of the IDE's model usage or file reads.**
-The all-Python packet is an explicit hypothetical baseline. Actual Antigravity
-usage can be compared through **TokenWise: Import Antigravity Usage Comparison**,
-using two independent successful, single-turn CLI JSON/stream-JSON logs. The
-importer preserves reported counters, answers, durations and completed tool
-traces; it rejects failed/resumed runs, identical conversation IDs, and differing
-reported models. Importing logs makes no cloud request. The feature does not
-launch paid comparison runs automatically, grade answer quality, or guarantee
-lower usage. Instructions are in [the teacher guide](demonstation.md#automatic-comparison-067).
-Run **TokenWise: Open Validation Guide** for the bundled with/without procedure.
-These additions require 0.6.7 and its matching backend; public 0.6.6 is unchanged.
-
-**0.6.6** adds task-aware prompt engineering to outgoing Antigravity context:
-grounded explanations, file/symbol citations, user-constraint preservation, and
-explicit uncertainty. Guidance is enabled by default, bounded, and switchable.
-It adds no LLM call; better answer quality remains an evaluation objective.
-
-The installer retains the icon and one complete
-[demonstration project](demonstration/tokenwise_demo/README.md), twenty tests,
-and the [teacher walkthrough](demonstation.md). The updated [study](study.md)
-is included in the presentation ZIP and the extension resources. Run
-`TokenWise: Open Demonstration Guide` to open it from the installed extension.
-Get the installer and single-project presentation bundle from the
-[0.6.8 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8).
-
-**0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
-`Explain session expiry, not invoice pricing.` These fixes are included in 0.6.7.
-Previously published releases are unchanged.
-
-To install or upgrade:
-
-1. Download [tokenwise-vscode-0.6.8.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix).
-   In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
-2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
-   as well as the extension: an already-running older backend does not have the
-   new comparison endpoint. Existing validated model downloads can be reused.
-3. Open the Python folder, run **TokenWise: Enable Automatic Context**, and start
-   a new chat. Repeat the task and check the fresh result, not an old panel.
-
-Friends can install the same VSIX without cloning or compiling. Their first
-backend setup still requires Python 3.12 and dependency/model download access.
-On a failed setup step choose **Retry Failed Step**; there is no need to uninstall
-or erase validated downloads to retry.
-
-## Before You Start
-
-For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
-and the single [Python demo project](demonstration/tokenwise_demo/README.md).
-The updated 0.6.8 guide focuses on **how pruning works** with repository discovery,
-exact selected source, and bounded same-chat user references. Its input-trace
-command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
-Download the 0.6.8 installer and presentation ZIP below for automatic comparison, validation and outgoing prompt
-engineering, its rehearsal, and the single-project bundle. The optional packet-comparison command is
-also included. See the guide for installation, exact steps, line decisions,
-and the distinction between a history replay and live Antigravity integration.
-
-| Requirement | Details |
+| Capability | What you get |
 | --- | --- |
-| Editor | Antigravity IDE with workspace rules and a command tool |
-| Python | A **64-bit Python 3.12** installation; [official downloads](https://www.python.org/downloads/) |
-| Repository | A local folder containing Python source |
-| Internet | Needed for initial dependency/model downloads; retrieval runs locally afterward |
-| Disk | Allow about **10 GB free** for the environment, model, and package caches |
-| Memory | 8 GB RAM is a practical starting recommendation; a CPU is sufficient |
-
-Windows installation and retrieval are tested. Portable setup and launchers are
-also included for macOS/Linux, but those platforms have not yet been verified
-on native machines. Python/PyTorch wheels must support your OS and architecture.
-On macOS/Linux, `python3` must be on PATH for the small workspace bootstrap.
-Remote SSH, WSL/Dev Containers, browser editors, and virtual workspaces are not
-supported by this first-run workflow.
-
-TokenWise itself does not need an API key. Your Antigravity model access and
-billing remain separate. A GPU, Ollama, and an MCP server are not required.
-
-### Install or Check Python on Windows
-
-Python 3.13/3.14 alone is not sufficient; TokenWise currently requires **3.12**.
-If it is missing, install the [official Python Install Manager](https://www.python.org/downloads/),
-open a new PowerShell terminal, and run:
-
-```powershell
-pymanager install 3.12
-py -3.12 -c "import sys,struct; print(sys.version); print(struct.calcsize('P')*8); print(sys.executable)"
-```
-
-The check should show **3.12.x**, **64**, and an executable path. Restart
-Antigravity afterward. If the manager installation/download fails, fix the
-reported issue and retry that step; do not remove your existing project Python.
-If detection still fails, set **TokenWise > Python Path** to the printed path.
-See [official Windows installation troubleshooting](https://docs.python.org/3/using/windows.html#troubleshooting).
+| Automatic repository discovery | Ask a normal coding question without selecting an editor file. |
+| Task-aware retrieval | Python AST metadata, lexical search and dependency relationships help locate implementation and tests. |
+| Neural and structural reduction | Relevant source can be pruned; supporting files may use signatures or retained short source instead. |
+| Complete-packet budget | Excerpts, file headings, guidance and conversation references share one local-token budget. |
+| Project overviews | Broad questions use a separate overview path rather than narrowing the search to a package initializer. |
+| Inspectable conversation memory | Related earlier user intent can inform follow-ups, with reasons and omissions visible. |
+| Response guidance | Task-specific instructions request grounded answers, citations and explicit uncertainty. |
+| Incremental background indexing | Saved Python changes update cached search data without rebuilding every unchanged AST. |
+| Comparison and export | Compare context strategies or import genuine reported usage from independent Antigravity runs. |
+| Carbon estimation | View configured before/after inference estimates, separated from measured emissions. |
 
 ## Quick Start
 
-### 1. Install TokenWise
+### 1. Check the Requirements
 
-Download [**TokenWise 0.6.8 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix)
-from the [0.6.8 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8).
-This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, one demonstration project, study, validation and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/TokenWise-0.6.8.zip)
-and `SHA256SUMS.txt`. Choose the VSIX for normal
-installation, not GitHub's automatically generated source-code ZIP.
+| Requirement | Current support |
+| --- | --- |
+| Editor | Antigravity IDE with workspace rules and a command tool |
+| Python | **64-bit Python 3.12**, available to the installer |
+| Workspace | A trusted **local folder** containing Python source |
+| Internet | Required for initial dependency and model downloads |
+| Storage | Allow approximately **10 GB free**, including environment and caches |
+| Memory | **8 GB RAM** is a starting recommendation; larger inputs can need more |
+| Compute | CPU supported; a GPU, Ollama and an MCP server are not required |
 
-**The overview/token-accounting/automatic-carbon fixes require 0.6.1 or later,
-including its updated backend.** Install the VSIX, reload, and update the managed
-backend through **TokenWise: Set Up Backend**. Use the versioned release link
-above: GitHub's `/releases/latest` does not select beta pre-releases.
+Windows setup and retrieval are tested. macOS/Linux portable launchers are included
+but have not been verified on native machines. Remote SSH, WSL/Dev Containers,
+virtual workspaces and browser editors are not supported by this setup workflow.
 
-In Antigravity:
+TokenWise needs no API key of its own. Antigravity model access and billing are
+separate. Install Python from [the official Python website](https://www.python.org/downloads/).
+Python 3.13 or 3.14 alone does not satisfy the current backend requirement.
 
-1. Open the **Extensions** view.
-2. Open its **...** menu and choose **Install from VSIX...**.
-3. Select the TokenWise VSIX and reload the editor window when asked.
+### 2. Install the Extension
 
-Install the extension normally. **F5 is only for extension developers.**
+1. Download [**tokenwise-vscode-0.6.8.vsix**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix).
+2. In Antigravity, open **Extensions**, open its **...** menu and select **Install from VSIX...**.
+3. Select the downloaded file and reload the editor when prompted.
 
-### 2. Open Your Python Repository
+Use the versioned link above. This is a beta distributed through GitHub, not a
+public marketplace listing; GitHub's latest-release shortcut can omit prereleases.
+The automatically generated source-code ZIP is not the extension installer.
 
-Use **File > Open Folder** and select your project, for example
-`C:\Projects\my-python-app`. The folder can be anywhere; it does not need to sit
-inside a TokenWise checkout. Trust it only if you trust the repository's contents.
+### 3. Enable Your Python Folder
 
-### 3. Enable Automatic Context
+1. Use **File > Open Folder** to open your Python repository anywhere on your machine.
+2. Trust the workspace only if you trust its contents.
+3. Open the command palette and run **TokenWise: Enable Automatic Context**.
+4. On first use, choose **Install Managed Backend**, review the confirmation and approve **Install Backend**.
+5. Wait for the seven setup stages, then confirm enabling TokenWise in this repository.
 
-Open the command palette and run **TokenWise: Enable Automatic Context**.
+The installer creates a private environment and downloads approximately **1.35 GB**
+of pinned model weights with checksum verification. First setup can take several
+minutes. Progress appears in notifications; details appear in **Output > TokenWise Setup**.
 
-On a new computer:
+**A step failed?** Fix the named cause and choose **Retry Failed Step**. Validated
+dependencies and downloads are reused. If you dismissed the notification, run
+**TokenWise: Set Up Backend** again. See the [setup and recovery guide](docs/SETUP.md).
 
-1. Choose **Install Managed Backend**.
-2. Review the download/setup confirmation and choose **Install Backend**.
-3. Wait for setup. It creates a private Python environment, installs CPU
-   dependencies, downloads about **1.35 GB** of pinned model weights, and checks
-   their SHA-256 checksum. Progress appears in a notification; detailed logs are
-   in **Output > TokenWise Setup**. First setup can take several minutes.
-4. Confirm enabling TokenWise in the selected repository.
+Setup preserves unrelated rules and hook handlers; it does not edit application
+source. Multiple configured repositories share the centrally managed backend.
+In a multi-folder window, choose the repository you want to enable.
 
-The notification shows **Step 1/7** through **Step 7/7**. If a step fails, fix
-the reported cause and click **Retry Failed Step**. Successful dependency steps
-are checked and reused; downloads are verified or resumed, not blindly trusted.
-You do not need to uninstall the extension or begin from scratch.
+### 4. Ask a Normal Question
 
-If you already have a complete TokenWise checkout/environment, choose
-**Use Existing Backend** and select its root folder instead. Do not select your
-Python repository or the `swe-pruner` subfolder as the backend installation.
+Start a **new Antigravity chat** and send:
 
-Setup adds TokenWise launchers and a workspace rule, merges its hook settings,
-and ignores local runtime data. Existing unrelated rules, hook handlers, and
-your context budget are preserved. Malformed JSON or customized launchers are
-not silently overwritten. No application source files are changed by setup.
-
-In a multi-folder window, choose the repository you want to enable. Repeat the
-command for each additional repository; they share one backend installation.
-
-### 4. Start a New Chat and Enter a Prompt
-
-For example:
-
-> Explain the login failure handling and its related tests. Do not modify files.
-
-Or:
-
-> Find why invoice retries fail and identify the relevant service and tests.
-
-For a project tour:
-
-> Give me the full overview of my project. Do not modify any files.
-
-You do not need to select an editor file, run a pruning command, or paste code.
-The backend starts automatically when needed. The first request also loads the
-model and can take longer; keep the context command running until it finishes.
-Approve its local command if Antigravity's permission policy asks. You do not
-need to enable unrestricted terminal execution.
-
-## If a Setup Step Fails
-
-Open **View > Output**, then choose **TokenWise Setup** in its dropdown for the
-full error. The notification identifies the failed stage and its recovery advice.
-
-| Step | What happens | Fix and retry |
-| --- | --- | --- |
-| **1. Prerequisites** | Finds 64-bit Python 3.12 and verifies bundled files | Install Python 3.12, restart Antigravity, then run setup again. For a custom Python location, set **TokenWise > Python Path**. If the VSIX is damaged, download it again. |
-| **2. Backend files** | Copies verified backend files into private user storage | Check free disk space and permissions for the storage path in the log. Click **Retry Failed Step**. |
-| **3. Environment** | Creates or checks TokenWise's private Python environment | Repair your Python 3.12 installation if needed, then retry. A broken private environment is recreated; model/download caches remain. |
-| **4. Dependencies** | Installs packaging tools, CPU PyTorch, and backend dependencies | Check internet/proxy access to PyPI and `download.pytorch.org`, and available disk space. Retry reuses completed, validated substeps and cached wheels. |
-| **5. Model** | Downloads about 1.35 GB of pinned weights and checks their hash | Check access to Hugging Face and free disk space. Retry resumes partial downloads when the server permits it; corrupt weights are replaced. Hash verification can take time even at 100%. |
-| **6. Verification** | Checks imports, tokenizer, and trained carbon artifacts | Read the import error in **TokenWise Setup**, fix the reported system/dependency issue, then retry. Previously completed dependencies are checked again. |
-| **7. Registration** | Saves the verified backend and its user setting | Check storage/settings permissions and retry. The installed environment and verified weights are retained. |
-
-If you dismissed the failure notification or cancelled setup, run **TokenWise:
-Set Up Backend** again. Keep the same IDE profile so its cached progress can be
-reused. Then run **Enable Automatic Context** if the repository is not enabled.
-For a repository rule/configuration error, choose **Retry Enable** after fixing
-the named file. Existing unrelated rules and files are preserved.
-
-Do not delete the backend/cache folders as your first troubleshooting step.
-An installer lock after an IDE crash is different: ensure no TokenWise setup is
-still running, use the logged storage path, remove only `backend/install.lock`,
-and retry. Never remove another running installer's lock.
-
-## Upgrade from an Earlier Version
-
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.8 VSIX
-   through **Install from VSIX...**, then reload the editor window.
-2. For a managed backend, select **Update Backend** when prompted. If you
-   dismissed the prompt, run **TokenWise: Set Up Backend** manually.
-3. Approve **Install Backend** and wait for the numbered steps. Verified model
-   downloads are reused. The previous managed process is stopped only after
-   installation succeeds and only when its process identity can be verified.
-4. Background indexing reconnects automatically. Open **Output > TokenWise
-   Index** to confirm the Python file count, then start a new Antigravity chat.
-5. Run **TokenWise: Enable Automatic Context** again in existing workspaces to
-   refresh generated follow-up rules. Existing unrelated rules are preserved.
-
-Your repository's central backend link remains valid. Do not uninstall or use
-**Remove All Local Data** just to upgrade: those actions remove reusable caches.
-If you use an existing **checkout backend** instead of a managed installation,
-update that checkout and restart its own backend process yourself; setup does
-not stop or alter checkout processes. See the developer guide for source setup.
-
-## How to Tell It Is Working
-
-- In **Customizations > Rules**, a TokenWise workspace rule should be listed.
-- In the chat, the agent should run the TokenWise context command, receive
-  `[TokenWise automatic context]`, and use the relevant excerpts.
-- The status bar changes from awaiting a prompt to **TokenWise Auto: N files,
-  N tokens**. The repository-context panel shows the selected files and excerpts.
-- Your repository's `.tokenwise/latest.json` should have a **new timestamp**,
-  the current query, `status: "ready"`, and `verification: false`.
-
-**A saved report or status bar alone does not prove that the model consumed the
-context. Check the current chat's actual tool output too.** Historical results
-are labeled **TokenWise last result**; verifier output is labeled **TokenWise test**.
-
-On stable Antigravity builds, an always-on rule asks the agent to invoke the
-local retrieval command. Context reaches the model through tool output. On IDE
-builds supporting native hooks, `PreInvocation` can inject it instead. The rule
-fallback is not guaranteed interception before the first model call: it depends
-on the agent following the rule and being permitted to run the command.
-
-## Everyday Controls
-
-### Background Indexing
-
-Version 0.6.0 warms the repository index when you open an already
-configured, trusted local folder. It uses your registered backend; it does not
-install dependencies or download models without setup consent.
-
-- Saving, creating, deleting, or renaming Python files updates the affected
-  metadata in the background. Bursts of edits are grouped together.
-- Different prompts reuse term counts, symbol locations, signatures, and the
-  dependency graph. File token counts are cached per tokenizer and content.
-- Source-content fingerprints invalidate search/context caches after edits.
-  Complete context results require the exact query, goal, repository fingerprint,
-  active file, threshold, budget, and candidate limit, not similar wording.
-- Full reconciliation runs approximately every two minutes to catch missed
-  events, including content changes with preserved timestamps. Unchanged ASTs
-  and derived metadata are retained. Only saved files on disk are indexed.
-- A watcher heartbeat runs every 30 seconds. If no watcher remains alive for
-  90 seconds, retrieval falls back to checking the repository before each query.
-  An edit becomes available after its background update completes; missed events
-  can remain unseen until reconciliation.
-
-Open **Output > TokenWise Index** to see the indexed file count and fingerprint
-after a change. Set `enabled: false` in `.agents/tokenwise.json` to stop indexing
-and automatic retrieval. Setting `auto_start_backend: false` also prevents
-background warm-up from starting an offline backend. Unconfigured, untrusted,
-remote, and virtual folders remain idle.
-
-An older backend continues to provide context using the conservative fallback.
-Update and restart the backend to activate background indexing; reloading only
-the extension does not reload Python code. See the
-[development instructions](docs/DEVELOPMENT.md#try-the-background-index) below.
-These changes reduce repository/search overhead; neural pruning and the
-Antigravity model response can still dominate total prompt latency.
-
-### Project Overviews and Honest Metrics
-
-An overview prompt uses a different retrieval mode from a focused bug or symbol
-question. It selects representative entry points, implementation modules, data
-models, and tests, plus bounded root README/package information when present.
-This mode does not use neural line pruning: preserving architectural coverage
-is more useful than narrowly selecting lines about a generic word such as
-`PROJECT`. Large modules use structural excerpts; small modules are kept intact.
-The same total token budget and file-candidate limit still apply.
-
-The panel reports how many Python files were indexed, which files were included,
-and any coverage warnings. A six-file bounded overview is not a promise to send
-every file in a large repository. Increase `max_candidates` (up to 32) and the
-budget if useful; the agent can read originals to fill gaps. If the project only
-contains `__init__.py` with a version string, TokenWise says so. Check that you
-opened the actual application root, not an empty scaffold or unrelated folder.
-
-Token statistics separate three quantities:
-
-- **Source tokens / Retained source:** before/after excerpt content from the
-  included files, excluding the context wrapper. Source reduction compares these
-  values. It is not a percentage of the entire repository or conversation.
-- **Packed tokens:** the complete supplied context, including paths, fences,
-  headings, repository map, and safety text. This is the bounded quantity.
-- **Formatting overhead:** the difference between the packed count and retained
-  source count. Tokenization across block boundaries is not exactly additive.
-
-For the reported case of 17 source tokens kept in a 117-token bundle, source
-reduction is **0%**, with **100 tokens of overhead**, not -588.24%. No savings are
-claimed when nothing was removed. Any real expansion is labeled as an increase.
-
-### Automatic Carbon Results
-
-With **TokenWise > Enable Carbon Estimation** enabled (the default), new automatic
-results display context immediately, then request carbon predictions separately.
-The panel shows CO2 before/after, estimated CO2 savings or increase, phase energy,
-the model scenario, and carbon intensity. Tiny values retain enough precision
-to remain visible. This does not add an Antigravity model call or delay the context command.
-
-Both predictions use the same selected files, formatting, output-token assumption,
-target model/hardware, and intensity. Only the input-context token count changes.
-The baseline is the same bundle with unpruned source, not the whole repository.
-An initializer-only bundle therefore has zero estimated savings, even though
-the wrapper is larger than its source. Increases are never hidden as savings.
-
-Carbon estimates are **approximate, SEAL-derived configured-scenario estimates**,
-not measurements of your Antigravity provider, local pruning energy, the whole
-conversation, or net environmental benefit. You can change the target scenario
-in TokenWise settings; it is not automatically detected from your agent model.
-
-Pending, disabled, and unavailable states are visible in the panel. If estimating
-fails, your prepared context remains usable; read the displayed error and check
-**TokenWise: Diagnose Setup**. An older backend without a matched baseline must
-be updated. With automatic panels disabled, **Show Automatic Context** opens the
-latest result with its estimate. Estimates live in the extension view and are
-not written back into `.tokenwise/latest.json` or injected as agent instructions.
-
-In 0.6.4, **Target Model Size B**, **Latency Per Input Token Ms**, and **Latency
-Per Output Token Ms** may be zero or unset to use the backend's registered
-features. A blank GPU setting is also automatic. Positive overrides remain
-explicit assumptions; MMLU-Pro/BBH scores of zero remain valid explicit scores.
-The backend still requires positive physical feature values when provided.
-For a `422` error mentioning zero model size or latency, install the corrected
-VSIX, reload, and repeat the task. For other invalid settings, repair the named
-setting and reopen **Show Automatic Context** to retry the estimate.
-
-### Explicit Topic Exclusions
-
-Focused repository retrieval recognizes contrasts such as `, not invoice
-pricing`, `but not invoice pricing`, `excluding invoice pricing`, and `rather
-than invoice pricing`. These words are excluded from positive lexical search
-and goal identifiers. Before neural pruning, AST-based reference views omit
-independent excluded declarations and methods; the original files are not edited.
-
-Required helpers are kept even when their names match the excluded topic, with
-a warning. The filter does not strip `not` conditions, assignments, or arbitrary
-side-effect calls. It is not a general natural-language parser, a replacement for
-reviewing excerpts, or a guarantee that every irrelevant line will disappear.
-Direct selected-source commands still prune the exact captured source with the
-neural model; broad overview mode still describes the repository structure.
-The panel reports **Excluded topics** and `scope_filter+...` methods. Exported
-repository runs include omitted-unit names, and reduction counts still compare
-the original included source against retained source plus separate overhead.
-
-### Response Guidance
-
-Version 0.6.6 adds **task-aware prompt engineering** to the context sent to
-Antigravity. A short `Response guidance (v1: ...)` block asks for grounded answers:
-cite relevant files/symbols, respect your requested scope and format, distinguish
-evidence from assumptions, and never claim unexecuted tests passed. Debugging,
-tests, features, refactoring, explanations, and overviews use different profiles.
-It does not authorize edits or change the original task.
-
-This is included automatically when space permits, not a prompt you must copy.
-It makes no additional LLM call. It counts toward the context budget and is
-included unchanged in both sides of the matched before/after carbon estimate.
-The panel reports its version, profile, format, status, and tokens; tiny budgets
-can produce `omitted_budget`. More useful answers are an evaluation objective,
-not a guaranteed or already measured improvement.
-
-For automatic Antigravity retrieval, add or change this property in your existing
-`.agents/tokenwise.json`, retaining its other properties:
-
-```json
-"response_guidance": true
+```text
+Explain account lockout after failed login attempts and its related tests.
+Do not modify any files.
 ```
 
-Set it to `false` to disable the block. For **Build Repository Context**, repository
-demonstrations, history replay, and **Compare Context Strategies**, use the separate
-editor setting **TokenWise > Enable Response Guidance**
-(`tokenWise.enableResponseGuidance`). Direct **Prune Current File** and
-**Prune Selected Code** still return source excerpts, not guided agent packets.
+Other useful prompts:
 
-To try the installed **0.6.8** release, no source build is needed:
+```text
+Explain session expiry and revocation, not invoice pricing. Do not modify any files.
+```
 
-1. Install the 0.6.8 VSIX and reload Antigravity.
-2. Open your Python repository or `demonstration/tokenwise_demo` from the ZIP.
-   Finish active prompts, then run **TokenWise: Set Up Backend** to update the
-   registered backend. An older running backend will not acquire this feature
-   just because the editor extension changed; verified downloads can be reused.
-3. Run **TokenWise: Enable Automatic Context**, then **TokenWise: Start Backend**.
-   Start a new Antigravity chat and ask: `Explain session expiry and its related
-   tests. Do not modify any files.`
-4. Open **TokenWise: Show Automatic Context**. Confirm `Response guidance` says
-   `v1: ... / applied` and the current tool output contains the guidance block.
-   `not reported` means the result came from an older backend/report; retry
-   setup and use a fresh prompt. Customized checkout backends are not stopped
-   automatically; restart only the checkout process you own, or use managed setup.
+```text
+Give me the full overview of my project. Do not modify any files.
+```
 
-For F5 development, run `npm run prepare-backend` and `npm run compile` from
-`vscode-extension`, then launch the development host and refresh its backend/setup
-as above. Older 0.6.5 installers remain unchanged and lack this new block.
+No file selection or code copy/paste is required. The backend starts when needed;
+its first model load can be slower. Approve the local context command if your
+Antigravity permission policy asks. Unrestricted terminal execution is not required.
 
-See [the study](study.md#137-outgoing-response-guidance-and-prompt-engineering)
-and [the teacher demonstration](demonstation.md#response-guidance)
-for the explanation and an honest comparison protocol.
+**Want a ready-made project?** Download the [demo bundle](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/TokenWise-0.6.8.zip)
+and open `demonstration/tokenwise_demo`, or open that folder in this checkout.
+Follow [demonstration2.md](demonstration2.md) for a short classroom walkthrough.
 
-### Commands
+## See It Working
 
-| Command | Use |
+<img src="docs/images/antigravity-context.png" width="560" alt="Recorded Antigravity conversation acknowledging TokenWise retrieval before giving a project summary">
+
+*Recorded report screenshot: Antigravity acknowledges retrieved context from
+application, security and workflow files before giving a project summary. Visible
+waiting messages belong to this recording, not a speed benchmark.*
+
+Check these signals after your own prompt:
+
+- **Customizations > Rules** contains a TokenWise workspace rule.
+- The current chat invokes the context command and receives `[TokenWise automatic context]`.
+- The status bar reports **TokenWise Auto: N files, N tokens**; **Show Automatic Context** opens the latest panel.
+- `.tokenwise/latest.json` has a fresh timestamp, your current query, `status: "ready"` and `verification: false`.
+
+An old panel or status bar alone proves neither a new retrieval nor model
+consumption. Historical results are labeled **TokenWise last result**; verifier
+activity is labeled **TokenWise test**. Check the current chat's tool output too.
+
+## How It Works
+
+```text
+Your prompt + eligible earlier user intent
+                  |
+         Automatic-context adapter
+                  |
+    Local index -> task-aware file retrieval
+                  |
+  Neural pruning / structural representation
+                  |
+  Budgeted excerpts + provenance + response guidance
+                  |
+     Antigravity tool output or supported hook
+                  |
+        Antigravity's answer model
+```
+
+1. **Configure.** Register the backend and add owned workspace rules/launchers.
+2. **Index.** Saved Python files supply ASTs, symbols, signatures, lexical counts and static dependency data. File events update affected metadata; reconciliation catches missed events.
+3. **Interpret.** A deterministic goal compiler identifies task focus and recognized exclusions. An optional local goal model is off by default.
+4. **Retrieve.** Search and graph relationships choose implementation, helpers and related tests. Overview requests take a separate architecture-oriented path.
+5. **Reduce and pack.** Source may receive neural line pruning; supporting files can use interfaces or retained short source. The complete packet must fit the configured budget.
+6. **Deliver and inspect.** Antigravity receives the packet and the extension exposes provenance. Carbon estimates and optional packet comparison load separately.
+
+**Integration boundary:** on supported IDE builds, a native `PreInvocation` hook
+can inject context. The stable fallback uses an always-on rule asking the agent
+to run a local context command. It depends on rule compliance and command approval;
+it is not guaranteed interception before the first model call.
+See [the integration guide](docs/ANTIGRAVITY.md) for transport details.
+
+Background indexing warms configured, trusted folders. Search data is reused
+across different prompts; complete results require exact request/cache identity
+and the source fingerprint. Unsaved buffers are not indexed. Reconciliation runs
+approximately every two minutes; see **Output > TokenWise Index** for updates.
+
+## Understand the Result Panel
+
+<img src="docs/images/repository-context.png" width="980" alt="Recorded repository panel showing source and packed tokens, estimated carbon impact and included-file provenance">
+
+*Recorded session-expiry/revocation result: eight files, 1,828 source tokens,
+1,158 retained source tokens and a 1,511-token complete packet. These are one
+example, not guaranteed values for another repository.*
+
+| Value | Meaning |
 | --- | --- |
-| **Enable Automatic Context** | Configure this Python repository or repair its backend link |
-| **Set Up Backend** | Install/repair a managed backend without configuring a repository |
-| **Start Backend** | Warm the model before a prompt; updates the manual API URL to its actual port |
-| **Diagnose Setup** | Check the registered installation, actual backend health, and workspace links |
-| **Show Automatic Context** | Reopen the latest supplied context |
-| **Demonstrate Pruning Inputs** (0.6.3+) | Inspect repository, exact selected-source, or user-history replay inputs and export real decisions |
-| **Compare Context Strategies** (0.6.2+) | Optional unpruned all-Python/selected versus automatic packet comparison |
-| **Configure Automatic Comparison** (0.6.7+) | Enable/disable packet comparison or retry the latest result |
-| **Import Antigravity Usage Comparison** (0.6.7+) | Compare two independent successful CLI usage logs |
-| **Open Setup Guide** | Read this guide inside the editor, even without the source checkout |
-| **Open Demonstration Guide** (0.6.5+) | Open the bundled one-project teacher walkthrough |
-| **Open Validation Guide** (0.6.7+) | Open the classroom quick route and controlled with/without protocol |
-| **Remove All Local Data** | Clean TokenWise data now, before uninstalling or starting over |
+| **Source tokens** | Original source in the included files, not all repository files. |
+| **Retained source** | Remaining source, excluding packet headings and instructions. |
+| **Packed tokens** | Complete packet: source, headings, safety text and any guidance/history. This is the budgeted quantity. |
+| **Source reduction** | `(source - retained source) / source x 100`; the screenshot shows 36.65%. |
+| **Formatting overhead** | Packed minus retained-source tokens: 353 in this example. Boundary tokenization is not perfectly additive. |
+| **Files included** | Files represented in the packet, not observed Antigravity file reads. |
+| **Included-file table** | Path, relationship, tier, original/retained counts, ranking score, representation method and effective threshold. |
+| **Score / threshold** | Selection diagnostics, not answer correctness. Tiers may use different thresholds; some representations do not apply a neural cutoff. |
 
-All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
-**Prune Current File**, and **Build Repository Context** commands remain available
-in VS Code as well; automatic chat retrieval needs Antigravity's agent integration.
+Counts use TokenWise's local model tokenizer, not necessarily your Antigravity
+model's tokenizer or billing counters. A small source can produce a larger packet
+because of formatting; genuine increases are disclosed. Keeping all 17 source
+tokens in a 117-token packet means **0% source reduction and 100 tokens of overhead**.
 
-In 0.6.8, up to eight selected earlier user turns and 4000 characters can inform
-related requests. Candidate state is capped at 32 messages; verified native
-transcript history can bootstrap a resumed topic. Unrelated topics and new chats
-must not inherit prior intent. Stable fallback passes separate earlier user
-references, not a full transcript. The teaching command's history mode
-is a supplied replay, not live capture. See the demonstration guide for evidence
-and isolation controls.
+### Carbon Values
 
-For a smaller context, edit your repository's `.agents/tokenwise.json`:
+The panel estimates input-processing (**prefill**) and output-generation
+(**decode**) energy under a configured model/hardware scenario. Before/after
+predictions share assumptions; the input-context size changes.
+
+In this screenshot, estimated CO2 changes from **0.171382 g to 0.158548 g**,
+with **97.2731 J** estimated energy saved and **0.012835 g** estimated CO2 saved.
+Decode energy is unchanged because the assumed output-token count is unchanged.
+The baseline is **the same files and formatting without pruning**, not every
+repository file. Small display-rounding differences are possible.
+
+**These are trained, SEAL-derived scenario estimates, not measured Antigravity
+emissions, provider usage or net environmental savings.** Local pruning energy
+is not included. Pending, disabled and failed estimates are explicit; a carbon
+error does not discard usable context.
+
+### Selected-File Neural Pruning
+
+<img src="docs/images/neural-pruning.png" width="980" alt="Recorded Session class pruning showing 117 original tokens, 26 pruned tokens and 77.78 percent reduction">
+
+*A separate recorded run asks about the `Session` class in `security/models.py`.
+Source changes from 117 to 26 tokens, a 77.78% reduction. The requested 0.45
+threshold is a relevance cutoff, not a promise of 45% savings.*
+
+Use **Prune Current File**, **Prune Selected Code** or **Demonstrate Pruning Inputs**
+to inspect a captured scope and line decisions. These commands do not overwrite
+the original file. Direct pruning output is an excerpt, not necessarily standalone
+executable code or a complete explanation.
+
+These unchanged report assets have [source and interpretation notes](docs/images/README.md).
+
+## Conversation Memory and Response Guidance
+
+**Memory in 0.6.8** can select up to **eight relevant earlier user turns / 4,000
+characters** from bounded same-chat candidates. A follow-up such as `What about
+its expiry boundary?` can retain the earlier topic and recognized requirements.
+The panel explains selection reasons, omissions, truncation and outgoing references.
+
+This is deterministic lexical selection, not perfect semantic understanding or
+full-chat replay. Assistant replies, tool output and prior injected packets are
+excluded. Native history must be chat-scoped and verified; fallback references
+are agent-supplied and labeled accordingly. New/unrelated chats must not inherit
+prior intent. History shares the complete budget and can be omitted.
+
+**Response guidance** adds bounded, task-specific prompt engineering: cite source
+files/symbols, respect requested scope, distinguish evidence from assumptions and
+never claim unexecuted tests passed. Explanation, debugging, test and overview
+tasks use different profiles. No extra LLM call is made. This is an implemented
+technique, not proof that every downstream answer becomes better.
+
+## Comparison and Validation
+
+TokenWise separates **prepared context measurements** from **live agent outcomes**.
+
+| Comparison | Establishes | Does not establish |
+| --- | --- | --- |
+| **Compare Context Strategies** | Local sizes for all-Python, selected-source and bounded packets. | How Antigravity actually reads files without TokenWise. |
+| **Configure Automatic Comparison** | The exact outgoing packet versus an all-indexed-Python baseline. | Billed model usage or automatically better answers. |
+| **Import Antigravity Usage Comparison** | Genuine counters, durations and completed traces from independent successful single-turn CLI runs. | Missing counters, automatic grading or an unperformed study. |
+
+Automatic packet comparison is **off by default**. Enable it through the command
+palette to see local differences and export JSON. It reuses prepared context and
+does not launch a second model answer. Changed snapshots require a fresh prompt.
+The all-Python baseline is hypothetical, not observed IDE behavior.
+
+### Recorded Component Study
+
+The [completed local study](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/comparative_study.md) covers **20 pinned Python
+repositories and 140 measured context packets**, separating neural and retrieval-only conditions.
+
+| Recorded finding | Scope |
+| --- | --- |
+| **93.58% aggregate packet reduction** | Retrieval-only ablation versus all-Python packets, not the full automatic neural pipeline. |
+| **3.25% additional aggregate reduction** | Real neural pruning versus the exact already-focused selected excerpts. |
+| **17/20 target anchors retained** | Three neural excerpt cases lost required implementation evidence. |
+| **33/43 to 40/43 required-file candidate coverage** | Same vague follow-up, memory off/on in retrieval-only conditions. |
+
+These findings support bounded selection and reveal preservation limitations.
+They do **not** establish improved Antigravity answer quality, actual cloud-token
+savings or measured emissions. The planned **120 live runs / 60 matched pairs**
+are separate from the completed component study and remain pending.
+
+For a fair live comparison, send the same task in separate fresh chats with
+TokenWise disabled/enabled. Keep model, source, permissions and rubric fixed;
+include retrieval overhead in answer time. Score supported facts and unsupported
+claims, record observed reads and keep **N/A** for unavailable genuine input-token counters.
+
+- [Short demonstration](demonstration2.md): one project and a straightforward walkthrough.
+- [Validation protocol](validation.md): controls, six-fact rubrics and evidence collection.
+- [Twenty study repositories](https://github.com/adnan-bin-wahid/Tokenwise-updated/tree/main/demonstration/comparative_study): open one numbered folder; tasks and a 120-run worksheet are included.
+- [Recorded test report](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/tests.md): 193 extension passes, 141 backend passes plus one skip, 20 demo passes and 10 browser views, dated October 9, 2026. A README edit does not rerun these tests.
+
+## Settings and Commands
+
+After setup, edit only the properties you need in `.agents/tokenwise.json`,
+retaining its existing fields:
 
 ```json
 {
   "enabled": true,
-  "token_budget": 2048,
+  "token_budget": 4096,
   "threshold": 0.45,
-  "max_candidates": 6
+  "max_candidates": 8,
+  "conversation_memory": true,
+  "response_guidance": true
 }
 ```
 
-Other settings use defaults when omitted. The default budget is 4,096 tokens;
-the supported range is 256-32,768. This counts the complete supplied context with
-TokenWise's local tokenizer, not necessarily the tokenizer of your chosen agent
-model. Set `enabled` to `false` to stop retrieval. To remove the rule entirely,
-remove only TokenWise's generated rule and handler, retaining your other rules.
+The budget defaults to **4,096 local tokens**; range **256-32,768**. This is an
+example, not a replacement for your generated file. Set `enabled` to `false`
+to stop automatic retrieval/indexing; disable memory or guidance individually
+with their booleans. Smaller budgets/candidate limits can omit useful evidence.
 
-Turn off **TokenWise > Auto Open Automatic Context** in editor settings to keep
-the status bar and logs without automatically opening a panel.
+Editor settings **Auto Open Automatic Context** and **Enable Carbon Estimation**
+control the panel and estimates. Manual repository commands use editor **Enable
+Response Guidance** separately from the workspace setting.
 
-## Troubleshooting
-
-| Problem | What to do |
+| Command | Purpose |
 | --- | --- |
-| Python 3.12 is not found | Install 64-bit Python 3.12 and restart the IDE. For a nonstandard installation, set the **TokenWise > Python Path** user setting to its executable. |
-| A download/setup fails | Use the numbered recovery table above, fix the reported cause, and click **Retry Failed Step**. Completed dependency steps and verified/partial downloads are retained. |
-| Setup was cancelled | Run setup again. The owned setup process is stopped; its private environment/cache are retained for retry. |
-| A setup lock remains after an IDE crash | First ensure no setup process is still running. The diagnostic paths identify user storage; remove only its `backend/install.lock` and retry. |
-| Backend is offline or the model is not ready | Run **TokenWise: Diagnose Setup**, then **Start Backend**. Inspect `backend.log` at the reported runtime path if startup fails. |
-| No context appears in chat | Start a new chat, confirm the workspace rule is loaded, and check command approval. An unchanged `latest.json` means no new retrieval ran. |
-| An old result is displayed | Check the timestamp/query and current tool output. A previous result is not evidence about your new prompt. |
-| Workspace is rejected | Use a trusted local folder. Version 0.5.0 accepts Antigravity's local `vscode-userdata` storage; remote/virtual repositories remain unsupported. |
-| You cloned/moved a repository or changed IDE profile | Run **Enable Automatic Context** again to create a valid local backend link. |
-| Existing rules or JSON conflict | Read the reported filename. Fix invalid JSON or retain customized files under another name; setup will not discard them. |
-| Retrieval is slow | Check **Output > TokenWise Index**, keep the backend running, and try a smaller budget/candidate limit. An older backend must be updated to use background indexing. Neural pruning still contributes to latency. |
-| Overview includes only a package initializer | Update both extension and backend to 0.6.1 or later. Confirm the application root contains real implementation. Check the panel's indexed-file count and coverage warnings. |
-| CO2 is missing or unavailable | Enable carbon estimation, run **Diagnose Setup**, update the backend through **Set Up Backend**, and issue a new prompt. The panel explains disabled, pending, and failed estimates; old saved reports may lack the matched baseline. |
+| **TokenWise: Enable Automatic Context** | Configure a workspace or refresh owned integration. |
+| **TokenWise: Set Up Backend** | Install, update or repair the managed backend. |
+| **TokenWise: Start Backend** | Warm the backend/model before a prompt. |
+| **TokenWise: Diagnose Setup** | Check registration, health and workspace links. |
+| **TokenWise: Show Automatic Context** | Reopen the latest result. |
+| **TokenWise: Build Repository Context** | Prepare repository context manually. |
+| **TokenWise: Prune Current File / Prune Selected Code** | Reduce explicitly captured source; two separate commands. |
+| **TokenWise: Demonstrate Pruning Inputs** | Inspect discovery, selected source or supplied user-history replay. |
+| **TokenWise: Configure Automatic Comparison** | Enable, disable or retry packet comparison. |
+| **TokenWise: Compare Context Strategies** | Compare manually prepared strategies. |
+| **TokenWise: Import Antigravity Usage Comparison** | Import independent successful CLI evidence. |
+| **TokenWise: Open Setup / Demonstration / Validation Guide** | Open a bundled guide; three separate commands. |
+| **TokenWise: Remove All Local Data** | Ownership-aware cleanup before uninstalling or starting over. |
 
-Corporate firewalls/proxies must permit PyPI, the PyTorch wheel host, Hugging Face,
-and Hugging Face's download CDN. TokenWise does not bypass your network policies.
-On Linux, missing system libraries such as OpenMP must be supplied by your OS.
+## Troubleshooting and Updates
 
-## Uninstall and Remove Local Data
+| Problem | First action |
+| --- | --- |
+| Python not detected | Install 64-bit Python 3.12, restart or set **TokenWise > Python Path**. |
+| Setup/download fails | Read **Output > TokenWise Setup**, fix the named stage and **Retry Failed Step**. |
+| No context reaches chat | New chat, workspace rule, command approval and fresh tool output. |
+| Old result appears | Check query/timestamp and repeat a fresh prompt. |
+| Backend offline | **Diagnose Setup**, then **Start Backend**; inspect the reported log. |
+| Slow retrieval | Allow first model load, keep the backend warm, check **TokenWise Index** and consider a smaller budget/candidate limit. |
+| CO2 unavailable | Read the displayed error, check settings and backend version; context remains usable. |
+| Moved/cloned workspace | **Enable Automatic Context** recreates the machine-specific backend link. |
 
-**Version 0.5.0 adds automatic uninstall cleanup.** Finish active agent/setup
-commands, click **Uninstall** in the Extensions view, then **fully restart the
-IDE** when required. The editor invokes TokenWise's Node uninstall hook when
-removal completes; a background worker finishes large environment deletions.
-Uninstall cleanup is not guaranteed to run at the instant you click the button.
+**Upgrade:** install the newer VSIX, reload, run **Set Up Backend**, then run
+**Enable Automatic Context** again in existing workspaces and start a new chat.
+The extension alone does not update an old running Python backend. Verified
+downloads are reusable; uninstalling is not an upgrade step. User-owned checkout
+backends must be updated/restarted by their owner.
 
-For an ordinary managed installation, cleanup removes:
+See [setup and recovery](docs/SETUP.md) for all stages and cleanup.
+Version history is in [CHANGELOG.md](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/CHANGELOG.md).
 
-- Managed Python environments, model downloads, partial downloads, private pip
-  cache, backend registration/logs, and verified owned backend/setup processes.
-- Unchanged generated repository rules/launchers, TokenWise hook handlers,
-  `.agents/tokenwise.json`, backend links, context records, and conversation state.
-- TokenWise's added `.gitignore` block and editor/workspace TokenWise preferences,
-  retaining unrelated settings, comments, hook handlers, and application files.
-- Its own tracking registry and temporary worker when cleanup succeeds.
+## Privacy and Limitations
 
-**For cleanup immediately**, run **TokenWise: Remove All Local Data**, confirm,
-and wait for completion before uninstalling. This also shows any preserved-file
-warnings in **Output > TokenWise Cleanup**.
+- **Local preparation, normal model delivery.** The backend normally uses `127.0.0.1` and does not execute repository Python. Excerpts subsequently enter Antigravity's provider request: local pruning does not mean code never leaves your machine.
+- **Initial downloads.** Setup contacts dependency/model hosts. Optional goal-generation endpoints require separate configuration.
+- **Sensitive records.** Ignored `.tokenwise/` contains prompt/context records and a machine-specific link. Do not commit/share it. Environments/models/logs live in extension user storage.
+- **Incomplete evidence.** Static relationships can miss dynamic imports, generated code, ignored/large files or unsupported syntax. Pruning can remove useful lines. Read originals before editing.
+- **No universal speed/quality promise.** Local neural inference has overhead. Memory/guidance are not guaranteed improvements; live paired evaluation is needed.
+- **Safe cleanup.** Uninstall removes verified owned data when editor removal completes, potentially after restart. Customized files, checkout backends and unrelated data are preserved. For visible cleanup run **Remove All Local Data** first. Editor history, backups, Git history and downloaded installers are not wiped.
 
-If upgrading from 0.4.0, install the current release and **reload once before uninstalling** so
-it can register your storage. It discovers old repositories recorded in this
-IDE's workspace history; open older configured repositories once if they are not
-in that history. Keep their drives/folders available during removal.
+## Development and Project Structure
 
-Cleanup deliberately preserves customized rules/launchers, unrecognized files,
-malformed configuration, pre-existing backend checkouts, Python itself, and shared
-caches used by other software. A failed/partial cleanup retains a small registry
-and report for diagnosis rather than silently deleting user data. Uninstall-hook
-logs identify the report under the OS temporary directory; use the immediate
-cleanup command before uninstalling to see issues directly.
-
-No extension can promise zero traces in editor-managed databases/history/logs,
-OS backups, source-control history, downloaded VSIX files, or shared pip caches
-created by older versions. These are not wiped by TokenWise. macOS/Linux cleanup
-is included but still needs native validation. The editor lifecycle timing is
-documented in [the uninstall-hook reference](https://code.visualstudio.com/api/references/extension-manifest#extension-uninstall-hook).
-
-## Privacy, Storage, and Limits
-
-The setup process downloads software and model files. Retrieval calls only the
-local backend on `127.0.0.1`; it does not execute repository Python files. Relevant
-source excerpts then enter **Antigravity's normal model request**, subject to
-your selected provider's privacy policy. Do not treat local pruning as a promise
-that code never leaves your machine.
-
-Managed environments, verified model downloads, backend registration, and logs
-live in **TokenWise's extension user storage**, not in your repository. Each
-repository has an ignored `.tokenwise/` directory containing prompt/context
-records and a machine-specific backend link. Do not commit or share that directory.
-The small `.agents/` rule/launcher files may be committed; teammates must still
-enable TokenWise locally to create their own backend link.
-
-Retrieval currently indexes Python files and supported static imports/calls.
-Dynamic imports, generated code, unsupported Python syntax, ignored directories,
-and very large files may not be represented. Context is a bounded selection,
-not a complete repository dump. The agent should read original files before
-editing. TokenWise never writes pruned excerpts into application source files.
-
-Carbon values in manual and automatic result views are **approximate, SEAL-derived estimates**,
-not measurements of your Antigravity cloud-model consumption. See
-[evaluation notes](docs/PROJECT-EVALUATION.md) and
-[the detailed integration guide](docs/ANTIGRAVITY.md).
-
-## For Maintainers
-
-To build a shareable release from this checkout, with Node.js dependencies installed:
-
-For future changes, assign a new extension version and update the release
-filenames/links. Never replace published release assets with a differently
-behaving build using the same version.
+Normal users do not need these commands. Contributors with Node.js/npm can run:
 
 ```powershell
 cd vscode-extension
 npm ci
 npm test
-npm run package
+npm run prepare-backend
+npm run compile
 ```
 
-Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.8/` with the VSIX, this guide,
-demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
-and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
-draft/upload/verify/publish process. Public marketplace publishing is a separate
-step requiring a publisher account; creating this package does not publish it.
+F5 is for extension development. Source-backend setup is in
+[DEVELOPMENT.md](docs/DEVELOPMENT.md). `npm run package` prepares a shareable
+VSIX/release folder; it does not publish automatically. Assign a new version for
+changed releases; never replace existing assets with another build under the same version.
 
-F5 remains available for extension development. Use
-[developer setup notes](docs/DEVELOPMENT.md) for source/environment setup and tests.
-The research pipeline remains under `carbon-engine/`; paper PDFs remain under
-`docs/papers/`. No developer-specific absolute paths are required for normal users.
+| Path | Responsibility |
+| --- | --- |
+| `vscode-extension/` | TypeScript extension, commands, setup, file watchers and result views. |
+| `swe-pruner/swe-pruner/src/swe_pruner/` | Python API, index, retrieval, pruning, packing and estimation integration. |
+| `scripts/` | Installers, adapters, packaging, verification and study tooling. |
+| `carbon-engine/` | Carbon-estimator research/training pipeline. |
+| `demonstration/tokenwise_demo/` | One deterministic classroom application with 20 tests. |
+| `demonstration/comparative_study/` | Twenty attributed, pinned upstream study snapshots. |
+| `evaluation/` | Component-study data, figures and verification evidence. |
+| `docs/` | Setup, integration, development, evaluation and notices. |
+
+## Documentation
+
+| Read this | When you need |
+| --- | --- |
+| [Setup and recovery](docs/SETUP.md) | Python checks, failed-stage retry, upgrades and cleanup. |
+| [Short classroom walkthrough](demonstration2.md) | A straightforward one-project demonstration. |
+| [Detailed demonstration](demonstation.md) | Input modes, decisions, memory/guidance and exports. |
+| [Validation](validation.md) | Controlled WITH/WITHOUT procedures and scoring. |
+| [Comparative study](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/comparative_study.md) | Completed local measurements and limitations. |
+| [Test report](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/tests.md) | Dated counts, browser checks and the platform skip. |
+| [Full project study](study.md) | Detailed implementation and defense preparation. |
+| [Development](docs/DEVELOPMENT.md) | Source setup, tests and backend lifecycle. |
+| [Publishing](docs/PUBLISHING.md) | Versioned packaging and release verification. |
 
 ## Credits and License
 
-TokenWise source is MIT licensed. The neural model is derived from
-[SWE-Pruner](https://github.com/Ayanami1314/swe-pruner), with weights from
+TokenWise source is [MIT licensed](https://github.com/adnan-bin-wahid/Tokenwise-updated/blob/main/LICENSE). Its neural pruner builds on
+[SWE-Pruner](https://github.com/Ayanami1314/swe-pruner), with pinned weights from
 [ayanami-kitasan/code-pruner](https://huggingface.co/ayanami-kitasan/code-pruner).
-Model assets and dependencies retain their respective licenses; see
-[third-party notices](docs/THIRD-PARTY-NOTICES.md).
+Carbon estimates use trained SEAL-derived artifacts and configured assumptions.
+Model assets, dependencies and upstream study snapshots retain their respective
+licenses. See [third-party notices](docs/THIRD-PARTY-NOTICES.md) and each snapshot's license.
