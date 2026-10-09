@@ -12,7 +12,7 @@ import asyncio
 import logging
 import threading
 from pathlib import Path
-from typing import List, Optional, Literal
+from typing import Annotated, List, Optional, Literal
 
 import torch
 import typer
@@ -27,7 +27,7 @@ from .prune_wrapper import PruneRequest, PruneResponse, SwePrunerForCodePruning
 from .repository.repository_index import RepositoryIndexCache
 from .retrieval.workspace_context import WorkspaceContextBuilder
 from .retrieval.context_comparison import build_comparison, ComparisonTooLarge, validate_selection
-from .conversation_context import is_follow_up
+from .conversation_context import select_memory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -81,7 +81,9 @@ class WorkspacePruneRequest(BaseModel):
     local_llm_model: Optional[str] = None
     token_budget: int = Field(default=8192, ge=256, le=32768)
     max_candidates: int = Field(default=8, ge=1, le=32)
-    context_hint: Optional[str] = Field(default=None, max_length=2000)
+    context_hint: Optional[str] = Field(default=None, max_length=4000)
+    conversation_history: List[Annotated[str, Field(max_length=2000)]] = Field(default_factory=list, max_length=32)
+    conversation_memory: bool = Field(default=True, strict=True)
     response_guidance: bool = Field(default=True, strict=True)
 
 
@@ -111,6 +113,7 @@ class WorkspacePruneResponse(BaseModel):
     comparison: Optional[dict] = None
     input_trace: Optional[dict] = None
     response_guidance: Optional[dict] = None
+    conversation_memory: Optional[dict] = None
 
 
 class PreparedComparisonRequest(BaseModel):
@@ -288,7 +291,9 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
     if active_rel_path and active_rel_path not in repo_index.index:
         raise HTTPException(status_code=400, detail="Active file is not an indexed Python file")
 
-    context_hint = (request.context_hint or "").strip() if is_follow_up(request.query) else ""
+    history = request.conversation_history or ([request.context_hint] if request.context_hint else [])
+    memory = select_memory(request.query, history if request.conversation_memory else [])
+    context_hint = memory.pop("hint")
     goal = await goal_compiler.compile(
         query=request.query.strip(),
         active_file=active_rel_path or "(automatic repository discovery)",
@@ -315,6 +320,8 @@ async def prune_workspace(request: WorkspacePruneRequest) -> WorkspacePruneRespo
         "history_text": context_hint, "history_source": "supplied_user_context" if context_hint else "none",
         "scope": "Repository discovery without editor hints" if active_rel_path is None else f"Repository anchored on {active_rel_path}",
         "threshold": request.threshold, "indexed_files": len(repo_index.index),
+        "memory": {**memory, "enabled": request.conversation_memory,
+                   "packet": result.get("conversation_memory")},
     }
     return WorkspacePruneResponse(**result, index_cache_hit=cache_hit)
 

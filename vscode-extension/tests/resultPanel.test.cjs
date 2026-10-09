@@ -240,3 +240,20 @@ test("comparison export preserves the exact response-guidance trace", async () =
   await panels.at(-1).receive({ command: "exportComparison" });
   assert.deepEqual(written.at(-1).result.response_guidance, guidance);
 });
+
+test("conversation memory shows selected messages, omissions, precedence trace and escaped reference text", () => {
+  const html = new ResultPanel().getWorkspaceHtml({ ...reportedResult, input_trace: {
+    mode: "conversation", current_query: "Which tests?", effective_query: "lockout", scope: "repository", threshold: .45,
+    history_text: "Earlier <task>", history_source: "agent_supplied_user_turns",
+    memory: { version: "1", enabled: true, selection: "bounded selection", summary: "Earlier <task>", requirements: ["Use <bullets>"],
+      considered_messages: 4, omitted_messages: 3, characters: 14, truncated: true,
+      messages: [{ position: 1, text: "Earlier <task>", reason: "topic anchor" }],
+      packet: { status: "compact", tokens: 25, text: "Current request takes precedence. <reference>" } } } });
+  assert.match(html, /1 selected \/ 4 considered/);
+  assert.match(html, /Agent-supplied earlier user turns/);
+  assert.match(html, /Omitted: 3/);
+  assert.match(html, /Some reference text was truncated/);
+  assert.match(html, /compact \/ 25 tokens/);
+  assert.match(html, /&lt;task&gt;/);
+  assert.doesNotMatch(html, /<reference>|<bullets>/);
+});

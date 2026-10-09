@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from swe_pruner.conversation_context import conversation_hint, is_follow_up, next_user_turns, bound_user_turns
+from swe_pruner.conversation_context import conversation_hint, is_follow_up, next_user_turns, bound_user_turns, HINT_LIMIT
 from swe_pruner.goal_compiler import GoalCompiler
 from swe_pruner.repository.repository_index import RepositoryIndex
 from swe_pruner.repository.repository_index import RepositoryIndexCache
@@ -52,11 +52,11 @@ class ConversationTests(unittest.TestCase):
         state = {"topic_query": "Explain account lockout"}
         for query in ("What about its expiry?", "What about its reset?", "Which tests cover that behavior?"):
             state = {"user_turns": next_user_turns(query, state, True)}
-        self.assertEqual(state["user_turns"], ["Explain account lockout", "What about its reset?", "Which tests cover that behavior?"])
+        self.assertEqual(state["user_turns"], ["Explain account lockout", "What about its expiry?", "What about its reset?", "Which tests cover that behavior?"])
         self.assertEqual(next_user_turns("Explain shipping", state, True), ["Explain shipping"])
         self.assertEqual(next_user_turns("What about its tests?", state, False), [])
         self.assertEqual(next_user_turns("What about its tests?", {}, True), [])
-        self.assertLessEqual(len("\n\n".join(bound_user_turns(["x" * 5000] * 10))), 2000)
+        self.assertLessEqual(len("\n\n".join(bound_user_turns(["x" * 5000] * 10))), HINT_LIMIT)
 
     def test_prune_response_exposes_actual_mean_line_scores(self):
         from types import SimpleNamespace

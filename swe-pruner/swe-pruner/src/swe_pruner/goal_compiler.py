@@ -100,7 +100,10 @@ CRITICAL SAFEGUARDS:
         context_hint: Optional[str] = None,
     ) -> StructuredGoal:
         if is_repository_overview(query):
-            return self.deterministic_fallback(query, current_symbol, diagnostics)
+            goal = self.deterministic_fallback(query, current_symbol, diagnostics)
+            if context_hint:
+                goal.objective += f"\nEarlier user reference (latest request takes precedence): {context_hint}"
+            return goal
         # Check if query is extremely vague and no context evidence is present
         is_vague = not query or is_follow_up(query) or query.lower().strip() in {"fix bug", "fix", "bug", "help", "debug", "test", "run"}
         has_evidence = bool(current_symbol or selected_code or diagnostics or context_hint)
@@ -131,7 +134,7 @@ CRITICAL SAFEGUARDS:
             logger.info("Local goal generation failed or client was disabled. Using deterministic fallback templates.")
             goal = self.deterministic_fallback(query, current_symbol, diagnostics)
         if context_hint:
-            goal.objective += f"\nEarlier user topic in this conversation (reference): {context_hint}"
+            goal.objective += f"\nEarlier user topic in this conversation (reference; latest request takes precedence): {context_hint}"
 
         # Post-process validation: Filter out hallucinated identifiers not in our workspace context
         # We build a vocabulary of valid words in context

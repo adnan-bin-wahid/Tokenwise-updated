@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.6.8 - 2026-10-09
+
+- Add bounded, extractive conversation memory for same-topic requests and a wider
+  set of follow-ups, not only the former three-turn phrase gate. Up to eight
+  relevant earlier user turns and 4000 characters inform retrieval; candidate
+  state is capped at 32 messages of 2000 characters each.
+- Preserve topic anchors and recognized active requirements; recognized newer
+  constraints supersede old clauses. Explicit unrelated topics do not inherit
+  prior references. Selection is deterministic lexical matching, not general
+  semantic understanding or an LLM-generated summary.
+- Native hooks recover earlier user turns only from verified same-chat records
+  or chat-scoped transcript paths; otherwise use scoped state. Assistant/model
+  replies, tool records and previous injected packets are excluded.
+- Updated Windows and portable fallback rules pass separate user-history data.
+  Label it agent-supplied, not independently verified native chat capture. Existing
+  workspaces must run Enable Automatic Context again after updating the backend.
+- Show memory selection reasons, candidate positions, omissions, truncation,
+  extractive task/requirements and exact outgoing memory blocks. Compact/omitted
+  blocks remain subject to the complete context budget; no extra LLM call runs.
+- Add the strict `conversation_memory` workspace opt-out and bundle the concise
+  `demonstration2.md` guide in both VSIX resources and the release ZIP.
+- No new live Antigravity answer-quality or measured-emissions claim is made.
+
 ## 0.6.7 - 2026-10-09
 
 ### Added

@@ -1,13 +1,13 @@
 # TokenWise: Classroom Demonstration
 
-Use TokenWise **0.6.7** and the single **`demonstration/tokenwise_demo`** folder.
+Use TokenWise **0.6.8** and the single **`demonstration/tokenwise_demo`** folder.
 Run commands through **Ctrl+Shift+P**. All commands below start with **TokenWise:**.
 
 ## 1. Prepare Before Class
 
-1. Install the 0.6.7 VSIX and reload Antigravity.
+1. Install the 0.6.8 VSIX and reload Antigravity.
 2. Open `demonstration/tokenwise_demo`, not the whole TokenWise checkout.
-3. Run **Set Up Backend**, **Enable Automatic Context**, then **Start Backend**.
+3. Run **Set Up Backend**, **Enable Automatic Context**, then **Start Backend**. Re-enable after upgrading to refresh the rule/launcher.
 4. Run **Diagnose Setup**. Resolve setup errors before presenting; use **Retry Failed Step** if offered.
 5. In the demo folder's terminal, run:
 
@@ -175,9 +175,18 @@ What about its expiry boundary? Do not modify any files.
 Which tests cover that behavior? Do not modify any files.
 ```
 
-Show fresh retrieval output and effective objectives. Confirm the subject remains
-account lockout, not unrelated session expiry. Native hooks can supply bounded
-earlier user turns; rule fallback can instead supply an agent-resolved current query.
+Show fresh retrieval output and effective objectives. Expand **Conversation
+memory**: show selected earlier messages, reasons, omitted count and outgoing
+reference status. Confirm the subject remains account lockout, not session expiry.
+Native hooks use verified same-chat user turns; fallback labels its references
+**Agent-supplied earlier user turns (not native capture)**.
+
+Also try `Use bullet points.` followed by `Explain account lockout boundary tests.`
+in that same chat. Show the earlier topic and still-active formatting requirement.
+Memory selects at most eight earlier user turns and 4000 characters, not every message.
+To demonstrate opt-out, set `.agents/tokenwise.json` `conversation_memory` to
+`false`, send a fresh same-topic request, and inspect the disabled memory trace.
+Restore `true` afterwards. Keep this separate from the with/without baseline.
 
 For an inspectable controlled replay, run **Demonstrate Pruning Inputs** ->
 **Conversation: replay earlier user context**. Enter the first lockout task as

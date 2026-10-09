@@ -33,17 +33,17 @@ if you use it instead of a live run.
 
 ### Choose the Correct Build
 
-Use **0.6.7** for this complete guide, including automatic comparison and validation.
+Use **0.6.8** for this complete guide, including automatic comparison and validation.
 The one-project layout and **Open Demonstration Guide** command were introduced
 in 0.6.5; older releases do not include the new response-guidance block.
-Download [the 0.6.7 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7)
+Download [the 0.6.8 release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8)
 for the VSIX, study, one-project demonstration ZIP and checksums.
 
 ### Normal Installation
 
-1. Download `tokenwise-vscode-0.6.7.vsix` from the release and install it with
+1. Download `tokenwise-vscode-0.6.8.vsix` from the release and install it with
    **Extensions > ... > Install from VSIX...**. Reload the editor.
-2. Download and extract `TokenWise-0.6.7.zip`. Open its
+2. Download and extract `TokenWise-0.6.8.zip`. Open its
    `demonstration/tokenwise_demo` folder in Antigravity.
 3. Follow **Open and Configure One Folder** below. No compiling or F5 is needed.
 
@@ -58,9 +58,9 @@ npm test
 npm run package
 ```
 
-Install `vscode-extension/tokenwise-vscode-0.6.7.vsix` using **Extensions > ... >
+Install `vscode-extension/tokenwise-vscode-0.6.8.vsix` using **Extensions > ... >
 Install from VSIX...**, then reload. The shareable folder is
-`releases/TokenWise-0.6.7/`; its `demonstration/tokenwise_demo` is the same project.
+`releases/TokenWise-0.6.8/`; its `demonstration/tokenwise_demo` is the same project.
 Never install the source-code ZIP as an extension.
 
 For your existing F5 workflow, run `npm run prepare-backend` and `npm run compile`
@@ -501,7 +501,7 @@ the answer. Boundary evidence should distinguish lockout from session expiry.
 | Integration path | How earlier intent reaches the backend |
 | --- | --- |
 | Native PreInvocation hook, where supported | Bounded earlier explicit user turns; trace can say `native_scoped_user_turns` |
-| Stable-build workspace rule/tool fallback | Agent resolves the subject into a self-contained current query; backend sees that query, not raw earlier chat |
+| Updated workspace rule/tool fallback | Agent passes latest query and bounded earlier user messages separately; trace labels agent-supplied reference, not native capture |
 
 Do not require a native history label on a fallback build. Instead inspect the
 resolved current query and current tool output. The backend cannot prove exactly
@@ -526,11 +526,14 @@ Which tests cover that behavior?
    chat's topic. If it clarifies without a tool call, no new retrieval event is
    expected. An unchanged status or old JSON is not evidence of a new run.
 
-Native state retains at most **three earlier user turns** from the current topic,
-within **2,000 combined characters**, preserving the topic opening and recent
-constraints. Explicit new tasks reset the topic. Reuse requires a conversation
-ID and is workspace-scoped. Assistant answers, injected context, unrelated chats,
-and unresolved questions are not authoritative remembered user intent.
+In 0.6.8, memory selects at most **eight earlier user turns** and **4000 combined
+characters**, preserving the topic opening and recognized active requirements.
+Native candidate state is bounded to 32 messages; transcript recovery requires
+verified same-chat identity. Explicit unrelated topics do not inherit old intent.
+Expand **Conversation memory** to show selection reasons, omissions, truncation
+and exact outgoing reference status. Assistant answers, tool output, injected
+context and unrelated chats are excluded. Matching/replacement are lexical
+heuristics, not general semantic conversation understanding.
 
 **Say:**
 
@@ -831,7 +834,7 @@ four demos are not numeric results for the new project.
 
 | Symptom | What to do |
 | --- | --- |
-| New guide command missing | Install the 0.6.7 VSIX; reload the correct host/profile |
+| New guide command missing | Install the 0.6.8 VSIX; reload the correct host/profile |
 | First setup failed | Read Output > TokenWise Setup; fix the named cause; Retry Failed Step |
 | Slow first retrieval | Warm with Start Backend; record startup separately; do not hide timeouts |
 | Trace/method fields absent | Update the matching Python backend and repeat the task |
@@ -890,9 +893,9 @@ fell below the threshold. It is a visible completeness limitation, not something
 to call correct executable code. Inspect original source before semantic claims.
 
 **Does history affect pruning, or only the final response?**
-For a recognized referring follow-up, bounded earlier user intent contributes to
-the effective retrieval/pruning objective. Show the trace. Fallback may provide
-a self-contained query rather than a raw transcript.
+For related tasks and recognized follow-ups, bounded earlier user intent enters
+the effective retrieval/pruning objective. Show the selected messages and trace.
+Updated fallback passes separate agent-supplied references, not a raw transcript.
 
 **Does it remember conversations in other chats?**
 No. This is scoped same-topic history, not persistent cross-chat memory. New
@@ -932,7 +935,7 @@ your normal prompt in Antigravity chat.
 | Diagnose Setup | Show installation, backend health and workspace registration in Output |
 | Check Backend Health | Show the direct API health check; inspect a missing/offline backend error instead of assuming readiness |
 | Open Setup Guide | Open the bundled installation and recovery documentation |
-| Open Demonstration Guide | Open this script from the installed 0.6.7 extension |
+| Open Demonstration Guide | Open this script from the installed 0.6.8 extension |
 | Open Validation Guide | Open the quick route, native with/without protocol and scoring rubric |
 | Show Automatic Context | Reopen the current automatic packet; check timestamp/query first |
 | Build Repository Context | Run the manual repository-context command from an open Python file with the lockout task; unlike controlled no-anchor mode, editor hints can affect this route |
@@ -965,7 +968,7 @@ This optional rehearsal demonstrates **prompt engineering in 0.6.6**.
 Earlier installers do not include it. Your earlier pruning/history/carbon
 demonstrations still apply; this is an extra stage after relevant evidence is found.
 
-1. Install the 0.6.7 VSIX, reload, and open this same `demonstration/tokenwise_demo`
+1. Install the 0.6.8 VSIX, reload, and open this same `demonstration/tokenwise_demo`
    folder. Refresh **Set Up Backend** and **Enable Automatic Context**, then
    **Start Backend**. Follow the [README steps](README.md#response-guidance).
    F5/compiling is only an alternative for developers, not normal users.

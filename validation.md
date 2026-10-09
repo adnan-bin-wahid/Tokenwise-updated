@@ -1,14 +1,20 @@
 # TokenWise: Validation and With/Without Comparison
 
-This 0.6.7 guide is the practical evidence plan for the project defense. It is a protocol,
+This 0.6.8 guide is the practical evidence plan for the project defense. It is a protocol,
 not a completed Antigravity comparison or a promise that TokenWise always wins.
 Use the single `demonstration/tokenwise_demo` repository throughout.
 
 ## Classroom Quick Route
 
-Before class install the 0.6.7 VSIX, reload, update through **Set Up Backend**,
+For the shortest classroom script, open [demonstration2.md](demonstration2.md).
+
+Before class install the 0.6.8 VSIX, reload, update through **Set Up Backend**,
 and open the ZIP's `demonstration/tokenwise_demo` folder. Run **Enable Automatic
 Context** and **Start Backend**. No compilation or F5 is required.
+
+After upgrading, run **Enable Automatic Context** again to refresh the owned
+rule/launcher. Version 0.6.8 keeps selected earlier user references visible in
+**Conversation memory**. New-chat isolation remains required for paired trials.
 
 For the short demonstration:
 

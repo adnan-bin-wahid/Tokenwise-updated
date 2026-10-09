@@ -98,7 +98,13 @@ export interface PruningInputTrace {
   scope: string;
   threshold: number;
   history_text: string;
-  history_source: "none" | "supplied_user_context" | "native_scoped_user_turns" | "supplied_replay";
+  history_source: "none" | "supplied_user_context" | "native_scoped_user_turns" | "supplied_replay" | "agent_supplied_user_turns";
+  memory?: {
+    version: string; enabled: boolean; selection: string; summary: string; requirements: string[];
+    considered_messages: number; omitted_messages: number; characters: number; truncated: boolean;
+    messages: { position: number; text: string; reason: string }[];
+    packet?: { status: string; tokens: number; text: string } | null;
+  };
   indexed_files?: number;
   first_line?: number;
 }
@@ -116,6 +122,8 @@ export interface WorkspacePruneRequest {
   local_llm_model?: string;
   token_budget?: number;
   context_hint?: string;
+  conversation_history?: string[];
+  conversation_memory?: boolean;
   max_candidates?: number;
   response_guidance?: boolean;
 }

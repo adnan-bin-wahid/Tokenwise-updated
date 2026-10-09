@@ -66,10 +66,26 @@ export function parseAutomaticActivity(value: unknown): AutomaticActivity | unde
     if (trace != null && (typeof trace !== "object" || Array.isArray(trace)
       || !["repository", "conversation", "selected_file", "selected_excerpt"].includes(trace.mode)
       || ![trace.current_query, trace.effective_query, trace.scope, trace.history_text].every(value => typeof value === "string")
-      || !["none", "supplied_user_context", "native_scoped_user_turns", "supplied_replay"].includes(trace.history_source)
+      || !["none", "supplied_user_context", "native_scoped_user_turns", "supplied_replay", "agent_supplied_user_turns"].includes(trace.history_source)
       || !Number.isFinite(trace.threshold) || trace.threshold < 0 || trace.threshold > 1
       || (trace.indexed_files !== undefined && (!Number.isInteger(trace.indexed_files) || trace.indexed_files < 0))
       || (trace.first_line !== undefined && (!Number.isInteger(trace.first_line) || trace.first_line < 1)))) { return undefined; }
+    const memory = trace?.memory;
+    if (memory != null && (typeof memory !== "object" || Array.isArray(memory)
+      || ![memory.version, memory.selection, memory.summary].every(value => typeof value === "string")
+      || typeof memory.enabled !== "boolean" || typeof memory.truncated !== "boolean"
+      || ![memory.considered_messages, memory.omitted_messages, memory.characters].every(value => Number.isInteger(value) && value >= 0)
+      || memory.characters > 4000 || memory.considered_messages > 32
+      || !Array.isArray(memory.requirements) || memory.requirements.some(value => typeof value !== "string")
+      || !Array.isArray(memory.messages) || memory.messages.length > 8
+      || memory.messages.length + memory.omitted_messages !== memory.considered_messages
+      || memory.messages.some(message => !message || typeof message !== "object"
+        || !Number.isInteger(message.position) || message.position < 1 || message.position > memory.considered_messages
+        || typeof message.text !== "string" || typeof message.reason !== "string")
+      || (memory.packet != null && (typeof memory.packet !== "object"
+        || !["not_used", "applied", "compact", "omitted_budget"].includes(memory.packet.status)
+        || !Number.isInteger(memory.packet.tokens) || memory.packet.tokens < 0
+        || typeof memory.packet.text !== "string")))) { return undefined; }
     if (result.files.some(file => (file.pruning_method !== undefined && typeof file.pruning_method !== "string")
       || (file.excluded_symbols !== undefined && (!Array.isArray(file.excluded_symbols)
         || file.excluded_symbols.some(symbol => typeof symbol !== "string")))

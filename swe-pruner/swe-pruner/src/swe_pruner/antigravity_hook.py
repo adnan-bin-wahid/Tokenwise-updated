@@ -18,13 +18,13 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
-from .conversation_context import conversation_hint, next_user_turns
+from .conversation_context import conversation_hint, next_user_turns, prior_user_turns, stored_user_turns
 
 
 MARKER = "[TokenWise automatic context]"
 DEFAULTS = {
     "enabled": True, "token_budget": 4096, "threshold": 0.45, "max_candidates": 6,
-    "response_guidance": True,
+    "response_guidance": True, "conversation_memory": True,
     "backend_port": 8000, "auto_start_backend": True,
     "startup_timeout_seconds": 40, "request_timeout_seconds": 90,
 }
@@ -78,6 +78,25 @@ def message_text(content: object) -> str:
     return ""
 
 
+def user_prompt_record(record: dict, payload: dict) -> tuple[str, str] | None:
+    if not isinstance(record, dict):
+        return None
+    if record.get("conversationId") is not None and payload.get("conversationId") is not None \
+            and record["conversationId"] != payload["conversationId"]:
+        return None
+    explicit = record.get("type") == "USER_INPUT" and record.get("source") == "USER_EXPLICIT"
+    standard = record.get("role") == "user" and "type" not in record \
+        and record.get("source") in (None, "USER", "USER_EXPLICIT", "user")
+    if not (explicit or standard):
+        return None
+    query = message_text(record.get("content"))
+    if not query or query.startswith(MARKER):
+        return None
+    identity = json.dumps([payload.get("conversationId"), record.get("step_index", record.get("id")),
+                           record.get("created_at", record.get("timestamp")), query], ensure_ascii=True)
+    return query, hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
 def latest_prompt(payload: dict) -> tuple[str, str] | None:
     transcript = payload.get("transcriptPath")
     if not transcript:
@@ -87,25 +106,39 @@ def latest_prompt(payload: dict) -> tuple[str, str] | None:
             record = json.loads(line)
         except ValueError:
             continue  # Antigravity may still be writing the trailing record.
-        if not isinstance(record, dict):
-            continue
-        if record.get("conversationId") is not None and payload.get("conversationId") is not None \
-                and record["conversationId"] != payload["conversationId"]:
-            continue
-        # Explicit Antigravity user records, plus standard role-based transcripts.
-        explicit = record.get("type") == "USER_INPUT" and record.get("source") == "USER_EXPLICIT"
-        standard = record.get("role") == "user" and "type" not in record
-        if not (explicit or standard):
-            continue
-        query = message_text(record.get("content"))
-        if not query or query.startswith(MARKER):
-            continue
-        identity = json.dumps([
-            payload.get("conversationId"), record.get("step_index", record.get("id")),
-            record.get("created_at", record.get("timestamp")), query,
-        ], ensure_ascii=True)
-        return query, hashlib.sha256(identity.encode("utf-8")).hexdigest()
+        if prompt := user_prompt_record(record, payload):
+            return prompt
     return None
+
+
+def earlier_user_turns(payload: dict, prompt_id: str) -> list[str]:
+    conversation = payload.get("conversationId")
+    if not isinstance(conversation, str) or not conversation.strip():
+        return []
+    transcript = Path(payload["transcriptPath"]).expanduser()
+    path_scoped = conversation in transcript.resolve().parts
+    turns, seen, current_seen = [], set(), False
+    for line in reverse_lines(transcript):
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        prompt = user_prompt_record(record, payload)
+        if not prompt:
+            continue
+        if prompt[1] == prompt_id:
+            current_seen = True
+            continue
+        if not current_seen or prompt[1] in seen:
+            continue
+        # Unlabeled records are accepted only in a verifiably chat-scoped path.
+        if not path_scoped and record.get("conversationId") != conversation:
+            continue
+        seen.add(prompt[1])
+        turns.append(prompt[0])
+        if len(turns) >= 64:
+            break
+    return stored_user_turns(list(reversed(turns)))
 
 
 @contextmanager
@@ -268,7 +301,7 @@ def load_settings(workspace: Path) -> dict:
     if not isinstance(overrides, dict):
         raise ValueError("TokenWise settings must be a JSON object")
     settings = {**DEFAULTS, **overrides}
-    for key in ("enabled", "auto_start_backend", "response_guidance"):
+    for key in ("enabled", "auto_start_backend", "response_guidance", "conversation_memory"):
         if not isinstance(settings[key], bool):
             raise ValueError(f"TokenWise setting {key} must be a boolean")
     bounds = {
@@ -285,14 +318,16 @@ def load_settings(workspace: Path) -> dict:
     return settings
 
 
-def retrieve_context(project_root: Path, workspace: Path, query: str, settings: dict, context_hint: str = "") -> tuple[str, dict]:
+def retrieve_context(project_root: Path, workspace: Path, query: str, settings: dict, context_hint: str = "", history: list[str] | None = None) -> tuple[str, dict]:
     base_url = ensure_backend(project_root, settings)
     result = request_json(f"{base_url}/prune-workspace", {
         "query": query, "workspace_root": str(workspace),
         "token_budget": settings["token_budget"], "threshold": settings["threshold"],
         "max_candidates": settings["max_candidates"],
         "response_guidance": settings["response_guidance"],
-        **({"context_hint": context_hint} if context_hint else {}),
+        "conversation_memory": settings["conversation_memory"],
+        **({"conversation_history": history} if history and settings["conversation_memory"] else {}),
+        **({"context_hint": context_hint} if context_hint and settings["conversation_memory"] else {}),
     }, timeout=float(settings["request_timeout_seconds"]))
     if not result.get("files") or not result.get("unified_prompt", "").startswith(MARKER):
         raise RuntimeError("TokenWise returned no usable automatic repository context.")
@@ -336,16 +371,17 @@ def run_hook(payload: dict, project_root: Path, workspace: Path) -> dict:
                 return {}
             write_json(runtime / "latest.json", event)
             scoped = isinstance(payload.get("conversationId"), str) and bool(payload["conversationId"].strip())
-            hint = conversation_hint(query, previous, scoped)
-            base_url, result = retrieve_context(project_root, workspace, query, settings, hint)
+            history = (earlier_user_turns(payload, prompt_id) or prior_user_turns(previous)) if scoped and settings["conversation_memory"] else []
+            hint = conversation_hint(query, {"user_turns": history}, scoped)
+            base_url, result = retrieve_context(project_root, workspace, query, settings, hint, history)
             if isinstance(result.get("input_trace"), dict):
-                result["input_trace"]["history_source"] = "native_scoped_user_turns" if hint else "none"
+                result["input_trace"]["history_source"] = "native_scoped_user_turns" if history else "none"
             event.update({
                 "status": "ready", "result": result, "backend_url": base_url,
                 "elapsed_ms": round((time.monotonic() - started) * 1000),
             })
             write_json(runtime / "latest.json", event)
-            turns = next_user_turns(query, previous, scoped)
+            turns = next_user_turns(query, {"user_turns": history}, scoped) if settings["conversation_memory"] else []
             write_json(state_path, {"prompt_id": prompt_id, "event_id": event["event_id"],
                                     "topic_query": turns[0] if turns else "", "user_turns": turns})
             # userMessage keeps repository text at user priority and persists it for later tool steps.

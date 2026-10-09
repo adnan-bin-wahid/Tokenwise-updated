@@ -5,7 +5,7 @@ const Module = require("node:module");
 
 async function main() {
   const playwright = require(path.resolve(process.argv[2]));
-  const directory = path.resolve(process.argv[3] ?? "tmp/release-0.6.7-ui");
+  const directory = path.resolve(process.argv[3] ?? "tmp/release-0.6.8-ui");
   await fs.mkdir(directory, { recursive: true });
   let webview;
   const load = Module._load;
@@ -43,6 +43,16 @@ async function main() {
       usage: { input_tokens: 80, output_tokens: 20, total_tokens: 100 } },
     notes: ["Synthetic fixture only. Actual logs are supplied by the user."] });
   const views = {
+    memory: panel.getWorkspaceHtml({ ...result, input_trace: {
+      mode: "conversation", current_query: "Explain account lockout boundary tests", effective_query: "Lockout evidence and earlier requirements",
+      scope: "Repository discovery", threshold: .45, history_text: "Explain account lockout. Do not modify any files.\n\nUse bullet points.",
+      history_source: "agent_supplied_user_turns", memory: {
+        version: "1", enabled: true, selection: "Synthetic memory UI fixture", summary: "Explain account lockout.",
+        requirements: ["Do not modify any files.", "Use bullet points."], considered_messages: 4, omitted_messages: 2,
+        characters: 78, truncated: false, messages: [
+          { position: 1, text: "Explain account lockout. Do not modify any files.", reason: "topic anchor" },
+          { position: 3, text: "Use bullet points.", reason: "earlier requirement" }],
+        packet: { status: "applied", tokens: 50, text: "Synthetic reference block. Latest user request takes precedence." } } } }),
     automatic: panel.getWorkspaceHtml({ ...result, comparison }),
     pending: panel.getWorkspaceHtml({ ...result, comparisonStatus: "pending" }),
     unavailable: panel.getWorkspaceHtml({ ...result, comparisonStatus: "unavailable", comparisonError: "Saved repository changed; send a fresh prompt." }),
@@ -77,6 +87,11 @@ async function main() {
           }
           await page.getByRole("button", { name: "Export Comparison", exact: true }).click();
           assert.deepEqual(await page.evaluate(() => window.messages.at(-1)), { command: "exportComparison" });
+        } else if (name === "memory") {
+          await page.getByText(/Conversation memory: 2 selected \/ 4 considered/).waitFor();
+          await page.getByText(/Omitted: 2/).waitFor();
+          await page.getByRole("button", { name: "Export Pruning Run", exact: true }).click();
+          assert.deepEqual(await page.evaluate(() => window.messages.at(-1)), { command: "exportPruningRun" });
         } else if (name === "cli_usage") {
           await page.getByRole("columnheader", { name: "Reported counter", exact: true }).waitFor();
           await page.getByRole("button", { name: "Export Reported Usage Comparison", exact: true }).click();

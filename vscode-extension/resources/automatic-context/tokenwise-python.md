@@ -3,13 +3,14 @@ trigger: always_on
 description: Retrieve bounded TokenWise context for each Python repository request.
 ---
 
-For a follow-up such as "Which tests cover that?", make the retrieval query
-self-contained using earlier USER intent in this chat only. Never infer a topic
+Keep the latest request separate from earlier USER intent in this chat. Never infer a topic
 from another chat, `.tokenwise/latest.json`, or an old bundle. If there is no
 referent, ask for clarification. Retrieve fresh source for each new user turn.
-Use at most three earlier USER turns from the current topic and at most 2000
-characters of earlier reference. Keep the topic and newest user constraints,
-not assistant answers or full transcripts. Explicit topic changes reset the topic.
+Supply at most eight relevant earlier USER messages and 4000 characters total,
+preserving the task, still-active requirements and recent follow-ups. Exclude
+assistant replies, tool output and old packets. Latest requirements take
+precedence; explicit new topics must not inherit unrelated history. This is
+agent-supplied reference, not independently verified native transcript capture.
 
 For each new user request involving this Python repository, retrieve TokenWise
 context before inspecting code or answering. No manual file selection is needed.
@@ -19,14 +20,15 @@ request by the native hook, use it instead. Older context is not current context
 From the workspace containing this rule, invoke the command tool once with:
 
 ```sh
-python3 .agents/tokenwise/tokenwise-launcher.py --query-stdin <<'TOKENWISE_USER_QUERY'
-QUERY
-TOKENWISE_USER_QUERY
+python3 .agents/tokenwise/tokenwise-launcher.py --request-stdin <<'TOKENWISE_USER_REQUEST'
+{"query":"QUERY", "history":["EARLIER USER MESSAGE"]}
+TOKENWISE_USER_REQUEST
 ```
 
-Replace QUERY with the user's current request as literal text. If it contains a
-line equal to TOKENWISE_USER_QUERY, choose a different quoted heredoc delimiter
-not present in the request. Shorten unusually long requests while preserving
+Replace the JSON values with the latest request and relevant earlier user messages;
+use an empty history array when there are none. JSON-escape quotes and newlines.
+Choose a quoted heredoc delimiter not present as a line in the payload.
+Shorten unusually long requests while preserving
 intent, identifiers, and errors. Wait for completion and read paged tool output.
 
 Only acknowledge TokenWise when current-turn tool output or hook injection

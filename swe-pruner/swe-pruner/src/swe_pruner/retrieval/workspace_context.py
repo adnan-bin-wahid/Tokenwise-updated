@@ -5,6 +5,7 @@ from typing import Any
 from ..prune_wrapper import PruneRequest
 from ..goal_compiler import is_repository_overview
 from ..query_focus import query_focus
+from .conversation_memory import append_conversation_memory
 
 from ..repository.dependency_graph import DependencyGraph
 from ..repository.repository_index import RepositoryIndex
@@ -60,7 +61,7 @@ class WorkspaceContextBuilder:
         lexical, graph, retrieval_cache_hit = self.prepare(index)
         if overview:
             result = self._build_overview(index, goal, model, documents, warnings, graph,
-                                          active_file is None, token_budget, max_candidates, response_guidance)
+                                          active_file is None, token_budget, max_candidates, response_guidance, context_hint)
             result["retrieval_cache_hit"] = retrieval_cache_hit
             self._remember(cache_key, result)
             return result
@@ -133,6 +134,7 @@ class WorkspaceContextBuilder:
             preamble += ("\n" if preamble else "") + "Explicitly excluded topics: " + "; ".join(focus.excluded_topics) + "."
         preamble, guidance = append_response_guidance(preamble, goal.task_type, token_budget,
                                                       getattr(model, "tokenizer", None), response_guidance)
+        preamble, memory = append_conversation_memory(preamble, context_hint, token_budget, getattr(model, "tokenizer", None))
         packed, files, count = ContextBuilder(token_budget).pack_context(
             goal.objective, source_views, anchor_distances, ranked, model,
             threshold, anchor, preamble=preamble,
@@ -161,6 +163,7 @@ class WorkspaceContextBuilder:
             "context_mode": "focused", "indexed_files": len(index.index),
             "context_hint_used": bool(context_hint),
             "response_guidance": guidance,
+            "conversation_memory": memory,
             "warnings": scope_warnings + (["Task needs clarification; no current-chat topic or editor evidence resolved the request."]
                          if goal.clarification_required else [])
                         + (["Explicit topic exclusions left no source evidence; narrow or clarify the request."] if not paths else []),
@@ -175,7 +178,7 @@ class WorkspaceContextBuilder:
             self.cache.popitem(last=False)
 
     def _build_overview(self, index, goal, model, documents, warnings, graph,
-                        automatic: bool, token_budget: int, max_candidates: int, response_guidance: bool) -> dict:
+                        automatic: bool, token_budget: int, max_candidates: int, response_guidance: bool, context_hint: str = "") -> dict:
         document_slots = min(len(documents), max(0, max_candidates - 2))
         selected_documents = dict(list(documents.items())[:document_slots])
         selected = select_overview_files(index, graph, max_candidates - document_slots)
@@ -187,6 +190,7 @@ class WorkspaceContextBuilder:
         tokenizer = getattr(model, "tokenizer", None)
         preamble, guidance = append_response_guidance(preamble, "repository_overview", token_budget,
                                                       tokenizer, response_guidance)
+        preamble, memory = append_conversation_memory(preamble, context_hint, token_budget, tokenizer)
         map_budget = max(0, token_budget // 3 - ContextBuilder._count(preamble, tokenizer))
         if map_budget > 32:
             preamble += "\n" + ContextBuilder._truncate(repository_map(index), map_budget - 4, tokenizer)
@@ -210,6 +214,8 @@ class WorkspaceContextBuilder:
             "context_cache_hit": False, "context_mode": "repository_overview",
             "indexed_files": len(index.index), "warnings": warnings,
             "response_guidance": guidance,
+            "conversation_memory": memory,
+            "context_hint_used": bool(context_hint),
             **self._token_metrics(metadata, files, count, preamble, model),
         }
 

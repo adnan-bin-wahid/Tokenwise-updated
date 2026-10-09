@@ -26,7 +26,7 @@ interface PendingWrite { target: string; previous?: Buffer; content: Buffer }
 
 const DEFAULT_SETTINGS = {
   enabled: true, token_budget: 4096, threshold: 0.45, max_candidates: 6,
-  response_guidance: true,
+  response_guidance: true, conversation_memory: true,
   backend_port: 8000, auto_start_backend: true,
   startup_timeout_seconds: 40, request_timeout_seconds: 90,
 };
@@ -197,7 +197,7 @@ export async function discoverRegisteredBackend(storageRoot: string): Promise<st
 }
 
 function validateSettings(settings: JsonObject): void {
-  for (const name of ["enabled", "auto_start_backend", "response_guidance"]) {
+  for (const name of ["enabled", "auto_start_backend", "response_guidance", "conversation_memory"]) {
     if (typeof settings[name] !== "boolean") { throw new Error(`TokenWise setting ${name} must be a boolean.`); }
   }
   const ranges: Record<string, [number, number]> = {

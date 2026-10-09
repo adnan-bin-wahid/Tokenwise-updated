@@ -12,8 +12,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--hook", action="store_true")
     parser.add_argument("--query-stdin", action="store_true")
+    parser.add_argument("--request-stdin", action="store_true")
     parser.add_argument("--query-base64")
     parser.add_argument("--verification", action="store_true")
+    parser.add_argument("--history-base64", default="")
     args = parser.parse_args()
     try:
         workspace = Path(__file__).resolve().parents[2]
@@ -30,8 +32,17 @@ def main():
         os.environ.update({"TOKENWISE_RUNTIME_DIR": str(runtime), "PYTHONUTF8": "1"})
         script = root / "scripts" / ("antigravity_hook.py" if args.hook else "antigravity_context.py")
         command = [str(python), str(script), "--workspace", str(workspace)]
+        query_bytes = None
         if not args.hook:
-            if args.query_stdin:
+            if args.request_stdin:
+                request = json.loads(sys.stdin.read(131073))
+                if (not isinstance(request, dict) or not isinstance(request.get("query"), str)
+                        or not isinstance(request.get("history", []), list)):
+                    raise ValueError("Expected a JSON request with query and user history.")
+                query_bytes = request["query"].encode("utf-8")
+                args.history_base64 = base64.b64encode(json.dumps(request.get("history", [])).encode("utf-8")).decode("ascii")
+                command.append("--query-stdin")
+            elif args.query_stdin:
                 command.append("--query-stdin")
             elif args.query_base64 is not None:
                 command += ["--query", base64.b64decode(args.query_base64, validate=True).decode("utf-8")]
@@ -39,7 +50,9 @@ def main():
                 raise ValueError("Provide --query-stdin or --query-base64 for a context request.")
             if args.verification:
                 command.append("--verification")
-        status = subprocess.call(command)
+            if args.history_base64:
+                command += ["--history-base64", args.history_base64]
+        status = subprocess.run(command, input=query_bytes).returncode if query_bytes is not None else subprocess.call(command)
         if status and args.hook:
             print("{}")
             return 0

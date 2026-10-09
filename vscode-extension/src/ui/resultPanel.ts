@@ -179,7 +179,8 @@ export class ResultPanel {
     const modes = { repository: "Repository discovery (no file selected)", selected_file: "Selected entire file",
       selected_excerpt: "Selected excerpt", conversation: "Conversation-informed repository discovery" };
     const sources = { none: "None", supplied_user_context: "User context supplied in request",
-      native_scoped_user_turns: "Native hook: current-chat user turns", supplied_replay: "Supplied replay (not live chat capture)" };
+      native_scoped_user_turns: "Native hook: current-chat user turns", supplied_replay: "Supplied replay (not live chat capture)",
+      agent_supplied_user_turns: "Agent-supplied earlier user turns (not native capture)" };
     return `<section><h2>Pruning inputs</h2><div class="meta-grid">
       <span>Mode</span><strong>${escapeHtml(modes[trace.mode])}</strong>
       <span>Current task</span><strong>${escapeHtml(trace.current_query)}</strong>
@@ -190,6 +191,15 @@ export class ResultPanel {
       ${trace.first_line !== undefined ? `<span>First source line</span><strong>${trace.first_line}</strong>` : ""}
       </div><details><summary>Inference objective</summary><pre>${escapeHtml(trace.effective_query)}</pre></details>
       ${trace.history_text ? `<details open><summary>Earlier user reference</summary><pre>${escapeHtml(trace.history_text)}</pre></details>` : ""}
+      ${trace.memory ? `<details open><summary>Conversation memory: ${trace.memory.messages.length} selected / ${trace.memory.considered_messages} considered</summary>
+        <div class="notice">${escapeHtml(trace.memory.selection)}. Omitted: ${trace.memory.omitted_messages}. ${trace.memory.characters} reference characters.
+        ${trace.memory.truncated ? "Some reference text was truncated." : ""} ${trace.memory.enabled ? "" : "Memory is disabled."}
+        Positions refer to the bounded candidate window, not absolute chat indices. Assistant replies are not used as facts.</div>
+        <div class="meta-grid"><span>Task reference</span><strong>${escapeHtml(trace.memory.summary || "none")}</strong>
+        <span>Earlier requirements</span><strong>${escapeHtml(trace.memory.requirements.join("; ") || "none")}</strong>
+        <span>Outgoing reference</span><strong>${escapeHtml(trace.memory.packet?.status ?? "not reported")} / ${trace.memory.packet?.tokens ?? 0} tokens</strong></div>
+        ${trace.memory.messages.map(message => `<div><strong>Candidate ${message.position}: ${escapeHtml(message.reason)}</strong><pre>${escapeHtml(message.text)}</pre></div>`).join("")}
+        ${trace.memory.packet?.text ? `<details><summary>Exact outgoing memory block</summary><pre>${escapeHtml(trace.memory.packet.text)}</pre></details>` : ""}</details>` : ""}
       <div class="actions"><button onclick="send('exportPruningRun')">Export Pruning Run</button></div></section>`;
   }
 

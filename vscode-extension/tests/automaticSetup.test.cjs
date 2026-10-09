@@ -175,7 +175,7 @@ test("macOS/Linux setup installs the portable launcher and POSIX rule", async (t
   const { workspace, backend } = await fixture(t);
   for (const platform of ["darwin", "linux"]) {
     const result = await configureAutomaticContext(workspace, backend, templates, platform);
-    assert.match(await fs.readFile(path.join(workspace, result.rulePath), "utf8"), /python3 .agents\/tokenwise\/tokenwise-launcher.py --query-stdin/);
+    assert.match(await fs.readFile(path.join(workspace, result.rulePath), "utf8"), /python3 .agents\/tokenwise\/tokenwise-launcher.py --request-stdin/);
     await fs.access(path.join(workspace, ".agents/tokenwise/tokenwise-launcher.py"));
     const handlers = (await json(workspace, ".agents/hooks.json"))["tokenwise-automatic-context"].PreInvocation;
     assert.equal(handlers[0].command, "python3 .agents/tokenwise/tokenwise-launcher.py --hook");

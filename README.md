@@ -12,7 +12,26 @@ with/without pilot, use the current-source [validation guide](validation.md).
 It separates working-system evidence, supplied-packet measurements and actual
 agent outcomes; its results worksheet starts blank, not with invented savings.
 
-## Version 0.6.7
+## Version 0.6.8
+
+### Inspectable Conversation Memory
+
+Version 0.6.8 selects earlier same-chat user intent for follow-ups and explicit
+same-topic requests. Up to eight relevant turns and 4000 characters preserve
+the task and recognized active requirements. The panel's **Conversation memory**
+shows selected messages/reasons, omitted counts, truncation and the exact outgoing
+reference status. Assistant replies, tool output and old packets are excluded.
+Selection is deterministic lexical matching, not perfect semantic chat understanding.
+
+After installing 0.6.8, update through **Set Up Backend**, then run **Enable
+Automatic Context** again to refresh owned rules/launchers. Native hooks use
+verified same-chat history; fallback passes separate agent-supplied user references,
+clearly labeled in the panel. To opt out, set `"conversation_memory": false` in
+`.agents/tokenwise.json`. Reference blocks count toward the complete packet budget
+and can be compact or omitted. No extra LLM call runs.
+
+For the shortest classroom walkthrough, use [demonstration2.md](demonstration2.md),
+now included in the installer resources and presentation ZIP.
 
 ### Automatic Comparison
 
@@ -49,7 +68,7 @@ and the [teacher walkthrough](demonstation.md). The updated [study](study.md)
 is included in the presentation ZIP and the extension resources. Run
 `TokenWise: Open Demonstration Guide` to open it from the installed extension.
 Get the installer and single-project presentation bundle from the
-[0.6.7 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
+[0.6.8 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8).
 
 **0.6.4** fixes zero-valued CO2 settings and explicit topic exclusions such as
 `Explain session expiry, not invoice pricing.` These fixes are included in 0.6.7.
@@ -57,7 +76,7 @@ Previously published releases are unchanged.
 
 To install or upgrade:
 
-1. Download [tokenwise-vscode-0.6.7.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix).
+1. Download [tokenwise-vscode-0.6.8.vsix](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix).
    In Antigravity, use **Extensions > ... > Install from VSIX...** and select it.
 2. Reload the editor, then run **TokenWise: Set Up Backend**. Update the backend
    as well as the extension: an already-running older backend does not have the
@@ -74,10 +93,10 @@ or erase validated downloads to retry.
 
 For a teacher presentation from this checkout, start with [the demonstration guide](demonstation.md)
 and the single [Python demo project](demonstration/tokenwise_demo/README.md).
-The updated 0.6.7 guide focuses on **how pruning works** with repository discovery,
+The updated 0.6.8 guide focuses on **how pruning works** with repository discovery,
 exact selected source, and bounded same-chat user references. Its input-trace
 command needs **0.6.4 or later and a matching backend** for the retrieval fixes.
-Download the 0.6.7 installer and presentation ZIP below for automatic comparison, validation and outgoing prompt
+Download the 0.6.8 installer and presentation ZIP below for automatic comparison, validation and outgoing prompt
 engineering, its rehearsal, and the single-project bundle. The optional packet-comparison command is
 also included. See the guide for installation, exact steps, line decisions,
 and the distinction between a history replay and live Antigravity integration.
@@ -122,10 +141,10 @@ See [official Windows installation troubleshooting](https://docs.python.org/3/us
 
 ### 1. Install TokenWise
 
-Download [**TokenWise 0.6.7 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix)
-from the [0.6.7 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
+Download [**TokenWise 0.6.8 for Antigravity (.vsix)**](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix)
+from the [0.6.8 GitHub release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8).
 This is a **Windows-tested beta**, not a marketplace listing. The release also
-provides an [installer, one demonstration project, study, validation and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/TokenWise-0.6.7.zip)
+provides an [installer, one demonstration project, study, validation and teacher-guide ZIP](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/TokenWise-0.6.8.zip)
 and `SHA256SUMS.txt`. Choose the VSIX for normal
 installation, not GitHub's automatically generated source-code ZIP.
 
@@ -227,7 +246,7 @@ and retry. Never remove another running installer's lock.
 
 ## Upgrade from an Earlier Version
 
-1. Finish active TokenWise prompts/setup commands. Install the new 0.6.7 VSIX
+1. Finish active TokenWise prompts/setup commands. Install the new 0.6.8 VSIX
    through **Install from VSIX...**, then reload the editor window.
 2. For a managed backend, select **Update Backend** when prompted. If you
    dismissed the prompt, run **TokenWise: Set Up Backend** manually.
@@ -414,9 +433,9 @@ editor setting **TokenWise > Enable Response Guidance**
 (`tokenWise.enableResponseGuidance`). Direct **Prune Current File** and
 **Prune Selected Code** still return source excerpts, not guided agent packets.
 
-To try the installed **0.6.7** release, no source build is needed:
+To try the installed **0.6.8** release, no source build is needed:
 
-1. Install the 0.6.7 VSIX and reload Antigravity.
+1. Install the 0.6.8 VSIX and reload Antigravity.
 2. Open your Python repository or `demonstration/tokenwise_demo` from the ZIP.
    Finish active prompts, then run **TokenWise: Set Up Backend** to update the
    registered backend. An older running backend will not acquire this feature
@@ -460,11 +479,11 @@ All commands have the **TokenWise:** prefix. The manual **Prune Selected Code**,
 **Prune Current File**, and **Build Repository Context** commands remain available
 in VS Code as well; automatic chat retrieval needs Antigravity's agent integration.
 
-In 0.6.3, recognized native follow-ups can use at most three earlier user
-turns from the current topic, with a combined 2,000-character bound. Explicit
-tasks reset the topic; missing conversation IDs and new chats do not inherit it.
-Stable-build fallback resolves user intent into a self-contained query rather
-than exposing the full chat to the backend. The teaching command's history mode
+In 0.6.8, up to eight selected earlier user turns and 4000 characters can inform
+related requests. Candidate state is capped at 32 messages; verified native
+transcript history can bootstrap a resumed topic. Unrelated topics and new chats
+must not inherit prior intent. Stable fallback passes separate earlier user
+references, not a full transcript. The teaching command's history mode
 is a supplied replay, not live capture. See the demonstration guide for evidence
 and isolation controls.
 
@@ -592,7 +611,7 @@ npm run package
 ```
 
 Packaging bundles the backend source/configuration, not the weight or a virtual
-environment, and creates `releases/TokenWise-0.6.7/` with the VSIX, this guide,
+environment, and creates `releases/TokenWise-0.6.8/` with the VSIX, this guide,
 demo projects, the teacher guide, licenses, and SHA-256 checksums. Send your friend that folder or just the VSIX
 and guide. See [GitHub publishing instructions](docs/PUBLISHING.md) for the
 draft/upload/verify/publish process. Public marketplace publishing is a separate

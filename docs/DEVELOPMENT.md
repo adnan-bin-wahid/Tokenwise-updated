@@ -249,14 +249,14 @@ selected file at two thresholds, selected excerpt, native-history, and new-chat
 result views. Use `scripts/verify_demonstration.py --inputs-only` to retry just
 these real input paths without regenerating the optional packet comparisons.
 
-For 0.6.7 comparison rendering, install Playwright in a temporary directory,
+For 0.6.8 comparison/memory rendering, install Playwright in a temporary directory,
 install its Chromium browser, compile the extension, then run:
 
 ```powershell
-node scripts/verify-comparison-panels.cjs <path-to-playwright-module> tmp/release-0.6.7-ui
+node scripts/verify-comparison-panels.cjs <path-to-playwright-module> tmp/release-0.6.8-ui
 ```
 
-This checks automatic two-packet comparisons, pending/unavailable states, and
+This checks conversation-memory selections, automatic two-packet comparisons, pending/unavailable states, and
 the separate imported-usage view at desktop and narrow widths, including button
 messages and overflow. Its data is explicitly synthetic UI verification, not
 agent experiment results. Screenshots and the checks report stay under `tmp/`.

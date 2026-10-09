@@ -3,18 +3,23 @@
 **Project:** TokenWise: Sustainable Context Optimization for Coding Agents  
 **Student:** Adnan Bin Wahid, BSSE-1442, Institute of Information Technology, University of Dhaka  
 **Supervisor named in the proposal:** Mridha Md. Nafis Fuad  
-**Implementation studied:** TokenWise extension 0.6.7, inspected on October 9, 2026
+**Implementation studied:** TokenWise extension 0.6.8, inspected on October 9, 2026
 
 **Comparison addendum:** Automatic packet comparison, CLI-usage import and the
 validation-guide shortcut are included in 0.6.7. Earlier public
 0.6.6 assets remain unchanged. The comparison measurements and their
 limitations are explained in Section 32.8 below and in the teacher guide.
 
+**Memory addendum (0.6.8):** Related user messages now inform retrieval through
+bounded extractive conversation memory. Section 21.5 explains native identity
+checks, separately labeled fallback references, constraint selection, outgoing
+packet limits, opt-out and the visible selection trace. This adds no LLM call.
+
 **Purpose:** Understand the entire project, explain its engineering and research foundations, demonstrate it, and answer project-defense questions confidently.
 
 This guide describes TokenWise as a complete system: its requirements, architecture, implementation, research basis, operation, evaluation, distribution, and limitations. It is not a chronological account of repairs, and it does not explain source code line by line. Instead, it explains the reasoning and behavior behind the important parts of the implementation.
 
-The implementation descriptions cover 0.6.7, including broad repository overviews, explicit topic exclusions, pruning-input traces, bounded conversation hints, context-strategy comparisons, automatic-result carbon reporting, the single teaching project, outgoing prompt engineering in Section 13.7, and comparison/validation support in Section 32.8. Earlier installers remain unchanged and do not acquire new functionality automatically. Historical performance and carbon-model measurements retain their original dates, fixtures, and evaluation boundaries. A supported experiment or a proposed comparative study is not presented as a completed downstream-quality result.
+The implementation descriptions cover 0.6.8, including broad repository overviews, explicit topic exclusions, pruning-input traces, bounded extractive conversation memory, context-strategy comparisons, automatic-result carbon reporting, the single teaching project, outgoing prompt engineering in Section 13.7, and comparison/validation support in Section 32.8. Earlier installers remain unchanged and do not acquire new functionality automatically. Historical performance and carbon-model measurements retain their original dates, fixtures, and evaluation boundaries. A supported experiment or a proposed comparative study is not presented as a completed downstream-quality result.
 
 The project ownership statement must remain precise. I built the TokenWise application and integrated its components into a working developer workflow. That includes the extension, repository-context pipeline, local service integration, sustainability-estimation workflow, installation, configuration, caching, diagnostics, packaging, and testing represented in this repository. The neural checkpoint and the foundational Qwen model are pretrained third-party components; their original training and published benchmark results belong to the cited researchers. Building an application from its requirements is not the same as training every dependency from random initialization. A strong defense can explain both the original system engineering and the properly attributed research it builds on.
 
@@ -483,7 +488,7 @@ Focused repository retrieval builds AST-based reference views that can omit inde
 
 ### 13.6 Earlier user context in the effective task
 
-The API accepts an optional hint of at most 2,000 characters and uses it only for recognized follow-up wording. The accepted hint contributes to goal compilation and lexical retrieval, so history can change the evidence selected before the final agent answer. It is not merely appended to a generated explanation. The trace separates current query, effective objective, history text, and provenance. The native hook and the manual replay supply this evidence differently; Section 21 explains their boundaries.
+The API accepts `conversation_history` with at most 32 user strings, each bounded to 2000 characters, or a legacy `context_hint` of at most 4000 characters. The selector identifies a related topic segment and chooses at most eight references and 4000 characters. History contributes to goal compilation, lexical retrieval and pruning for related explicit tasks as well as recognized follow-ups. The trace separates current query, effective objective, selected reference text and provenance; Section 21.5 explains transport, selection and packet bounds.
 
 ### 13.7 Outgoing response guidance and prompt engineering
 
@@ -546,7 +551,7 @@ The repository result panel shows version, profile, status, format, and fragment
 
 Automatic Antigravity retrieval uses `"response_guidance": true` in the repository's `.agents/tokenwise.json`; a boolean `false` disables it. The default is true even for an older settings file that omits the key. Manual **Build Repository Context**, repository/history demonstrations, and **Compare Context Strategies** independently use `tokenWise.enableResponseGuidance` in editor settings. Direct `/prune` and selected-source commands still produce raw excerpts and line decisions, not guided outgoing repository packets. Disabling response guidance does not disable retrieval, earlier-user hints, source-reference labels, or the existing Antigravity rule.
 
-Normal users install the 0.6.7 VSIX, reload, update the Python backend through **Set Up Backend**, and refresh workspace rules through **Enable Automatic Context**. A developer source-build trial instead requires `npm run prepare-backend`, `npm run compile`, and F5 from `vscode-extension`, followed by the same backend/setup refresh. Compile alone updates TypeScript, not an already installed/running Python service. See the [README rehearsal](README.md#response-guidance) and [demonstration](demonstation.md#response-guidance).
+Normal users install the 0.6.8 VSIX, reload, update the Python backend through **Set Up Backend**, and refresh workspace rules through **Enable Automatic Context**. A developer source-build trial instead requires `npm run prepare-backend`, `npm run compile`, and F5 from `vscode-extension`, followed by the same backend/setup refresh. Compile alone updates TypeScript, not an already installed/running Python service. See the [README rehearsal](README.md#response-guidance) and [demonstration](demonstation.md#response-guidance).
 
 #### How to establish whether answers are better
 
@@ -887,11 +892,13 @@ Only the last level establishes downstream usefulness for that task. Status-bar 
 
 ### 21.5 Bounded same-chat references, not permanent memory
 
-The native adapter can retain up to three earlier user turns within a combined 2,000-character limit. If a topic contains more turns, the bound keeps the topic-establishing first turn and the latest two, truncating their allotted text as needed. State is associated with workspace and conversation identity, not taken from another chat's latest activity. Assistant answers, tool output, and injected snippets are not authoritative remembered user intent.
+Version 0.6.8 uses bounded, extractive user memory. Candidate state is capped at 32 turns of 2000 characters each. For native bootstrap, the existing reverse reader scans at most a 16 MiB transcript tail and collects at most 64 earlier qualifying turns before candidate normalization. Recovery accepts records with the matching conversation ID, or unlabeled records only when the transcript path is verifiably scoped to that conversation. Otherwise it uses only that chat's existing state. Workspace and conversation identity remain separate; no other chat's latest activity is used. Assistant/model replies, tool output and injected snippets are excluded.
 
-Recognized references such as 'Which tests cover that behavior?' can carry this bounded hint into `/prune-workspace`. An explicit new topic resets the retained topic rather than importing unrelated old requests. Missing scoped conversation identity does not authorize cross-chat reuse. This is neither permanent user memory, model fine-tuning, nor a general understanding of every possible conversational reference.
+The selector uses the repository's term normalizer, topic overlap and expanded follow-up cues. It segments topic changes and selects the related segment, prioritizing the topic anchor and recognized active requirements before filling remaining slots with recent related turns. Up to eight selected messages share a 4000-character hint allowance. Recognized newer edit/test/format/exclusion constraints remove superseded clauses; the latest request takes precedence. The summary is an extract from selected user text, not a model-generated semantic summary. Explicit unrelated subjects do not inherit old requirements. Lexical English heuristics can miss synonyms, arbitrary coreference and unrecognized conflicts, so this is not perfect general chat understanding.
 
-On a stable rule/tool fallback, the agent may resolve a same-chat reference to a self-contained retrieval query using the visible conversation. It should ask for clarification when the subject is missing. That can produce `history_source: none` even though the query correctly names the earlier topic; native history capture and agent-resolved wording are different mechanisms. Re-enable an existing workspace after upgrading when it needs the current rule/launcher behavior.
+Updated fallback rules pass the latest query and earlier user strings separately: Windows uses encoded JSON history and the portable launcher accepts a JSON stdin envelope. The trace says `agent_supplied_user_turns`; TokenWise cannot independently verify those messages against private IDE chat storage. It must not label this native capture. Missing referents still require clarification. Existing workspaces must run Enable Automatic Context again after installing the matching backend so owned rules/launchers receive the new transport; customized integration files are preserved.
+
+The input trace exposes selected candidate positions/text/reasons, considered and omitted counts, truncation, extractive summary/requirements and exact outgoing-reference status. Candidate positions are indices within the bounded window, not absolute transcript message numbers. The outgoing JSON-quoted reference is separate from repository facts and states that the latest request wins. It uses at most 384 tokenizer tokens and one quarter of the packet budget, with evidence space reserved; it may be compact or omitted even when a hint informed retrieval. Its overhead counts toward the complete packed context and matched carbon baseline. Set `conversation_memory` to false in `.agents/tokenwise.json` to disable automatic history transport/use. State and exports can contain user requirements and need privacy review before sharing.
 
 ### 21.6 Controlled input demonstrations and provenance
 
@@ -1387,7 +1394,7 @@ This separates a modest distributable extension from the much larger ML runtime 
 
 ### 30.3 Public distribution
 
-The 0.6.7 distribution is [TokenWise 0.6.7](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7), dated October 9, 2026. Its assets are `tokenwise-vscode-0.6.7.vsix`, `TokenWise-0.6.7.zip`, and `SHA256SUMS.txt`. The ZIP includes the installer, one teaching project, `study.md`, `demonstation.md`, `validation.md`, usage/operational documentation, notices, and internal checksums. Normal users install the VSIX through **Extensions > ... > Install from VSIX...**, reload, set up/update the matching backend, and enable their trusted Python folder. They do not need Node.js, a source clone, or F5.
+The 0.6.8 distribution is [TokenWise 0.6.8](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8), dated October 9, 2026. Its assets are `tokenwise-vscode-0.6.8.vsix`, `TokenWise-0.6.8.zip`, and `SHA256SUMS.txt`. The ZIP includes the installer, one teaching project, `study.md`, `demonstation.md`, `demonstration2.md`, `validation.md`, usage/operational documentation, notices, and internal checksums. Normal users install the VSIX through **Extensions > ... > Install from VSIX...**, reload, set up/update the matching backend, and enable their trusted Python folder again to refresh owned integration. They do not need Node.js, a source clone, or F5.
 
 The release publisher verifies an explicit file allowlist and hashes, checks that the annotated tag and remote `main` match the release commit, creates a draft, uploads three assets, and verifies GitHub sizes/digests before publication. The final 0.6.5 VSIX, ZIP, and checksums were also downloaded without authentication and checked against the local build. The installer was inspected for the icon, guide, one-project inventory, and backend integrity. These checks establish distribution integrity, not general agent quality. Earlier public assets/tags remain unchanged; a future update requires a new version. GitHub's automatically generated source archives are not the normal-user installer.
 
@@ -1411,12 +1418,12 @@ TokenWise therefore has several forms of evidence rather than treating one test 
 
 ### 31.2 Current unit-test results
 
-The 0.6.7 source/release checks on October 9, 2026 report the following suites. These are functional checks, not downstream agent-quality measurements. The October 7 record for 0.6.6 remains historical: 174 extension passes, 118 backend passes and one skip, and twenty application passes. The prior 0.6.5 record reports 167 extension passes, 105 backend passes and one skip, and twenty application passes.
+The 0.6.8 source/release checks on October 9, 2026 report the following suites. These are functional checks, not downstream agent-quality measurements. The 0.6.7 record remains historical: 191 extension passes, 121 backend passes and one skip, and twenty application passes. The October 7 record for 0.6.6 reports 174 extension passes, 118 backend passes and one skip; 0.6.5 reports 167 extension passes, 105 backend passes and one skip. Each teaching application check passed twenty tests.
 
 | Suite | Result | Meaning |
 | --- | --- | --- |
-| Extension Node tests | 191 passed, no failures | Setup/lifecycle, synchronization, carbon states/counts, input traces, automatic comparisons, CLI-usage imports, response guidance, bundled study/validation guides, packaging, and icon contracts |
-| Backend Python tests | 122 discovered: 121 passed, 1 skipped, no failures | Adapter, installer, index/cache, overview/focused retrieval, exclusions, history, budgets, response templates, tokenizer accounting, and HTTP/prepared-comparison snapshot contracts |
+| Extension Node tests | 193 passed, no failures | Setup/lifecycle, synchronization, carbon states/counts, bounded memory traces, automatic comparisons, CLI-usage imports, response guidance, bundled classroom guides, packaging, and icon contracts |
+| Backend Python tests | 142 discovered: 141 passed, 1 skipped, no failures | Adapter, installer, index/cache, overview/focused retrieval, exclusions, conversation selection/identity/supersession, real-tokenizer budgets, response templates, and HTTP/comparison contracts |
 | Current demo tests | 20 passed, no failures; deterministic app output passed | Lockout/session boundaries, invoice/shipping, model defaults, and activity reports |
 
 The skipped backend test requires creating file symlinks, which this Windows account cannot do. This is a test-coverage qualification, not an unexplained silent pass. The run also emits dependency deprecation warnings; successful assertions do not imply that every library API is future-proof.
@@ -1732,7 +1739,7 @@ I report the saved local metrics rather than adopting the source paper's numbers
 
 I implemented central backend registration, recoverable managed installation, arbitrary-workspace integration, background saved-file synchronization, exact cache identities, diagnostics, and ownership-aware uninstall. I added tests for the failure and concurrency cases that could otherwise make a working demo unreliable for another user.
 
-I packaged version 0.6.7 with outgoing response guidance, automatic packet comparison, independent CLI-usage import, its icon, one runnable teaching application, twenty application tests, bundled study/validation guides, integrity metadata, and separately downloaded weights. Functional tests, isolated integration checks, performance benchmarks, and public-download checks verify different aspects of this complete system. The real-model/agent results recorded for older fixtures are not relabeled as current single-project experiments.
+I packaged version 0.6.8 with inspectable bounded conversation memory, outgoing response guidance, automatic packet comparison, independent CLI-usage import, its icon, one runnable teaching application, twenty application tests, bundled study/validation/short demonstration guides, integrity metadata, and separately downloaded weights. Functional tests, isolated integration checks, performance benchmarks, and public-download checks verify different aspects of this complete system. The real-model/agent results recorded for older fixtures are not relabeled as current single-project experiments.
 
 ### 35.6 Evaluation and reflection
 
@@ -2030,7 +2037,7 @@ The most important next step is proving downstream usefulness across independent
 
 ### 37.61 Does conversation history really influence pruning?
 
-For recognized native follow-ups, a bounded scoped earlier-user hint enters the effective goal and lexical retrieval before evidence selection. The controlled replay can demonstrate the same input effect with explicitly supplied text. A rule fallback may instead resolve the reference into the retrieval query. Inspect actual provenance, not only the final answer. Neither route implies general cross-chat memory, complete transcript ingestion, or reuse of assistant claims as authoritative intent.
+For related explicit requests and recognized follow-ups, selected scoped user references enter the effective goal and lexical retrieval before evidence selection. Controlled replay supplies text explicitly; updated fallback passes separately labeled agent-supplied user references. Inspect selected messages, effective objective and outgoing memory status, not only the final answer. Neither route implies general cross-chat memory, complete transcript ingestion, perfect semantic matching or reuse of assistant claims as facts.
 
 ### 37.62 Why does an overview have a pruning result without neural line masks?
 
@@ -2118,7 +2125,7 @@ I can say that I implemented task-aware outgoing prompting **designed to improve
 
 | Item | Current value or distinction |
 | --- | --- |
-| Extension snapshot / release version | 0.6.7 / Windows beta on GitHub Releases |
+| Extension snapshot / release version | 0.6.8 / Windows beta on GitHub Releases |
 | Normal managed interpreter | 64-bit Python 3.12 |
 | Neural foundation | Qwen3-Reranker-0.6B-derived pretrained SWE-Pruner checkpoint |
 | Backbone layers used for fusion | 7, 14, 28 from 28 layers |
@@ -2132,7 +2139,7 @@ I can say that I implemented task-aware outgoing prompting **designed to improve
 | Eligible intact short-source packing | At most 512 local tokens when task-matched and not already pre-pruned |
 | Overview document limits | At most two root documents, up to 64 KiB inspected per document |
 | Overview small-body cutoff / listed paths | 1,600 characters / up to 24 Python paths |
-| Native earlier-user hint limit | Up to three turns / 2,000 combined characters, workspace/conversation scoped |
+| Earlier-user memory limits | 32 bounded candidates; select at most eight turns / 4000 characters, workspace/conversation scoped |
 | Comparison baseline limits | 200 indexed Python files / 2 MiB source; selected text must match saved source |
 | Graph neighborhood | Up to two hops; incoming and outgoing evidence |
 | File-update debounce / maximum batch | 150 ms / 512 relative paths |
@@ -2150,6 +2157,7 @@ I can say that I implemented task-aware outgoing prompting **designed to improve
 | Recorded 0.6.5 extension/backend/demo checks | 167 pass / 105 pass and one skip / 20 pass |
 | 0.6.6 extension/backend/demo checks | 174 pass / 118 pass and one skip / 20 pass |
 | 0.6.7 extension/backend/demo checks | 191 pass / 121 pass and one skip / 20 pass |
+| 0.6.8 extension/backend/demo checks | 193 pass / 141 pass and one skip / 20 pass |
 | Current demo source | `demonstration/tokenwise_demo`, eleven Python files |
 | Demo lockout threshold / duration | Three failures / sixty seconds; exact deadline resets |
 | Demo session duration / validity | 300 seconds / not revoked and strictly before expiry |
@@ -2217,7 +2225,7 @@ The documents are research/reference material. Agent/teacher/judge prompts print
 | [Repository overview](swe-pruner/swe-pruner/src/swe_pruner/retrieval/repository_overview.py) | Bounded root documents, role coverage, repository map, and document fingerprints |
 | [Topic contrasts](swe-pruner/swe-pruner/src/swe_pruner/query_focus.py) | Positive query/excluded topics without arbitrary grammatical negation |
 | [Source focus](swe-pruner/swe-pruner/src/swe_pruner/retrieval/source_focus.py) | AST-based independent-unit exclusions, protected helpers, and warnings |
-| [Conversation hints](swe-pruner/swe-pruner/src/swe_pruner/conversation_context.py) | Recognized references, three-turn bounds, and topic resets |
+| [Conversation memory](swe-pruner/swe-pruner/src/swe_pruner/conversation_context.py) | Bounded topic/requirement selection, supersession heuristics and inspectable extractive references |
 | [Comparison packets](swe-pruner/swe-pruner/src/swe_pruner/retrieval/context_comparison.py) | All-Python/manual/automatic packets, exact counts, and snapshot/size safeguards |
 | [Context packer](swe-pruner/swe-pruner/src/swe_pruner/retrieval/context_builder.py) | Tiers, fallback interfaces, full-artifact counting and truncation |
 | [Neural wrapper](swe-pruner/swe-pruner/src/swe_pruner/prune_wrapper.py) | Chunking, token/line mapping, probabilities, thresholds and excerpt construction |

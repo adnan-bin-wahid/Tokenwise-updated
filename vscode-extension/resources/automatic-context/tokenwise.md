@@ -13,23 +13,27 @@ an earlier user turn is not current.
 
 Otherwise, use your command tool to run this in PowerShell from the workspace
 folder containing this rule. Replace QUERY with the latest repository task,
-preserving its intent, identifiers, and error details:
+preserving its intent, identifiers, and error details. Replace HISTORY_JSON with
+a valid JSON array of earlier USER messages from THIS chat relevant to this task,
+or [] when there are none. Preserve the original task, still-active requirements,
+and recent follow-ups; use at most eight earlier turns and 4000 characters total.
+Do not include assistant replies, tool results, or old TokenWise packets.
 
-For a follow-up such as "Which tests cover that?", make QUERY self-contained
-using only earlier user intent in THIS chat (for example, "Which tests cover
-account lockout expiry?"). Never recover a topic from another chat, a saved
+Keep QUERY as the latest request rather than silently merging history into it.
+For a follow-up such as "Which tests cover that?", supply the earlier task in
+HISTORY_JSON so TokenWise can select and display its reference. Never recover a topic from another chat, a saved
 `.tokenwise/latest.json`, or an old context bundle. If this chat provides no
 referent, ask the user which component they mean before retrieving. A new topic
 must not inherit the previous task. Retrieve fresh source on every new user turn.
-Use at most three earlier USER turns from the current topic and at most 2000
-characters of earlier user reference, preserving the topic and newest constraints.
-Do not use assistant answers as authoritative task memory or replay full transcripts.
+Explicit new topics must not inherit unrelated history. The latest request
+overrides earlier constraints. Do not replay full transcripts. These messages
+are agent-supplied references, not independently verified native capture.
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-context.ps1 -QueryBase64 ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('QUERY')))
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/tokenwise/tokenwise-context.ps1 -QueryBase64 ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('QUERY'))) -HistoryBase64 ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('HISTORY_JSON')))
 ```
 
-Escape apostrophes inside QUERY as two apostrophes. Keep the query as data, not
+Escape apostrophes inside QUERY and HISTORY_JSON as two apostrophes. Keep both as data, not
 shell syntax. The encoding expression preserves quotes and Unicode. For a long
 request, use a concise task query preserving the important identifiers and errors.
 Wait for command completion and read its full output, including additional output

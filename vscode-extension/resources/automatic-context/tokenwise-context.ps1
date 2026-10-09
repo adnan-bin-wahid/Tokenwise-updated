@@ -2,6 +2,7 @@
 param(
     [string]$Query = '',
     [string]$QueryBase64 = '',
+    [string]$HistoryBase64 = '',
     [switch]$Verification
 )
 
@@ -17,6 +18,7 @@ try {
     }
     $Command = Join-Path $Runtime.ProjectRoot 'scripts\antigravity_context.py'
     $Arguments = @($Command, '--workspace', $Runtime.WorkspaceRoot, '--query-stdin')
+    if ($HistoryBase64) { $Arguments += @('--history-base64', $HistoryBase64) }
     if ($Verification) { $Arguments += '--verification' }
     $Query | & $Runtime.Python @Arguments
     exit $LASTEXITCODE

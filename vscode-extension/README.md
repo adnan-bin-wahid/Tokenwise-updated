@@ -1,5 +1,19 @@
 # TokenWise
 
+## Conversation Memory (0.6.8)
+
+Selects up to eight relevant earlier user turns and 4000 characters for same-topic
+retrieval. Inspect **Conversation memory** for selected messages, reasons,
+omissions, truncation and outgoing reference status. Native hooks use verified
+same-chat history; rule fallback supplies separately labeled user references.
+Assistant replies, tool output and old packets are excluded. Lexical heuristics
+can miss paraphrases; this is not unlimited or cross-chat memory.
+
+Upgrade the backend through **Set Up Backend**, then run **Enable Automatic Context**
+again to refresh the workspace launcher/rule. Set `"conversation_memory": false`
+in `.agents/tokenwise.json` to opt out. The complete token budget still applies.
+The bundled validation guide links to the concise `demonstration2.md` script.
+
 Automatic, bounded Python repository context for Antigravity coding prompts.
 
 ## Automatic Comparison (0.6.7)
@@ -36,7 +50,7 @@ and prompt-engineering rehearsal are included with the guides.
 The release retains the TokenWise icon and one
 `demonstration/tokenwise_demo` application and twenty deterministic tests.
 Run **TokenWise: Open Demonstration Guide** for the complete teacher script.
-Install `tokenwise-vscode-0.6.7.vsix` from the release below. The earlier public
+Install `tokenwise-vscode-0.6.8.vsix` from the release below. The earlier public
 releases remain unchanged.
 
 **0.6.4** fixes optional zero-valued carbon settings and explicit topic contrasts
@@ -62,10 +76,10 @@ matching updated backend; it does not grade agent answers. The source checkout's
 `demonstation.md` explains pruning inputs and includes runnable teacher examples.
 The release ZIP below includes the demonstration projects and teacher guide.
 
-Download the [TokenWise 0.6.7 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/tokenwise-vscode-0.6.7.vsix)
-from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.7).
+Download the [TokenWise 0.6.8 VSIX](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/tokenwise-vscode-0.6.8.vsix)
+from the [Windows-tested beta release](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/tag/v0.6.8).
 For the study, teacher guide and single runnable example repository, download
-[TokenWise-0.6.7.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.7/TokenWise-0.6.7.zip).
+[TokenWise-0.6.8.zip](https://github.com/adnan-bin-wahid/Tokenwise-updated/releases/download/v0.6.8/TokenWise-0.6.8.zip).
 Do not download the source-code ZIP for normal installation.
 
 The project-overview, token-accounting, and automatic-carbon fixes require
@@ -100,7 +114,7 @@ file. You do not need to uninstall or clear your caches to retry.
 
 ## Upgrading
 
-Install the 0.6.7 VSIX and reload the editor. Select **Update Backend** when
+Install the 0.6.8 VSIX and reload the editor. Select **Update Backend** when
 prompted, or run **TokenWise: Set Up Backend** manually. Finish active prompts
 before confirming setup. A successful upgrade stops only the verified old
 managed backend and reconnects background indexing automatically. Verified
@@ -165,7 +179,7 @@ an older saved report may not contain the matched baseline needed for comparison
 
 ## Response Guidance
 
-Install the matching 0.6.7 backend through **Set Up Backend**, refresh your
+Install the matching 0.6.8 backend through **Set Up Backend**, refresh your
 workspace through **Enable Automatic Context**, and start a fresh chat. Ask
 `Explain session expiry and its related tests. Do not modify any files.`
 The current tool output and **Show Automatic Context** should expose a

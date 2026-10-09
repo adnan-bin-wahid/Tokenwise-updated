@@ -2,7 +2,7 @@
   "name": "tokenwise-vscode",
   "displayName": "TokenWise",
   "description": "Task-aware code context pruning for AI workflows using SWE-Pruner.",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "icon": "resources/icon.png",
   "license": "MIT",
   "repository": {

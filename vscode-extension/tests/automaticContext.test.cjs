@@ -93,6 +93,21 @@ test("accepts a complete hook activity record", () => {
   assert.equal(parseAutomaticActivity(ready).result.files[0].file_path, "services/payment_service.py");
 });
 
+test("bounded memory traces accept agent references and reject malformed renderer inputs", () => {
+  const trace = { mode: "conversation", current_query: "Which tests cover that behavior?", effective_query: "lockout",
+    scope: "repository", threshold: .45, history_text: "Explain lockout", history_source: "agent_supplied_user_turns",
+    memory: { version: "1", enabled: true, selection: "bounded selection", summary: "Explain lockout", requirements: [],
+      considered_messages: 1, omitted_messages: 0, characters: 15, truncated: false,
+      messages: [{ position: 1, text: "Explain lockout", reason: "topic anchor" }],
+      packet: { status: "applied", tokens: 20, text: "reference" } } };
+  const activity = { ...ready, result: { ...ready.result, input_trace: trace } };
+  assert.ok(parseAutomaticActivity(activity));
+  for (const change of [{ messages: null }, { characters: 4001 }, { packet: { status: "applied", tokens: -1, text: "bad" } },
+    { messages: [{ position: 0, text: "x", reason: "bad" }] }, { requirements: [null] }]) {
+    assert.equal(parseAutomaticActivity({ ...activity, result: { ...activity.result, input_trace: { ...trace, memory: { ...trace.memory, ...change } } } }), undefined);
+  }
+});
+
 test("guidance traces are optional for old records and malformed metadata is rejected", () => {
   const guidance = { version: "1", profile: "generic_task", enabled: true, status: "applied",
     format: "full", tokens: 80, text: "Ground answers in evidence." };

@@ -1,5 +1,28 @@
 # Local Verification Record
 
+## October 9 Release Validation (0.6.8)
+
+Conversation-memory release checks: 193 extension tests passed; 142 backend tests
+were discovered, 141 passed and one Windows symlink-privilege test was skipped.
+The single demo's twenty tests and deterministic application output passed.
+Coverage includes same-topic requirements, expanded follow-ups, standalone
+constraints, explicit resets, recognized supersession, bounded candidates/hints,
+native transcript identity, agent-supplied fallback transport, opt-out, cache
+isolation, trace validation/escaping, packaging and real-tokenizer packet limits.
+
+Ten browser fixture views passed at 1280x1000 and 390x844: memory inspection,
+automatic two-packet comparison, pending/unavailable states and imported CLI usage.
+No document overflow, overlapping/overflowing statistics or page errors occurred;
+copy/export messages passed. These are synthetic UI checks, not measured agent
+outcomes. Reports and screenshots are under ignored `tmp/release-0.6.8-ui/`.
+
+Contract tests use controlled pruning models; real-tokenizer counts do not prove
+real-weight relevance accuracy or improved cloud answers. No new live Antigravity
+quality trial or measured energy study was performed. The native-history and
+portable transport fixtures are synthetic, not records of paid cloud runs.
+
+Earlier release measurements below remain historical and are not relabeled.
+
 ## October 9 Release Validation (0.6.7)
 
 The 0.6.7 automatic-comparison, usage-import and validation-guide code passed
