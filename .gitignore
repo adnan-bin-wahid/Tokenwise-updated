@@ -44,6 +44,7 @@ tmp/
 temp/
 .tokenwise/
 demonstration/results/
+demonstration/comparative_study/results/
 
 # Generated workspace setup in demonstration repositories
 demonstration/**/.agents/

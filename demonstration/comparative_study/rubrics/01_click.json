@@ -1,0 +1,13 @@
+{
+  "repository": "01_click",
+  "commit": "934813e4d421071a1b3db3973c02fe2721359a6e",
+  "grading": "One point per supported criterion, maximum six; semantic review, not keyword matching. Count distinct incorrect or unsupported claims separately.",
+  "criteria": [
+    {"id": 1, "fact": "Conversion occurs before validation; missing min/max leaves that direction unbounded, and closed endpoints are accepted.", "evidence": ["src/click/types.py::_NumberRangeBase.convert", "tests/test_types.py::test_range"]},
+    {"id": 2, "fact": "min_open/max_open exclude equality at the corresponding endpoint.", "evidence": ["src/click/types.py::_NumberRangeBase.convert", "tests/test_types.py::test_range_fail"]},
+    {"id": 3, "fact": "With clamp=True, closed-bound violations return the violated bound instead of raising.", "evidence": ["src/click/types.py::_NumberRangeBase.convert", "src/click/types.py::IntRange._clamp", "tests/test_types.py::test_range"]},
+    {"id": 4, "fact": "For IntRange open bounds, clamping moves one integer inward: min+1 or max-1.", "evidence": ["src/click/types.py::IntRange._clamp", "tests/test_types.py::test_range"]},
+    {"id": 5, "fact": "Without clamping, out-of-range values fail with BadParameter and a range description; valid values are returned.", "evidence": ["src/click/types.py::_NumberRangeBase.convert", "src/click/types.py::_NumberRangeBase._describe_range", "tests/test_types.py::test_range_fail"]},
+    {"id": 6, "fact": "Identifies test_range and test_range_fail with accurate examples of accepted/clamped values and rejected bounds.", "evidence": ["tests/test_types.py::test_range", "tests/test_types.py::test_range_fail"]}
+  ]
+}
