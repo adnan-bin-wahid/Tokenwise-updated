@@ -1,0 +1,4 @@
+interface:
+  display_name: "TokenWise Academic Report"
+  short_description: "Write an evidence-grounded TokenWise final report"
+  default_prompt: "Use $tokenwise-final-report to write my TokenWise final report following my friend's report, with validation and comparison after the user manual and red screenshot instructions instead of images."
